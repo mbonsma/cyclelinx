@@ -1,0 +1,11 @@
+services:
+  next:
+    image: node:21-slim
+    working_dir: /app/cycle-network-toy
+    entrypoint: yarn dev
+    volumes:
+      - "./next:/app"
+    ports:
+      - "8656:3000"
+    user: "1000"
+
