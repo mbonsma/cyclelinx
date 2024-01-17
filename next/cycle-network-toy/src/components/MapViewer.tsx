@@ -1,23 +1,23 @@
 "use client";
 
-import React from "react";
-import { GeoJsonObject } from "geojson";
+import React, { useState, useEffect } from "react";
+import { GeoJsonObject, Geometry } from "geojson";
 import styled from "@emotion/styled";
 //we might need these as dynamic imports?
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
-import { LatLngBounds, LatLng } from "leaflet";
-import budget40 from "../../public/budget_40.json";
-import budget80 from "../../public/budget_80.json";
-import budget120 from "../../public/budget_120.json";
-import budget160 from "../../public/budget_160.json";
-import budget200 from "../../public/budget_200.json";
-import budget240 from "../../public/budget_240.json";
-import budget280 from "../../public/budget_280.json";
-import budget320 from "../../public/budget_320.json";
-import budget360 from "../../public/budget_360.json";
-import budget400 from "../../public/budget_400.json";
-import budget440 from "../../public/budget_440.json";
-import budget480 from "../../public/budget_480.json";
+import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
+import budget40 from "../app/lib/geojson/budget_40";
+import { default as budget80 } from "../app/lib/geojson/budget_80";
+import { default as budget120 } from "../app/lib/geojson/budget_120";
+import { default as budget160 } from "../app/lib/geojson/budget_160";
+import { default as budget200 } from "../app/lib/geojson/budget_200";
+import { default as budget240 } from "../app/lib/geojson/budget_240";
+import { default as budget280 } from "../app/lib/geojson/budget_280";
+import { default as budget320 } from "../app/lib/geojson/budget_320";
+import { default as budget360 } from "../app/lib/geojson/budget_360";
+import { default as budget400 } from "../app/lib/geojson/budget_400";
+import { default as budget440 } from "../app/lib/geojson/budget_440";
+import { default as budget480 } from "../app/lib/geojson/budget_480";
 
 export const BUDGET_MAP = {
   40: budget40,
@@ -34,30 +34,52 @@ export const BUDGET_MAP = {
   480: budget480,
 };
 
-const c1 = new LatLng(43.8, -79.4);
-const c2 = new LatLng(43.6, -79.39);
+/*
+    This is basically a context consumer...
+    We place it in the component and it is then nested in the context provider and we can access it
+*/
+const Handler: React.FC<{ selected: keyof typeof BUDGET_MAP }> = ({
+  selected,
+}) => {
+  const [currentLayer, setCurrentLayer] = useState<
+    LGeoJSON<any, Geometry> | undefined
+  >(undefined);
+
+  const map = useMap();
+
+  /* const map = useMapEvents({
+    moveend: (e) => {
+      console.log(map.getBounds());
+    },
+  }); */
+
+  useEffect(() => {
+    const layer = new LGeoJSON(BUDGET_MAP[selected] as GeoJsonObject);
+    if (currentLayer) {
+      map.removeLayer(currentLayer);
+    }
+    map.addLayer(layer);
+    setCurrentLayer(layer);
+  }, [map, selected]);
+
+  return null;
+};
+
+const c1 = new LatLng(43.76, -79.17);
+const c2 = new LatLng(43.65, -79.65);
 
 const MapViewer: React.FC<{ budget: keyof typeof BUDGET_MAP }> = ({
   budget,
 }) => (
   <StyledLeafletContainer
     bounds={new LatLngBounds(c1, c2)}
-    zoom={12}
     scrollWheelZoom={true}
   >
-    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-    {budget === 40 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 80 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 120 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 160 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 200 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 240 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 280 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 320 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 360 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 400 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 440 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
-    {budget === 480 && <GeoJSON data={BUDGET_MAP[budget] as GeoJsonObject} />}
+    <TileLayer
+      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    />
+    <Handler selected={budget} />
   </StyledLeafletContainer>
 );
 
@@ -87,6 +109,10 @@ const SelectedLayer2: React.FC<SelectedLayerProps> = ({ selectedBudget }) => (
 const StyledLeafletContainer = styled(MapContainer)`
   width: 80%;
   height: 80vh;
+  //remove logo
+  .leaflet-control-attribution.leaflet-control {
+    display: none;
+  }
 `;
 
 export const getEntries = <T extends Record<any, any>>(obj: T) =>
