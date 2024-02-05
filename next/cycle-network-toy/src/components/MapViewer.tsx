@@ -4,20 +4,26 @@ import React, { useState, useEffect } from "react";
 import { GeoJsonObject, Geometry } from "geojson";
 import styled from "@emotion/styled";
 //we might need these as dynamic imports?
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  GeoJSON,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
-import budget40 from "../app/lib/geojson/budget_40";
-import { default as budget80 } from "../app/lib/geojson/budget_80";
-import { default as budget120 } from "../app/lib/geojson/budget_120";
-import { default as budget160 } from "../app/lib/geojson/budget_160";
-import { default as budget200 } from "../app/lib/geojson/budget_200";
-import { default as budget240 } from "../app/lib/geojson/budget_240";
-import { default as budget280 } from "../app/lib/geojson/budget_280";
-import { default as budget320 } from "../app/lib/geojson/budget_320";
-import { default as budget360 } from "../app/lib/geojson/budget_360";
-import { default as budget400 } from "../app/lib/geojson/budget_400";
-import { default as budget440 } from "../app/lib/geojson/budget_440";
-import { default as budget480 } from "../app/lib/geojson/budget_480";
+import budget40 from "../lib/geojson/budget_40";
+import { default as budget80 } from "../lib/geojson/budget_80";
+import { default as budget120 } from "../lib/geojson/budget_120";
+import { default as budget160 } from "../lib/geojson/budget_160";
+import { default as budget200 } from "../lib/geojson/budget_200";
+import { default as budget240 } from "../lib/geojson/budget_240";
+import { default as budget280 } from "../lib/geojson/budget_280";
+import { default as budget320 } from "../lib/geojson/budget_320";
+import { default as budget360 } from "../lib/geojson/budget_360";
+import { default as budget400 } from "../lib/geojson/budget_400";
+import { default as budget440 } from "../lib/geojson/budget_440";
+import { default as budget480 } from "../lib/geojson/budget_480";
 
 export const BUDGET_MAP = {
   40: budget40,
@@ -45,16 +51,26 @@ const Handler: React.FC<{ selected: keyof typeof BUDGET_MAP }> = ({
     LGeoJSON<any, Geometry> | undefined
   >(undefined);
 
-  const map = useMap();
+  //const map = useMap();
 
-  /* const map = useMapEvents({
-    moveend: (e) => {
-      console.log(map.getBounds());
-    },
-  }); */
+  const map = useMapEvents({
+    // moveend: (e) => {
+    //   console.log(e);
+    //   console.log(map.getBounds());
+    // },
+    // click: (e) => {
+    //   console.log(e);
+    // },
+  });
 
   useEffect(() => {
-    const layer = new LGeoJSON(BUDGET_MAP[selected] as GeoJsonObject);
+    const layer = new LGeoJSON(BUDGET_MAP[selected] as GeoJsonObject, {
+      //click handler for features
+      onEachFeature: (f, l) =>
+        l.on({
+          click: () => console.log(f),
+        }),
+    });
     if (currentLayer) {
       map.removeLayer(currentLayer);
     }
@@ -88,23 +104,6 @@ export default MapViewer;
 interface SelectedLayerProps {
   selectedBudget: keyof typeof BUDGET_MAP;
 }
-
-/* These doesn't work, evidently --- we can't just replace */
-const SelectedLayer: React.FC<SelectedLayerProps> = ({ selectedBudget }) => (
-  <GeoJSON data={BUDGET_MAP[selectedBudget] as GeoJsonObject} />
-);
-
-const SelectedLayer2: React.FC<SelectedLayerProps> = ({ selectedBudget }) => (
-  <>
-    {getEntries(BUDGET_MAP).map(([k, v]) => (
-      <>
-        {selectedBudget === k && (
-          <GeoJSON data={BUDGET_MAP[k] as GeoJsonObject} />
-        )}
-      </>
-    ))}
-  </>
-);
 
 const StyledLeafletContainer = styled(MapContainer)`
   width: 80%;

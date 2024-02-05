@@ -1,4 +1,17 @@
 services:
+  flask:
+    build: ./flask
+    volumes:
+      - ./flask:/code
+    ports:
+      - "9033:5000"
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_HOST
+      - POSTGRES_PASSWORD
+      - POSTGRES_ROOT_PASSWORD
+      - POSTGRES_USER
+      - TEST_DB_NAME
   next:
     image: node:21-slim
     working_dir: /app/cycle-network-toy
@@ -8,4 +21,18 @@ services:
     ports:
       - "8656:3000"
     user: "1000"
+  postgres:
+    image: postgis/postgis:15-3.3
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_HOST_AUTH_METHOD=password
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_ROOT_PASSWORD
+
+volumes:
+  db-data:
 

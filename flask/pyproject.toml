@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "api"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+alembic = "^1.7.6"
+psycopg2-binary = "^2.9.3"
+python = "^3.10"
+flask = "^2.2.2"
+factory-boy = "^3.2.1"
+graphql-server = "^3.0.0b5"
+Flask-Cors = "^4.0.0"
+sqlalchemy-utils = "^0.41.1"
+geoalchemy2 = "^0.14.3"
+geopandas = "^0.14.3"
+flask-sqlalchemy = "^3.1.1"
+
+[tool.poetry.group.dev.dependencies]
+sqlalchemy-stubs = "^0.4"
+black = "^22.1.0"
+debugpy = "^1.5.1"
+pytest = "^7.0.1"
+pylint = "^2.12.2"
+
+[tool.pyright]
+include = ["api"]
+exclude = ["**/pytest_cache", "**/__pycache__"]
+defineConstant = { DEBUG = true }
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+pythonPlatform = "Linux"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
