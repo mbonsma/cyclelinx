@@ -1,50 +1,64 @@
 import json
-import traceback
-
-from flask import Flask
-from flask_cors import CORS
-from graphql_server import format_error_default, GraphQLError
 import logging
+
+from flask import Blueprint, Flask
+from flask_cors import CORS
+from geoalchemy2.shape import to_shape
+import logging
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
-from sqlalchemy import select
 
-from api.db import db
-from api.models import Budget
+
+from api.models import db, Budget, ImprovementFeature
 from api.settings import app_settings
+from api.utils import improvement_features_to_geojson_features, model_to_dict
 
+logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    app_settings.POSTGRES_CONNECTION_STRING
-    if app_settings.APP_ENV != "testing"
-    else app_settings.TEST_DB_CONNECTION_STRING
+cycling_api = Blueprint(
+    "cycling_api",
+    __name__,
 )
-db.init_app(app)
-CORS(app)
+
+
+def create_app(testing=False):
+    app = Flask(__name__)
+    # app.config.from_pyfile(config_filename)
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        app_settings.POSTGRES_CONNECTION_STRING
+        if not testing
+        else app_settings.TEST_DB_CONNECTION_STRING
+    )
+    db.init_app(app)
+    app.register_blueprint(cycling_api)
+    CORS(app)
+    return app
+
 
 logger = logging.getLogger(__name__)
 
 
-@app.route("/budgets", methods=["GET"])
+@cycling_api.route("/budgets", methods=["GET"])
 def get_budgets():
-    return db.session(select(Budget).scalars().all())
+    results = db.session.execute(select(Budget)).scalars().all()
+    return [model_to_dict(result) for result in results]
 
 
-@app.route("/budgets/<int:id>/features")
-def get_budget_features():
-    return ""
+@cycling_api.route("/budgets/<int:id>/features")
+def get_budget_features(id):
+    budget = db.session.execute(
+        select(Budget)
+        .options(joinedload(Budget.improvement_features))
+        .filter(Budget.id == id)
+    ).scalar()
 
-
-def format_error(error: GraphQLError):
-    """Try to get a trace from exception that gql swallows"""
-    if error.original_error:
-        logger.error(traceback.print_exception(error.original_error))
-    return format_error_default(error)
+    return improvement_features_to_geojson_features(budget.improvement_features)
 
 
 # https://flask.palletsprojects.com/en/2.2.x/errorhandling/#generic-exception-handlers
-@app.errorhandler(HTTPException)
+@cycling_api.errorhandler(HTTPException)
 def handle_http_exception(e: HTTPException):
     """Return JSON instead of HTML for HTTP errors."""
     # create a werkzeug response
@@ -60,11 +74,13 @@ def handle_http_exception(e: HTTPException):
     return response
 
 
-@app.errorhandler(Exception)
+@cycling_api.errorhandler(Exception)
 def handle_exception(e: Exception):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
         return e
+
+    logger.error(e.args)
 
     return {
         "code": 500,

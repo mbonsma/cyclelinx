@@ -1,15 +1,20 @@
 from typing import List
 
-from sqlalchemy import Column, Float, ForeignKey, Integer, String, Table
-from sqlalchemy.orm import relationship, Mapped
+from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
+from sqlalchemy import Column, Float, ForeignKey, Integer, String, Table
+from sqlalchemy.orm import DeclarativeBase, relationship, Mapped
 
-from api.db import Base
+db = SQLAlchemy()
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 budgets_improvement_features = Table(
     "budgets_improvement_features",
-    Base.metadata,
+    db.Model.metadata,
     Column("budget_id", ForeignKey("budgets.id"), primary_key=True),
     Column(
         "improvement_feature_id",
@@ -19,7 +24,7 @@ budgets_improvement_features = Table(
 )
 
 
-class Budget(Base):
+class Budget(db.Model):
     __tablename__ = "budgets"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
@@ -29,7 +34,7 @@ class Budget(Base):
     )
 
 
-class ImprovementFeature(Base):
+class ImprovementFeature(db.Model):
     __tablename__ = "improvement_features"
     id = Column(Integer, primary_key=True, index=True)
     GEO_ID = Column(Integer, nullable=True, unique=True)

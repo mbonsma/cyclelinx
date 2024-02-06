@@ -1,5 +1,5 @@
-import pytest
 import logging
+import pytest
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -9,10 +9,6 @@ from api.settings import app_settings
 
 
 logger = logging.getLogger(__name__)
-
-
-app_settings.APP_ENV = "testing"
-app_settings.POSTGRES_CONNECTION_STRING = app_settings.TEST_DB_CONNECTION_STRING
 
 
 @pytest.fixture(scope="session")
@@ -45,9 +41,12 @@ def connection():
 
 @pytest.fixture
 def app():
-    from api.app import app as flask_app
+    from api.app import create_app
 
-    yield flask_app
+    app = create_app(testing=True)
+    app.config.update({"TESTING": True})
+
+    yield app
 
 
 @pytest.fixture
@@ -58,13 +57,19 @@ def app_ctx(app):
 
 
 @pytest.fixture(scope="function")
-def fresh_db(connection, app_ctx):
-    from api.db import db
+def fresh_db(connection, app_ctx, app):
+    from api.models import db
 
     """
     Recreate tables at the start of every test.
     """
+
     db.drop_all()
     db.create_all()
 
     yield db
+
+
+@pytest.fixture()
+def client(app):
+    return app.test_client()

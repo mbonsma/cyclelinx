@@ -8,11 +8,10 @@ import tempfile
 
 from geoalchemy2.elements import WKTElement
 import geopandas
-from sqlalchemy import delete, select
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import select
+from flask_sqlalchemy import SQLAlchemy
 
 from api.models import Budget, ImprovementFeature
-from api.db import db
 
 
 def extract_files(path: str):
@@ -28,7 +27,7 @@ def extract_files(path: str):
     return tempdir
 
 
-def get_budget(filename: str):
+def get_budget(filename: str, db: SQLAlchemy):
     match = re.search(r"budget(\d+)", filename)
     if not match:
         raise ValueError(
@@ -42,7 +41,7 @@ def get_budget(filename: str):
 
     budget = db.session.execute(
         select(Budget).filter(Budget.name == str(budget_name))
-    ).first()
+    ).scalar()
 
     if not budget:
         budget = Budget(name=budget_name)
@@ -52,19 +51,15 @@ def get_budget(filename: str):
     return budget
 
 
-def import_improvements(archive_path: str, truncate=True):
+def import_improvements(archive_path: str, db: SQLAlchemy):
     """We assume the .shp file has a suffix like budget\d+.shp"""
     ext_dir = extract_files(archive_path)
-
-    if truncate:
-        db.session.execute(delete(ImprovementFeature))
-        db.session.commit()
 
     for _, _, filenames in walk(ext_dir):
         for filename in filenames:
             if filename.endswith(".shp"):
 
-                budget = get_budget(filename)
+                budget = get_budget(filename, db)
                 features = geopandas.read_file(path.join(ext_dir, filename))
                 rows = [entry[1].to_dict() for entry in features.iterrows()]
                 for row in rows:
@@ -72,7 +67,7 @@ def import_improvements(archive_path: str, truncate=True):
                         select(ImprovementFeature).filter(
                             ImprovementFeature.GEO_ID == row["GEO_ID"]
                         )
-                    ).first()
+                    ).scalar()
 
                     if existing_feature is None:
                         row["geometry"] = WKTElement(str(row["geometry"]))

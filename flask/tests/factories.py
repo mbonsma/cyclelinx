@@ -41,3 +41,15 @@ def improvement_feature_model_factory(session):
         geometry = "LINESTRING (-79.40082705472463 43.64430503964604, -79.40083825308278 43.64430275536802, -79.4027055361314 43.64392631444804)"
 
     return ImprovementFeatureFactory
+
+
+def budget_model_factory(session):
+    class BudgetFactory(SQLAlchemyModelFactory):
+        class Meta:
+            model = Models.Budget
+            sqlalchemy_session = session
+            sqlalchemy_session_persistence = "commit"
+
+        name = Faker("pystr")
+
+    return BudgetFactory
