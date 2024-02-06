@@ -8,10 +8,11 @@ import tempfile
 
 from geoalchemy2.elements import WKTElement
 import geopandas
-from sqlalchemy import select
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import select, create_engine
+from sqlalchemy.orm import Session
 
 from api.models import Budget, ImprovementFeature
+from api.settings import app_settings
 
 
 def extract_files(path: str):
@@ -27,7 +28,7 @@ def extract_files(path: str):
     return tempdir
 
 
-def get_budget(filename: str, db: SQLAlchemy):
+def get_budget(filename: str, session: Session):
     match = re.search(r"budget(\d+)", filename)
     if not match:
         raise ValueError(
@@ -39,31 +40,28 @@ def get_budget(filename: str, db: SQLAlchemy):
         )
     budget_name = match.groups()[0]
 
-    budget = db.session.execute(
+    budget = session.execute(
         select(Budget).filter(Budget.name == str(budget_name))
     ).scalar()
 
     if not budget:
         budget = Budget(name=budget_name)
-        db.session.add(budget)
-        db.session.commit()
+        session.add(budget)
+        session.commit()
 
     return budget
 
 
-def import_improvements(archive_path: str, db: SQLAlchemy):
-    """We assume the .shp file has a suffix like budget\d+.shp"""
-    ext_dir = extract_files(archive_path)
-
-    for _, _, filenames in walk(ext_dir):
+def import_rows(dir_path: str):
+    for root, dirs, filenames in walk(dir_path):
         for filename in filenames:
             if filename.endswith(".shp"):
-
-                budget = get_budget(filename, db)
-                features = geopandas.read_file(path.join(ext_dir, filename))
+                print(f"processing {path.join(root, filename)}")
+                budget = get_budget(filename, session)
+                features = geopandas.read_file(path.join(root, filename))
                 rows = [entry[1].to_dict() for entry in features.iterrows()]
                 for row in rows:
-                    existing_feature = db.session.execute(
+                    existing_feature = session.execute(
                         select(ImprovementFeature).filter(
                             ImprovementFeature.GEO_ID == row["GEO_ID"]
                         )
@@ -73,9 +71,34 @@ def import_improvements(archive_path: str, db: SQLAlchemy):
                         row["geometry"] = WKTElement(str(row["geometry"]))
                         feature = ImprovementFeature(**row)
                         feature.budgets.append(budget)
-                        db.session.add(feature)
-                        db.session.commit()
+                        session.add(feature)
+                        session.commit()
                     elif budget.name not in [b.name for b in existing_feature.budgets]:
                         existing_feature.budgets.append(budget)
-                        db.session.add(existing_feature)
-                        db.session.commit()
+                        session.add(existing_feature)
+                        session.commit()
+
+
+def import_improvements(archive_path: str, session: Session):
+    """We assume the .shp file has a suffix like budget\d+.shp"""
+    ext_dir = extract_files(archive_path)
+
+    import_rows(ext_dir)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="Import Improvements",
+        description="Add features related to a budget from a compressed archive.",
+    )
+
+    parser.add_argument("--archive_path")
+
+    args = parser.parse_args()
+
+    engine = create_engine(app_settings.POSTGRES_CONNECTION_STRING)
+
+    with Session(engine) as session:
+        import_improvements(args.archive_path, session)

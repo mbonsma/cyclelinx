@@ -1,21 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Grid, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import dynamic from "next/dynamic";
 
-import { BUDGET_MAP } from "./../components/MapViewer";
+import { Budget } from "@/lib/ts/types";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
   ssr: false,
 });
 
 export default function Home() {
-  const [budget, setBudget] = useState<keyof typeof BUDGET_MAP>(40);
+  const [budgetId, setBudgetId] = useState<number>();
+  const [features, setFeatures] = useState<any>();
+  const [budgets, setBudgets] = useState<Budget[]>();
 
-  const budgets = Array(12)
-    .fill(null)
-    .map((_, i) => (i + 1) * 40);
+  useEffect(() => {
+    axios
+      .get<Budget[]>("http://localhost:9033/budgets")
+      .then((r) => setBudgets(r.data));
+  }, []);
+
+  useEffect(() => {
+    console.log(budgetId);
+    if (budgetId) {
+      axios
+        .get(`http://localhost:9033/budgets/${budgetId}/features`)
+        .then((r) => setFeatures(r.data));
+    }
+  }, [budgetId]);
 
   return (
     /* Outer container */
@@ -44,22 +58,21 @@ export default function Home() {
               <Select
                 labelId="budget-select-label"
                 id="budget-select"
-                value={budget}
+                value={budgetId}
                 label="Age"
-                onChange={(e) =>
-                  setBudget(+e.target.value as keyof typeof BUDGET_MAP)
-                }
+                onChange={(e) => setBudgetId(+e.target.value)}
               >
-                {budgets.map((b) => (
-                  <MenuItem key={b} value={b}>
-                    {b}
-                  </MenuItem>
-                ))}
+                {budgets &&
+                  budgets.map((b) => (
+                    <MenuItem key={b.id} value={b.id}>
+                      {b.name}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
           </Grid>
           <Grid width={"100%"} item xs={12} md={10} flexGrow={1}>
-            <MapViewer budget={budget} />
+            <MapViewer features={features} />
           </Grid>
         </Grid>
       </Grid>
