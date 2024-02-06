@@ -14,14 +14,13 @@ from tests.factories import improvement_feature_model_factory
 def test_import(app_ctx, fresh_db):
     test_import_path = path.join(path.dirname(__file__), "fixtures", "budget_40.xz")
     import_improvements(test_import_path)
-    assert len(fresh_db.session.execute(select(ImprovementFeature)).all()) == 118
+    features = fresh_db.session.execute(select(ImprovementFeature)).scalars().all()
+    assert len(features) == 118
+    assert features[0].budgets[0].name == "40"
 
 
 # TODO: break these up
-
 # TODO: we might be losing a decimal of precision with float
-
-
 def test_can_make_geojson(app_ctx, fresh_db):
     improvement_feature_model_factory(fresh_db.session).create_batch(10)
     # sanity check on our database reset
@@ -34,3 +33,6 @@ def test_can_make_geojson(app_ctx, fresh_db):
     geopandas.read_file(StringIO(json.dumps(geojson)))
 
     assert True
+
+
+# now we need a route....

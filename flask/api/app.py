@@ -7,8 +7,10 @@ from graphql_server import format_error_default, GraphQLError
 import logging
 from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
+from sqlalchemy import select
 
 from api.db import db
+from api.models import Budget
 from api.settings import app_settings
 
 
@@ -24,8 +26,13 @@ CORS(app)
 logger = logging.getLogger(__name__)
 
 
-@app.route("/")
-def hello_world():
+@app.route("/budgets", methods=["GET"])
+def get_budgets():
+    return db.session(select(Budget).scalars().all())
+
+
+@app.route("/budgets/<int:id>/features")
+def get_budget_features():
     return ""
 
 

@@ -1,19 +1,32 @@
-from sqlalchemy import (
-    Column,
-    Float,
-    Integer,
-    String,
-)
+from typing import List
+
+from sqlalchemy import Column, Float, ForeignKey, Integer, String, Table
+from sqlalchemy.orm import relationship, Mapped
 from geoalchemy2 import Geometry
 
-
 from api.db import Base
+
+
+budgets_improvement_features = Table(
+    "budgets_improvement_features",
+    Base.metadata,
+    Column("budget_id", ForeignKey("budgets.id"), primary_key=True),
+    Column(
+        "improvement_feature_id",
+        ForeignKey("improvement_features.id"),
+        primary_key=True,
+    ),
+)
 
 
 class Budget(Base):
     __tablename__ = "budgets"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
+    improvement_features: Mapped[List["ImprovementFeature"]] = relationship(
+        secondary=budgets_improvement_features,
+        back_populates="budgets",
+    )
 
 
 class ImprovementFeature(Base):
@@ -45,3 +58,7 @@ class ImprovementFeature(Base):
     Shape_Leng = Column(Float, nullable=True)
     U500_20 = Column(String, nullable=True)
     geometry = Column(Geometry("LINESTRING"), nullable=True)
+    budgets: Mapped[List[Budget]] = relationship(
+        secondary=budgets_improvement_features,
+        back_populates="improvement_features",
+    )
