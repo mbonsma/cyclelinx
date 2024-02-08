@@ -43,6 +43,43 @@ def improvement_feature_model_factory(session):
     return ImprovementFeatureFactory
 
 
+def dissemination_area_factory(session):
+    class DisseminationAreaFactory(SQLAlchemyModelFactory):
+        class Meta:
+            model = Models.DisseminationArea
+            sqlalchemy_session = session
+            sqlalchemy_session_persistence = "commit"
+
+        DAUID = Faker("pyint")
+        PRUID = Faker("pyint")
+        PRNAME = Faker("pystr")
+        CDUID = Faker("pyint")
+        CDNAME = Faker("pystr")
+        CDTYPE = Faker("pystr")
+        CCSUID = Faker("pyint")
+        CCSNAME = Faker("pystr")
+        CSDUID = Faker("pyint")
+        CSDNAME = Faker("pystr")
+        CSDTYPE = Faker("pystr")
+        ERUID = Faker("pyint")
+        ERNAME = Faker("pystr")
+        SACCODE = Faker("pyint")
+        SACTYPE = Faker("pystr")
+        CMAUID = Faker("pyint")
+        CMAPUID = Faker("pyint")
+        CMANAME = Faker("pystr")
+        CMATYPE = Faker("pystr")
+        CTUID = Faker("pyfloat")
+        CTNAME = Faker("pyfloat")
+        ADAUID = Faker("pyint")
+        DAUID_int = Faker("pyint")
+        Shape_Leng = Faker("pyfloat")
+        Shape_Area = Faker("pyfloat")
+        geometry = "POLYGON ((7212775.082900003 920625.879999999, 7212687.302900001 920581.1143000014, 7212632.305699997 920679.5628999993, 7212583.608599998 920771.8486000001, 7212563.648599997 920805.7113999985, 7212651.268600002 920853.6257000007, 7212737.685699999 920900.2342999987, 7212820.245700002 920945.1171000004, 7212904.640000001 920991.3685999997, 7212987.194300003 921036.2514000013, 7213079.2971 921085.9571000002, 7213185.082900003 920889.3513999991, 7213201.454300001 920855.8429000005, 7213109.3486 920806.1370999999, 7213028.808600001 920761.6114000008, 7212944.237099998 920716.365699999, 7212860.6657000035 920671.308600001, 7212775.082900003 920625.879999999))"
+
+    return DisseminationAreaFactory
+
+
 def budget_model_factory(session):
     class BudgetFactory(SQLAlchemyModelFactory):
         class Meta:

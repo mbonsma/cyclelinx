@@ -52,7 +52,7 @@ def get_budget(filename: str, session: Session):
     return budget
 
 
-def import_rows(dir_path: str):
+def import_rows(dir_path: str, session: Session):
     for root, dirs, filenames in walk(dir_path):
         for filename in filenames:
             if filename.endswith(".shp"):
@@ -83,7 +83,7 @@ def import_improvements(archive_path: str, session: Session):
     """We assume the .shp file has a suffix like budget\d+.shp"""
     ext_dir = extract_files(archive_path)
 
-    import_rows(ext_dir)
+    import_rows(ext_dir, session)
 
 
 if __name__ == "__main__":

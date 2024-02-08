@@ -23,7 +23,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    console.log(budgetId);
     if (budgetId) {
       axios
         .get(`http://localhost:9033/budgets/${budgetId}/features`)
@@ -58,7 +57,7 @@ export default function Home() {
               <Select
                 labelId="budget-select-label"
                 id="budget-select"
-                value={budgetId}
+                value={budgetId || ""}
                 label="Age"
                 onChange={(e) => setBudgetId(+e.target.value)}
               >

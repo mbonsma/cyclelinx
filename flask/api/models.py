@@ -2,15 +2,18 @@ from typing import List
 
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Float, ForeignKey, Integer, String, Table
-from sqlalchemy.orm import DeclarativeBase, relationship, Mapped
+from sqlalchemy import (
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import relationship, Mapped
 
 db = SQLAlchemy()
-
-
-class Base(DeclarativeBase):
-    pass
-
 
 budgets_improvement_features = Table(
     "budgets_improvement_features",
@@ -62,8 +65,68 @@ class ImprovementFeature(db.Model):
     length_in_ = Column(Float, nullable=True)
     Shape_Leng = Column(Float, nullable=True)
     U500_20 = Column(String, nullable=True)
-    geometry = Column(Geometry("LINESTRING"), nullable=True)
+    geometry = Column(Geometry("LINESTRING"), nullable=False)
     budgets: Mapped[List[Budget]] = relationship(
         secondary=budgets_improvement_features,
         back_populates="improvement_features",
     )
+    scores = db.relationship("FeatureScore", back_populates="improvement_feature")
+
+
+class DisseminationArea(db.Model):
+    __tablename__ = "dissemination_areas"
+    id = Column(Integer, primary_key=True, index=True)
+    DAUID = Column(Integer, nullable=False)
+    PRUID = Column(Integer, nullable=True)
+    PRNAME = Column(String, nullable=True)
+    CDUID = Column(Integer, nullable=True)
+    CDNAME = Column(String, nullable=True)
+    CDTYPE = Column(String, nullable=True)
+    CCSUID = Column(Integer, nullable=True)
+    CCSNAME = Column(String, nullable=True)
+    CSDUID = Column(Integer, nullable=True)
+    CSDNAME = Column(String, nullable=True)
+    CSDTYPE = Column(String, nullable=True)
+    ERUID = Column(Integer, nullable=True)
+    ERNAME = Column(String, nullable=True)
+    SACCODE = Column(Integer, nullable=True)
+    SACTYPE = Column(String, nullable=True)
+    CMAUID = Column(Integer, nullable=True)
+    CMAPUID = Column(Integer, nullable=True)
+    CMANAME = Column(String, nullable=True)
+    CMATYPE = Column(String, nullable=True)
+    CTUID = Column(Float, nullable=True)
+    CTNAME = Column(Float, nullable=True)
+    ADAUID = Column(Integer, nullable=True)
+    DAUID_int = Column(Integer, nullable=True)
+    Shape_Leng = Column(Float, nullable=True)
+    Shape_Area = Column(Float, nullable=True)
+    geometry = Column(Geometry("POLYGON"), nullable=False)
+    scores = db.relationship("FeatureScore", back_populates="dissemination_area")
+
+
+class Metric(db.Model):
+    __tablename__ = "metrics"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+
+
+class FeatureScore(db.Model):
+    __tablename__ = "feature_scores"
+    id = Column(Integer, primary_key=True)
+    metric_id = Column(Integer, ForeignKey("metrics.id"), nullable=False)
+    improvement_feature_id = Column(
+        Integer, ForeignKey("improvement_features.id"), nullable=False
+    )
+    dissemination_area_id = Column(
+        Integer, ForeignKey("dissemination_areas.id"), nullable=False
+    )
+    score = Column(Float, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(dissemination_area_id, metric_id, improvement_feature_id),
+    )
+
+    improvement_feature = db.relationship("ImprovementFeature", back_populates="scores")
+    metric = db.relationship("Metric")
+    dissemination_area = db.relationship("DisseminationArea", back_populates="scores")

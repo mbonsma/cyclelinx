@@ -6,18 +6,6 @@ import styled from "@emotion/styled";
 //we might need these as dynamic imports?
 import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
 import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
-import budget40 from "../lib/geojson/budget_40";
-import { default as budget80 } from "../lib/geojson/budget_80";
-import { default as budget120 } from "../lib/geojson/budget_120";
-import { default as budget160 } from "../lib/geojson/budget_160";
-import { default as budget200 } from "../lib/geojson/budget_200";
-import { default as budget240 } from "../lib/geojson/budget_240";
-import { default as budget280 } from "../lib/geojson/budget_280";
-import { default as budget320 } from "../lib/geojson/budget_320";
-import { default as budget360 } from "../lib/geojson/budget_360";
-import { default as budget400 } from "../lib/geojson/budget_400";
-import { default as budget440 } from "../lib/geojson/budget_440";
-import { default as budget480 } from "../lib/geojson/budget_480";
 
 /*
     This is basically a context consumer...
