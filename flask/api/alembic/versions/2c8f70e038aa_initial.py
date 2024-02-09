@@ -61,7 +61,7 @@ def upgrade() -> None:
         sa.Column(
             "geometry",
             geoalchemy2.types.Geometry(
-                geometry_type="POLYGON",
+                geometry_type="MULTIPOLYGON",
                 from_text="ST_GeomFromEWKT",
                 name="geometry",
                 nullable=False,
@@ -69,6 +69,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("DAUID"),
     )
     op.create_index(
         op.f("ix_dissemination_areas_id"), "dissemination_areas", ["id"], unique=False

@@ -76,7 +76,7 @@ class ImprovementFeature(db.Model):
 class DisseminationArea(db.Model):
     __tablename__ = "dissemination_areas"
     id = Column(Integer, primary_key=True, index=True)
-    DAUID = Column(Integer, nullable=False)
+    DAUID = Column(Integer, nullable=False, unique=True)
     PRUID = Column(Integer, nullable=True)
     PRNAME = Column(String, nullable=True)
     CDUID = Column(Integer, nullable=True)
@@ -101,7 +101,7 @@ class DisseminationArea(db.Model):
     DAUID_int = Column(Integer, nullable=True)
     Shape_Leng = Column(Float, nullable=True)
     Shape_Area = Column(Float, nullable=True)
-    geometry = Column(Geometry("POLYGON"), nullable=False)
+    geometry = Column(Geometry("MULTIPOLYGON"), nullable=False)
     scores = db.relationship("FeatureScore", back_populates="dissemination_area")
 
 

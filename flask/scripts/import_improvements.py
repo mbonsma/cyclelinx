@@ -1,10 +1,7 @@
 #! /usr/bin/env python
 
 from os import walk, path
-from pathlib import Path
 import re
-import tarfile
-import tempfile
 
 from geoalchemy2.elements import WKTElement
 import geopandas
@@ -13,19 +10,7 @@ from sqlalchemy.orm import Session
 
 from api.models import Budget, ImprovementFeature
 from api.settings import app_settings
-
-
-def extract_files(path: str):
-
-    if not Path(path).exists():
-        raise ValueError(f"Path {path} does not exist!")
-
-    tempdir = tempfile.mkdtemp()
-
-    with tarfile.open(path) as f:
-        f.extractall(tempdir)
-
-    return tempdir
+from api.utils import extract_files
 
 
 def get_budget(filename: str, session: Session):

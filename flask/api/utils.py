@@ -1,4 +1,7 @@
 from logging import getLogger
+from pathlib import Path
+import tarfile
+import tempfile
 from typing import Any, Dict, List
 
 from geoalchemy2.shape import to_shape
@@ -38,7 +41,7 @@ def model_to_dict(Model: DeclarativeMeta):
     return dict
 
 
-# TODO: this should just be an object with an .add_feature method
+# TODO: this should just be a class with an .add_feature method and a __str__ method
 # can refactor once it's working
 def improvement_features_to_geojson_features(
     improvement_features: List[Models.ImprovementFeature],
@@ -65,3 +68,28 @@ def improvement_features_to_geojson_features(
         )
 
     return fc
+
+
+def extract_files(path: str):
+    """
+    Extract files from a tarball into a temporar directory
+
+        Parameters
+        ----------
+        path : str, the path to the archive
+
+        Returns
+        -------
+        str, the path to the extracted archive
+
+    """
+
+    if not Path(path).exists():
+        raise ValueError(f"Path {path} does not exist!")
+
+    tempdir = tempfile.mkdtemp()
+
+    with tarfile.open(path) as f:
+        f.extractall(tempdir)
+
+    return tempdir
