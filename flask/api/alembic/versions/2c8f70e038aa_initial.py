@@ -124,6 +124,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("name"),
     )
     op.create_index(op.f("ix_metrics_id"), "metrics", ["id"], unique=False)
     op.create_table(

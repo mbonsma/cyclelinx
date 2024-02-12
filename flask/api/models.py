@@ -108,7 +108,7 @@ class DisseminationArea(db.Model):
 class Metric(db.Model):
     __tablename__ = "metrics"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
 
 
 class FeatureScore(db.Model):

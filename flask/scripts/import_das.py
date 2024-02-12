@@ -38,6 +38,8 @@ def import_rows(dir_path: str, session: Session):
 
                 session.execute(stmt, rows)
 
+                session.commit()
+
 
 def import_das(archive_path: str, session: Session):
     """We assume the .shp file has a suffix like budget\d+.shp"""

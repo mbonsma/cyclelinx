@@ -42,9 +42,11 @@ def model_to_dict(Model: DeclarativeMeta):
 
 
 # TODO: this should just be a class with an .add_feature method and a __str__ method
+# yeah we need this for MULTIPOLYGON too
+# so this means that we have an ABC and then implementations for the differnt WKTs
 # can refactor once it's working
-def improvement_features_to_geojson_features(
-    improvement_features: List[Models.ImprovementFeature],
+def db_data_to_geojson_features(
+    data: List[Any],
 ):
     fc = {
         "type": "FeatureCollection",
@@ -55,7 +57,7 @@ def improvement_features_to_geojson_features(
         "features": [],
     }
 
-    for feature in improvement_features:
+    for feature in data:
         properties = model_to_dict(feature)
         geometry = to_shape(properties.pop("geometry"))
         x, y = geometry.xy

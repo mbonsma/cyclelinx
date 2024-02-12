@@ -3,7 +3,6 @@ import logging
 
 from flask import Blueprint, Flask
 from flask_cors import CORS
-from geoalchemy2.shape import to_shape
 import logging
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -11,9 +10,9 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
 
-from api.models import db, Budget, ImprovementFeature
+from api.models import db, Budget, FeatureScore, ImprovementFeature
 from api.settings import app_settings
-from api.utils import improvement_features_to_geojson_features, model_to_dict
+from api.utils import db_data_to_geojson_features, model_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,24 @@ def get_budget_features(id):
         .filter(Budget.id == id)
     ).scalar()
 
-    return improvement_features_to_geojson_features(budget.improvement_features)
+    return db_data_to_geojson_features(budget.improvement_features)
+
+
+@cycling_api.route("/improvement_features/<int:id>/scores")
+def get_improvement_feature_scores(id):
+    feature = db.session.execute(
+        select(ImprovementFeature)
+        .options(
+            joinedload(ImprovementFeature.scores).subqueryload(
+                FeatureScore.dissemination_area
+            )
+        )
+        .filter(ImprovementFeature.id == id)
+    ).scalar()
+
+    das = [score.dissemination_area for score in feature.scores]
+
+    return db_data_to_geojson_features(das)
 
 
 # https://flask.palletsprojects.com/en/2.2.x/errorhandling/#generic-exception-handlers
