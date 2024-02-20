@@ -91,6 +91,9 @@ class ImprovementFeature(Feature):
 
 
 class Arterial(Feature):
+
+    import_idx = Column(Integer, nullable=True)
+
     __mapper_args__ = {"polymorphic_identity": "arterial"}
 
     projects: Mapped[List["Project"]] = db.relationship(

@@ -99,6 +99,7 @@ def upgrade() -> None:
         ),
         sa.Column("HINUML", sa.Integer(), nullable=True),
         sa.Column("HINUMR", sa.Integer(), nullable=True),
+        sa.Column("import_idx", sa.Integer(), nullable=True),
         sa.Column("JURIS_CODE", sa.String(), nullable=True),
         sa.Column("length_in_", sa.Float(), nullable=True),
         sa.Column("LFN_ID", sa.Integer(), nullable=True),

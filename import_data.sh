@@ -1,6 +1,8 @@
 #! /usr/bin/env bash
 
 # $1 is absolute archive path (archive is xz)
+# $2 is absolute path to das
+# $3 is absulute path to
 
 set -ex
 
