@@ -9,12 +9,17 @@ from sqlalchemy.orm import Session
 from shapely import wkb
 
 
-from api.models import DisseminationArea, ImprovementFeature, FeatureScore, Metric
+from api.models import (
+    Arterial,
+    DisseminationArea,
+    ProjectScore,
+    Metric,
+)
 from api.settings import app_settings
 
 
-def get_nearby_das(feature: ImprovementFeature, session: Session, limit=10):
-    location = wkb.loads(str(feature.geometry))
+def get_nearby_das(arterial: Arterial, session: Session, limit=10):
+    location = wkb.loads(str(arterial.geometry))
 
     x, y = next(zip(location.xy[0], location.xy[1]))
 
@@ -41,7 +46,7 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
     # fetch the 10 closest DAs
     # cycle through metrics (insert if needed) and assign a random score between 1 and 10
     # add to table
-    features = session.execute(select(ImprovementFeature)).scalars().all()
+    arterials = session.execute(select(Arterial)).scalars().all()
 
     metrics_ = []
 
@@ -54,13 +59,13 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
 
         metrics_.append(m)
 
-    for feature in features:
-        nearby_das = get_nearby_das(feature, session)
+    for arterial in arterials:
+        nearby_das = get_nearby_das(arterial, session)
         for da in nearby_das:
             for metric in metrics_:
                 score = random.randint(1, 10)
-                score = FeatureScore(
-                    improvement_feature=feature,
+                score = ProjectScore(
+                    project=project,
                     dissemination_area=da,
                     metric=metric,
                     score=score,

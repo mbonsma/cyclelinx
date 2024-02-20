@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 2c8f70e038aa
+Revision ID: 55638d563036
 Revises:
-Create Date: 2024-02-08 21:21:26.503621
+Create Date: 2024-02-20 17:33:39.267305
 
 """
 
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "2c8f70e038aa"
+revision: str = "55638d563036"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -71,37 +71,22 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("DAUID"),
     )
+
     op.create_index(
         op.f("ix_dissemination_areas_id"), "dissemination_areas", ["id"], unique=False
     )
     op.create_table(
-        "improvement_features",
+        "features",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("GEO_ID", sa.Integer(), nullable=True),
-        sa.Column("LFN_ID", sa.Integer(), nullable=True),
-        sa.Column("LF_NAME", sa.String(), nullable=True),
         sa.Column("ADDRESS_L", sa.String(), nullable=True),
         sa.Column("ADDRESS_R", sa.String(), nullable=True),
-        sa.Column("OE_FLAG_L", sa.String(), nullable=True),
-        sa.Column("OE_FLAG_R", sa.String(), nullable=True),
-        sa.Column("LONUML", sa.Integer(), nullable=True),
-        sa.Column("HINUML", sa.Integer(), nullable=True),
-        sa.Column("LONUMR", sa.Integer(), nullable=True),
-        sa.Column("HINUMR", sa.Integer(), nullable=True),
-        sa.Column("FNODE", sa.Integer(), nullable=True),
-        sa.Column("TNODE", sa.Integer(), nullable=True),
-        sa.Column("ONE_WAY_DI", sa.Integer(), nullable=True),
+        sa.Column("CP_TYPE", sa.String(), nullable=True),
         sa.Column("DIR_CODE_D", sa.String(), nullable=True),
         sa.Column("FCODE", sa.Integer(), nullable=True),
         sa.Column("FCODE_DESC", sa.String(), nullable=True),
-        sa.Column("JURIS_CODE", sa.String(), nullable=True),
-        sa.Column("OBJECTID", sa.Float(), nullable=True),
-        sa.Column("CP_TYPE", sa.String(), nullable=True),
-        sa.Column("SPEED", sa.Integer(), nullable=True),
-        sa.Column("NBRLANES_2", sa.Integer(), nullable=True),
-        sa.Column("length_in_", sa.Float(), nullable=True),
-        sa.Column("Shape_Leng", sa.Float(), nullable=True),
-        sa.Column("U500_20", sa.String(), nullable=True),
+        sa.Column("feature_type", sa.String(length=255), nullable=False),
+        sa.Column("FNODE", sa.Integer(), nullable=True),
+        sa.Column("GEO_ID", sa.Integer(), nullable=True),
         sa.Column(
             "geometry",
             geoalchemy2.types.Geometry(
@@ -112,13 +97,28 @@ def upgrade() -> None:
             ),
             nullable=False,
         ),
+        sa.Column("HINUML", sa.Integer(), nullable=True),
+        sa.Column("HINUMR", sa.Integer(), nullable=True),
+        sa.Column("JURIS_CODE", sa.String(), nullable=True),
+        sa.Column("length_in_", sa.Float(), nullable=True),
+        sa.Column("LFN_ID", sa.Integer(), nullable=True),
+        sa.Column("LF_NAME", sa.String(), nullable=True),
+        sa.Column("LONUMR", sa.Integer(), nullable=True),
+        sa.Column("LONUML", sa.Integer(), nullable=True),
+        sa.Column("NBRLANES_2", sa.Integer(), nullable=True),
+        sa.Column("OBJECTID", sa.Float(), nullable=True),
+        sa.Column("OE_FLAG_L", sa.String(), nullable=True),
+        sa.Column("OE_FLAG_R", sa.String(), nullable=True),
+        sa.Column("ONE_WAY_DI", sa.Integer(), nullable=True),
+        sa.Column("Shape_Leng", sa.Float(), nullable=True),
+        sa.Column("SPEED", sa.Integer(), nullable=True),
+        sa.Column("TNODE", sa.Integer(), nullable=True),
+        sa.Column("U500_20", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("GEO_ID"),
     )
 
-    op.create_index(
-        op.f("ix_improvement_features_id"), "improvement_features", ["id"], unique=False
-    )
+    op.create_index(op.f("ix_features_id"), "features", ["id"], unique=False)
     op.create_table(
         "metrics",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -127,6 +127,14 @@ def upgrade() -> None:
         sa.UniqueConstraint("name"),
     )
     op.create_index(op.f("ix_metrics_id"), "metrics", ["id"], unique=False)
+    op.create_table(
+        "projects",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("orig_id", sa.Integer(), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("orig_id"),
+    )
+    op.create_index(op.f("ix_projects_id"), "projects", ["id"], unique=False)
     op.create_table(
         "budgets_improvement_features",
         sa.Column("budget_id", sa.Integer(), nullable=False),
@@ -137,15 +145,15 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["improvement_feature_id"],
-            ["improvement_features.id"],
+            ["features.id"],
         ),
         sa.PrimaryKeyConstraint("budget_id", "improvement_feature_id"),
     )
     op.create_table(
-        "feature_scores",
+        "project_scores",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("metric_id", sa.Integer(), nullable=False),
-        sa.Column("improvement_feature_id", sa.Integer(), nullable=False),
+        sa.Column("project_id", sa.Integer(), nullable=False),
         sa.Column("dissemination_area_id", sa.Integer(), nullable=False),
         sa.Column("score", sa.Float(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -153,17 +161,15 @@ def upgrade() -> None:
             ["dissemination_areas.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["improvement_feature_id"],
-            ["improvement_features.id"],
-        ),
-        sa.ForeignKeyConstraint(
             ["metric_id"],
             ["metrics.id"],
         ),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "dissemination_area_id", "metric_id", "improvement_feature_id"
+        sa.ForeignKeyConstraint(
+            ["project_id"],
+            ["projects.id"],
         ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("dissemination_area_id", "metric_id", "project_id"),
     )
     # ### end Alembic commands ###
 
@@ -171,15 +177,15 @@ def upgrade() -> None:
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
 
-    op.drop_table("feature_scores")
+    op.drop_table("project_scores")
     op.drop_table("budgets_improvement_features")
+    op.drop_index(op.f("ix_projects_id"), table_name="projects")
+    op.drop_table("projects")
     op.drop_index(op.f("ix_metrics_id"), table_name="metrics")
     op.drop_table("metrics")
-    op.drop_index(op.f("ix_improvement_features_id"), table_name="improvement_features")
-
-    op.drop_table("improvement_features")
+    op.drop_index(op.f("ix_features_id"), table_name="features")
+    op.drop_table("features")
     op.drop_index(op.f("ix_dissemination_areas_id"), table_name="dissemination_areas")
-
     op.drop_table("dissemination_areas")
     op.drop_index(op.f("ix_budgets_id"), table_name="budgets")
     op.drop_table("budgets")

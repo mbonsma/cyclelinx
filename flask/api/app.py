@@ -10,7 +10,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
 
-from api.models import db, Budget, FeatureScore, ImprovementFeature
+from api.models import db, Budget, ProjectScore, ImprovementFeature
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
 
@@ -56,13 +56,14 @@ def get_budget_features(id):
     return db_data_to_geojson_features(budget.improvement_features)
 
 
-@cycling_api.route("/improvement_features/<int:id>/scores")
-def get_improvement_feature_scores(id):
+@cycling_api.route("/projects/<int:id>/scores")
+def get_project_scores(id):
+    # todo: finish cleaning up
     feature = db.session.execute(
         select(ImprovementFeature)
         .options(
             joinedload(ImprovementFeature.scores).subqueryload(
-                FeatureScore.dissemination_area
+                ProjectScore.dissemination_area
             )
         )
         .filter(ImprovementFeature.id == id)

@@ -21,7 +21,7 @@ budgets_improvement_features = Table(
     Column("budget_id", ForeignKey("budgets.id"), primary_key=True),
     Column(
         "improvement_feature_id",
-        ForeignKey("improvement_features.id"),
+        ForeignKey("features.id"),
         primary_key=True,
     ),
 )
@@ -37,43 +37,58 @@ class Budget(db.Model):
     )
 
 
-class ImprovementFeature(db.Model):
-    __tablename__ = "improvement_features"
+# this could/should be a polymorphic table on feature_type in [improvement_feature, arterial]
+# then improvementfeature has budget relationship and arterial has project relationship
+# then project has the score relationship
+
+
+class Feature(db.Model):
+    __tablename__ = "features"
     id = Column(Integer, primary_key=True, index=True)
-    GEO_ID = Column(Integer, nullable=True, unique=True)
-    LFN_ID = Column(Integer, nullable=True)
-    LF_NAME = Column(String, nullable=True)
     ADDRESS_L = Column(String, nullable=True)
     ADDRESS_R = Column(String, nullable=True)
-    OE_FLAG_L = Column(String, nullable=True)
-    OE_FLAG_R = Column(String, nullable=True)
-    LONUML = Column(Integer, nullable=True)
-    HINUML = Column(Integer, nullable=True)
-    LONUMR = Column(Integer, nullable=True)
-    HINUMR = Column(Integer, nullable=True)
-    FNODE = Column(Integer, nullable=True)
-    TNODE = Column(Integer, nullable=True)
-    ONE_WAY_DI = Column(Integer, nullable=True)
+    CP_TYPE = Column(String, nullable=True)
     DIR_CODE_D = Column(String, nullable=True)
     FCODE = Column(Integer, nullable=True)
     FCODE_DESC = Column(String, nullable=True)
-    JURIS_CODE = Column(String, nullable=True)
-    OBJECTID = Column(Float, nullable=True)
-    CP_TYPE = Column(String, nullable=True)
-    SPEED = Column(Integer, nullable=True)
-    NBRLANES_2 = Column(Integer, nullable=True)
-    length_in_ = Column(Float, nullable=True)
-    Shape_Leng = Column(Float, nullable=True)
-    U500_20 = Column(String, nullable=True)
+    feature_type = Column(String(255), nullable=False)
+    FNODE = Column(Integer, nullable=True)
+    GEO_ID = Column(Integer, nullable=True, unique=True)
     geometry = Column(Geometry("LINESTRING"), nullable=False)
+    HINUML = Column(Integer, nullable=True)
+    HINUMR = Column(Integer, nullable=True)
+    JURIS_CODE = Column(String, nullable=True)
+    length_in_ = Column(Float, nullable=True)
+    LFN_ID = Column(Integer, nullable=True)
+    LF_NAME = Column(String, nullable=True)
+    LONUMR = Column(Integer, nullable=True)
+    LONUML = Column(Integer, nullable=True)
+    NBRLANES_2 = Column(Integer, nullable=True)
+    OBJECTID = Column(Float, nullable=True)
+    OE_FLAG_L = Column(String, nullable=True)
+    OE_FLAG_R = Column(String, nullable=True)
+    ONE_WAY_DI = Column(Integer, nullable=True)
+    Shape_Leng = Column(Float, nullable=True)
+    SPEED = Column(Integer, nullable=True)
+    TNODE = Column(Integer, nullable=True)
+    U500_20 = Column(String, nullable=True)
+    __mapper_args__ = {"polymorphic_on": "feature_type"}
+
+
+class ImprovementFeature(Feature):
     budgets: Mapped[List[Budget]] = relationship(
         secondary=budgets_improvement_features,
         back_populates="improvement_features",
     )
-    scores = db.relationship("FeatureScore", back_populates="improvement_feature")
+    __mapper_args__ = {"polymorphic_identity": "improvement_feature"}
+
+
+class Arterial(Feature):
+    __mapper_args__ = {"polymorphic_identity": "arterial"}
 
 
 class DisseminationArea(db.Model):
+
     __tablename__ = "dissemination_areas"
     id = Column(Integer, primary_key=True, index=True)
     DAUID = Column(Integer, nullable=False, unique=True)
@@ -102,7 +117,7 @@ class DisseminationArea(db.Model):
     Shape_Leng = Column(Float, nullable=True)
     Shape_Area = Column(Float, nullable=True)
     geometry = Column(Geometry("MULTIPOLYGON"), nullable=False)
-    scores = db.relationship("FeatureScore", back_populates="dissemination_area")
+    scores = db.relationship("ProjectScore", back_populates="dissemination_area")
 
 
 class Metric(db.Model):
@@ -111,22 +126,25 @@ class Metric(db.Model):
     name = Column(String, nullable=False, unique=True)
 
 
-class FeatureScore(db.Model):
-    __tablename__ = "feature_scores"
+class Project(db.Model):
+    __tablename__ = "projects"
+    id = Column(Integer, primary_key=True, index=True)
+    orig_id = Column(Integer, unique=True)
+    scores = db.relationship("ProjectScore", back_populates="project")
+
+
+class ProjectScore(db.Model):
+    __tablename__ = "project_scores"
     id = Column(Integer, primary_key=True)
     metric_id = Column(Integer, ForeignKey("metrics.id"), nullable=False)
-    improvement_feature_id = Column(
-        Integer, ForeignKey("improvement_features.id"), nullable=False
-    )
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     dissemination_area_id = Column(
         Integer, ForeignKey("dissemination_areas.id"), nullable=False
     )
     score = Column(Float, nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint(dissemination_area_id, metric_id, improvement_feature_id),
-    )
+    __table_args__ = (UniqueConstraint(dissemination_area_id, metric_id, project_id),)
 
-    improvement_feature = db.relationship("ImprovementFeature", back_populates="scores")
+    project = db.relationship("Project", back_populates="scores")
     metric = db.relationship("Metric")
     dissemination_area = db.relationship("DisseminationArea", back_populates="scores")

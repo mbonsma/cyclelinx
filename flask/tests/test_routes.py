@@ -1,9 +1,10 @@
-from api.models import Metric, FeatureScore
+from api.models import Metric, ProjectScore
 
 from tests.factories import (
     budget_model_factory,
     dissemination_area_factory,
     improvement_feature_model_factory,
+    project_model_factory,
 )
 
 
@@ -30,15 +31,15 @@ def test_get_budget_improvements(client, fresh_db):
     assert len(response.json["features"]) == 10
 
 
-def test_get_improvement_features(client, fresh_db):
-    improvement = improvement_feature_model_factory(fresh_db.session).create()
+def test_get_project_scores(client, fresh_db):
+    project = project_model_factory(fresh_db.session).create()
     das = dissemination_area_factory(fresh_db.session).create_batch(5)
     metric = Metric(name="a")
     fresh_db.session.add(metric)
     fresh_db.session.commit()
     for da in das:
-        score = FeatureScore(
-            improvement_feature=improvement,
+        score = ProjectScore(
+            project=project,
             dissemination_area=da,
             metric=metric,
             score=2,
@@ -46,5 +47,5 @@ def test_get_improvement_features(client, fresh_db):
         fresh_db.session.add(score)
         fresh_db.session.commit()
 
-    response = client.get(f"/improvement_features/{improvement.id}/scores")
+    response = client.get(f"/projects/{project.id}/scores")
     assert response.status_code == 200

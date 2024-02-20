@@ -1,5 +1,5 @@
 from factory.alchemy import SQLAlchemyModelFactory
-from factory import Faker
+from factory import Faker, Sequence
 
 import api.models as Models
 
@@ -13,6 +13,7 @@ def improvement_feature_model_factory(session):
             sqlalchemy_session = session
             sqlalchemy_session_persistence = "commit"
 
+        feature_type = "improvement_feature"
         GEO_ID = Faker("pyint")
         LFN_ID = Faker("pyint")
         LF_NAME = Faker("pyint")
@@ -41,6 +42,18 @@ def improvement_feature_model_factory(session):
         geometry = "LINESTRING (-79.40082705472463 43.64430503964604, -79.40083825308278 43.64430275536802, -79.4027055361314 43.64392631444804)"
 
     return ImprovementFeatureFactory
+
+
+def project_model_factory(session):
+    class ProjectFactory(SQLAlchemyModelFactory):
+        class Meta:
+            model = Models.Project
+            sqlalchemy_session = session
+            sqlalchemy_session_persistence = "commit"
+
+        orig_id = Sequence(lambda n: n)
+
+    return ProjectFactory
 
 
 def dissemination_area_factory(session):
