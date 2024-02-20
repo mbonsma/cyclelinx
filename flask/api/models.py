@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import List
 
 from flask_sqlalchemy import SQLAlchemy
@@ -26,20 +27,26 @@ budgets_improvement_features = Table(
     ),
 )
 
+arterials_projects = Table(
+    "arterials_projects",
+    db.Model.metadata,
+    Column("arterial_id", ForeignKey("features.id"), primary_key=True),
+    Column(
+        "project_id",
+        ForeignKey("projects.id"),
+        primary_key=True,
+    ),
+)
+
 
 class Budget(db.Model):
     __tablename__ = "budgets"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
-    improvement_features: Mapped[List["ImprovementFeature"]] = relationship(
+    improvement_features: Mapped[List["ImprovementFeature"]] = db.relationship(
         secondary=budgets_improvement_features,
         back_populates="budgets",
     )
-
-
-# this could/should be a polymorphic table on feature_type in [improvement_feature, arterial]
-# then improvementfeature has budget relationship and arterial has project relationship
-# then project has the score relationship
 
 
 class Feature(db.Model):
@@ -76,7 +83,7 @@ class Feature(db.Model):
 
 
 class ImprovementFeature(Feature):
-    budgets: Mapped[List[Budget]] = relationship(
+    budgets: Mapped[List[Budget]] = db.relationship(
         secondary=budgets_improvement_features,
         back_populates="improvement_features",
     )
@@ -85,6 +92,11 @@ class ImprovementFeature(Feature):
 
 class Arterial(Feature):
     __mapper_args__ = {"polymorphic_identity": "arterial"}
+
+    projects: Mapped[List["Project"]] = db.relationship(
+        secondary=arterials_projects,
+        back_populates="arterials",
+    )
 
 
 class DisseminationArea(db.Model):
@@ -131,6 +143,10 @@ class Project(db.Model):
     id = Column(Integer, primary_key=True, index=True)
     orig_id = Column(Integer, unique=True)
     scores = db.relationship("ProjectScore", back_populates="project")
+    arterials: Mapped[List["Arterial"]] = db.relationship(
+        secondary=arterials_projects,
+        back_populates="projects",
+    )
 
 
 class ProjectScore(db.Model):

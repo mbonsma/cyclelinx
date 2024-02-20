@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 55638d563036
+Revision ID: 86bfcf7004d6
 Revises:
-Create Date: 2024-02-20 17:33:39.267305
+Create Date: 2024-02-20 19:50:09.309441
 
 """
 
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "55638d563036"
+revision: str = "86bfcf7004d6"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -136,6 +136,20 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_projects_id"), "projects", ["id"], unique=False)
     op.create_table(
+        "arterials_projects",
+        sa.Column("arterial_id", sa.Integer(), nullable=False),
+        sa.Column("project_id", sa.Integer(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["arterial_id"],
+            ["features.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["project_id"],
+            ["projects.id"],
+        ),
+        sa.PrimaryKeyConstraint("arterial_id", "project_id"),
+    )
+    op.create_table(
         "budgets_improvement_features",
         sa.Column("budget_id", sa.Integer(), nullable=False),
         sa.Column("improvement_feature_id", sa.Integer(), nullable=False),
@@ -179,13 +193,16 @@ def downgrade() -> None:
 
     op.drop_table("project_scores")
     op.drop_table("budgets_improvement_features")
+    op.drop_table("arterials_projects")
     op.drop_index(op.f("ix_projects_id"), table_name="projects")
     op.drop_table("projects")
     op.drop_index(op.f("ix_metrics_id"), table_name="metrics")
     op.drop_table("metrics")
     op.drop_index(op.f("ix_features_id"), table_name="features")
+
     op.drop_table("features")
     op.drop_index(op.f("ix_dissemination_areas_id"), table_name="dissemination_areas")
+
     op.drop_table("dissemination_areas")
     op.drop_index(op.f("ix_budgets_id"), table_name="budgets")
     op.drop_table("budgets")

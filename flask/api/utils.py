@@ -1,3 +1,4 @@
+from json import loads
 from logging import getLogger
 from pathlib import Path
 import tarfile
@@ -5,13 +6,10 @@ import tempfile
 from typing import Any, Dict, List
 
 from geoalchemy2.shape import to_shape
+from shapely import to_geojson
 from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.ext.hybrid import hybrid_property
-
-
-import api.models as Models
-
 
 logger = getLogger(__name__)
 
@@ -41,10 +39,6 @@ def model_to_dict(Model: DeclarativeMeta):
     return dict
 
 
-# TODO: this should just be a class with an .add_feature method and a __str__ method
-# yeah we need this for MULTIPOLYGON too
-# so this means that we have an ABC and then implementations for the differnt WKTs
-# can refactor once it's working
 def db_data_to_geojson_features(
     data: List[Any],
 ):
@@ -60,21 +54,16 @@ def db_data_to_geojson_features(
     for feature in data:
         properties = model_to_dict(feature)
         geometry = to_shape(properties.pop("geometry"))
-        x, y = geometry.xy
-        geometry = {
-            "type": "LineString",
-            "coordinates": [[x, y] for x, y in zip(list(x), list(y))],
-        }
-        fc["features"].append(
-            {"type": "Feature", "properties": properties, "geometry": geometry}
-        )
+        geojson = loads(to_geojson(geometry))
+        geojson["properties"] = properties
+        fc["features"].append(geojson)
 
     return fc
 
 
 def extract_files(path: str):
     """
-    Extract files from a tarball into a temporar directory
+    Extract files from a tarball into a temporary directory
 
         Parameters
         ----------

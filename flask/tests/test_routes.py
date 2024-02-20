@@ -1,6 +1,7 @@
 from api.models import Metric, ProjectScore
 
 from tests.factories import (
+    arterial_model_factory,
     budget_model_factory,
     dissemination_area_factory,
     improvement_feature_model_factory,
@@ -31,8 +32,12 @@ def test_get_budget_improvements(client, fresh_db):
     assert len(response.json["features"]) == 10
 
 
-def test_get_project_scores(client, fresh_db):
+def test_get_arterial_scores(client, fresh_db):
+    arterial = arterial_model_factory(fresh_db.session).create()
     project = project_model_factory(fresh_db.session).create()
+    arterial.projects = [project]
+    fresh_db.session.add(arterial)
+    fresh_db.session.commit()
     das = dissemination_area_factory(fresh_db.session).create_batch(5)
     metric = Metric(name="a")
     fresh_db.session.add(metric)
@@ -47,5 +52,6 @@ def test_get_project_scores(client, fresh_db):
         fresh_db.session.add(score)
         fresh_db.session.commit()
 
-    response = client.get(f"/projects/{project.id}/scores")
+    response = client.get(f"/arterials/{arterial.id}/scores")
     assert response.status_code == 200
+    assert len(response.json) == 5

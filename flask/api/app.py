@@ -1,7 +1,7 @@
 import json
 import logging
 
-from flask import Blueprint, Flask
+from flask import Blueprint, Flask, jsonify
 from flask_cors import CORS
 import logging
 from sqlalchemy import select
@@ -10,7 +10,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
 
-from api.models import db, Budget, ProjectScore, ImprovementFeature
+from api.models import db, Arterial, Budget, ImprovementFeature, Project, ProjectScore
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
 
@@ -56,22 +56,28 @@ def get_budget_features(id):
     return db_data_to_geojson_features(budget.improvement_features)
 
 
-@cycling_api.route("/projects/<int:id>/scores")
+@cycling_api.route("/arterials/<int:id>/scores")
 def get_project_scores(id):
-    # todo: finish cleaning up
-    feature = db.session.execute(
-        select(ImprovementFeature)
+    arterial = db.session.execute(
+        select(Arterial)
         .options(
-            joinedload(ImprovementFeature.scores).subqueryload(
-                ProjectScore.dissemination_area
-            )
+            joinedload(Arterial.projects)
+            .subqueryload(Project.scores)
+            .subqueryload(ProjectScore.dissemination_area)
         )
-        .filter(ImprovementFeature.id == id)
+        .filter(Arterial.id == id)
     ).scalar()
 
-    das = [score.dissemination_area for score in feature.scores]
+    result = [
+        {
+            "score": score.score,
+            "da": db_data_to_geojson_features([score.dissemination_area]),
+        }
+        for project in arterial.projects
+        for score in project.scores
+    ]
 
-    return db_data_to_geojson_features(das)
+    return result
 
 
 # https://flask.palletsprojects.com/en/2.2.x/errorhandling/#generic-exception-handlers

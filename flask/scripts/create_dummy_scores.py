@@ -12,6 +12,7 @@ from shapely import wkb
 from api.models import (
     Arterial,
     DisseminationArea,
+    Project,
     ProjectScore,
     Metric,
 )
@@ -42,13 +43,11 @@ def get_nearby_das(arterial: Arterial, session: Session, limit=10):
 
 
 def create_dummy_scores(session: Session, metrics=["recreation", "food", "employment"]):
-    # fetch all features
-    # fetch the 10 closest DAs
-    # cycle through metrics (insert if needed) and assign a random score between 1 and 10
-    # add to table
-    arterials = session.execute(select(Arterial)).scalars().all()
 
-    metrics_ = []
+    # to make the dummy data, we're just going to take the first arterial of the project as the location
+    projects = session.execute(select(Project)).scalars().all()
+
+    metrics_models = []
 
     for metric in metrics:
         m = session.execute(select(Metric).filter(Metric.name == metric)).scalar()
@@ -57,12 +56,12 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
             session.add(m)
             session.commit()
 
-        metrics_.append(m)
+        metrics_models.append(m)
 
-    for arterial in arterials:
-        nearby_das = get_nearby_das(arterial, session)
+    for project in projects:
+        nearby_das = get_nearby_das(project.arterials[0], session)
         for da in nearby_das:
-            for metric in metrics_:
+            for metric in metrics_models:
                 score = random.randint(1, 10)
                 score = ProjectScore(
                     project=project,

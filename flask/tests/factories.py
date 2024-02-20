@@ -44,6 +44,18 @@ def improvement_feature_model_factory(session):
     return ImprovementFeatureFactory
 
 
+def arterial_model_factory(session):
+    class ArterialFactory(improvement_feature_model_factory(session)):
+        class Meta:
+            model = Models.Arterial
+            sqlalchemy_session = session
+            sqlalchemy_session_persistence = "commit"
+
+        feature_type = "arterial"
+
+    return ArterialFactory
+
+
 def project_model_factory(session):
     class ProjectFactory(SQLAlchemyModelFactory):
         class Meta:

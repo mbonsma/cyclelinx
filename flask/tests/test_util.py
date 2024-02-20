@@ -8,6 +8,7 @@ from api.models import ImprovementFeature, ProjectScore
 from api.utils import db_data_to_geojson_features
 from scripts.create_dummy_scores import create_dummy_scores, get_nearby_das
 from tests.factories import (
+    arterial_model_factory,
     dissemination_area_factory,
     improvement_feature_model_factory,
     project_model_factory,
@@ -54,10 +55,15 @@ def test_get_nearby_das(fresh_db):
 
 
 def test_create_dummy_scores(fresh_db):
-    project_model_factory(fresh_db.session).create_batch(5)
     dissemination_area_factory(fresh_db.session).create_batch(5)
+    arterials = arterial_model_factory(fresh_db.session).create_batch(3)
+    project = project_model_factory(fresh_db.session).create()
+    for artery in arterials:
+        artery.projects = [project]
+        fresh_db.session.add(artery)
+        fresh_db.session.commit()
 
     create_dummy_scores(fresh_db.session, ["a", "b", "c"])
 
     scores = fresh_db.session.execute(select(ProjectScore)).scalars().all()
-    assert len(scores) == 5 * 5 * 3
+    assert len(scores) == 5 * 3
