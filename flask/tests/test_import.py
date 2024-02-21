@@ -1,10 +1,14 @@
 from os import path
+import pickle
 
 from sqlalchemy import select
 
-from api.models import DisseminationArea, ImprovementFeature
-from scripts.import_improvements import import_improvements
+from api.models import Arterial, DisseminationArea, ImprovementFeature, Project
+from api.utils import extract_files
 from scripts.import_das import import_das
+from scripts.import_improvements import import_improvements
+from scripts.import_projects import import_arterials, _import_projects
+from tests.factories import arterial_model_factory
 
 
 def test_import_features(app_ctx, fresh_db):
@@ -20,3 +24,29 @@ def test_import_das(app_ctx, fresh_db):
     import_das(test_import_path, fresh_db.session)
     das = fresh_db.session.execute(select(DisseminationArea)).scalars().all()
     assert len(das) == 3702
+
+
+def test_import_arterials(app_ctx, fresh_db):
+    extracted_path = extract_files(
+        path.join(path.dirname(__file__), "fixtures", "arterial.xz")
+    )
+
+    import_arterials(extracted_path, fresh_db.session)
+    arterials = fresh_db.session.execute(select(Arterial)).scalars().all()
+    assert len(arterials) == 9981
+
+
+def test_import_projects(app_ctx, fresh_db, tmp_path):
+    mapping = [[0], [1, 2, 3], [0, 4]]
+    mapping_location = tmp_path / "mapping.pkl"
+    with open(mapping_location, "wb") as f:
+        pickle.dump(mapping, f)
+    for i in range(5):
+        arterial_model_factory(fresh_db.session).create(import_idx=i)
+    _import_projects(mapping_location, fresh_db.session)
+
+    projects = fresh_db.session.execute(select(Project)).scalars().all()
+
+    assert len(projects[0].arterials) == 1
+    assert len(projects[1].arterials) == 3
+    assert len(projects[2].arterials) == 2

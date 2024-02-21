@@ -54,9 +54,9 @@ def _import_projects(mapping_path: str, session: Session):
 
             arterials = session.execute(
                 select(Arterial).filter(Arterial.import_idx.in_(ids))
-            ).scalar()
+            ).scalars()
 
-            project.arterials = arterials
+            project.arterials = list(arterials)
             session.add(project)
             session.commit()
         i += 1
