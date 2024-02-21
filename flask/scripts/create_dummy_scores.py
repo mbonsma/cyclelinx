@@ -6,6 +6,7 @@ from geoalchemy2.comparator import Comparator
 from geoalchemy2 import functions as func
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert
 from shapely import wkb
 
 
@@ -59,17 +60,24 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
         metrics_models.append(m)
 
     for project in projects:
+        print(f"creating scores for project {project.id}...")
+        if not project.arterials:
+            print(f"project id {project.id} has no arterials...!")
+            continue
         nearby_das = get_nearby_das(project.arterials[0], session)
         for da in nearby_das:
             for metric in metrics_models:
                 score = random.randint(1, 10)
-                score = ProjectScore(
-                    project=project,
-                    dissemination_area=da,
-                    metric=metric,
-                    score=score,
-                )
-                session.add(score)
+                row = {
+                    "project_id": project.id,
+                    "dissemination_area_id": da.id,
+                    "metric_id": metric.id,
+                    "score": score,
+                }
+
+                stmt = insert(ProjectScore).on_conflict_do_nothing()
+
+                session.execute(stmt, row)
                 session.commit()
 
 
@@ -77,4 +85,5 @@ if __name__ == "__main__":
     engine = create_engine(app_settings.POSTGRES_CONNECTION_STRING)
 
     with Session(engine) as session:
+        print("creating dummy scores...")
         create_dummy_scores(session)

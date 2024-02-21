@@ -12,7 +12,7 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
 )
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import Mapped
 
 db = SQLAlchemy()
 
@@ -60,7 +60,7 @@ class Feature(db.Model):
     FCODE_DESC = Column(String, nullable=True)
     feature_type = Column(String(255), nullable=False)
     FNODE = Column(Integer, nullable=True)
-    GEO_ID = Column(Integer, nullable=True, unique=True)
+    GEO_ID = Column(Integer, nullable=False)
     geometry = Column(Geometry("LINESTRING"), nullable=False)
     HINUML = Column(Integer, nullable=True)
     HINUMR = Column(Integer, nullable=True)
@@ -80,6 +80,7 @@ class Feature(db.Model):
     TNODE = Column(Integer, nullable=True)
     U500_20 = Column(String, nullable=True)
     __mapper_args__ = {"polymorphic_on": "feature_type"}
+    __table_args__ = (UniqueConstraint(GEO_ID, feature_type),)
 
 
 class ImprovementFeature(Feature):

@@ -1,12 +1,27 @@
 #! /usr/bin/env bash
 
-# $1 is absolute archive path (archive is xz)
-# $2 is absolute path to das
-# $3 is absulute path to
+set -e
 
-set -ex
+DATA_DIR="${1:-}"
+
+#./import_data.sh /home/conor/cycle-network-toy/flask/data
 
 docker compose run --rm \
-    -v "$1":/tmp/upload.xz \
+    -v ${DATA_DIR}/best.tar.xz:/tmp/upload.xz \
     --entrypoint="python /code/scripts/import_improvements.py --archive_path /tmp/upload.xz" \
+    flask
+
+docker compose run --rm \
+    -v ${DATA_DIR}/das.tar.xz:/tmp/upload.xz \
+    --entrypoint="python /code/scripts/import_das.py --archive_path /tmp/upload.xz" \
+    flask
+
+docker compose run --rm \
+    -v ${DATA_DIR}/arterial.tar.xz:/tmp/upload.xz \
+    -v ${DATA_DIR}/proj2artid.pkl:/tmp/proj2artid.pkl \
+    --entrypoint="python /code/scripts/import_projects.py --archive_path /tmp/upload.xz --mapping_path /tmp/proj2artid.pkl" \
+    flask
+
+docker compose run --rm \
+    --entrypoint="python /code/scripts/create_dummy_scores.py" \
     flask

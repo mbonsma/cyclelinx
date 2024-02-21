@@ -116,7 +116,9 @@ def upgrade() -> None:
         sa.Column("TNODE", sa.Integer(), nullable=True),
         sa.Column("U500_20", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("GEO_ID"),
+        sa.UniqueConstraint(
+            "GEO_ID", "feature_type"
+        ),  # TODO: I don't really like this, probably don't need polymorphism and can just define by relationships
     )
 
     op.create_index(op.f("ix_features_id"), "features", ["id"], unique=False)

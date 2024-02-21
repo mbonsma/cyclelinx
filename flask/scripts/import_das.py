@@ -32,9 +32,7 @@ def import_rows(dir_path: str, session: Session):
                     row["geometry"] = WKTElement(str(row["geometry"]))
                     rows.append(row)
 
-                stmt = insert(DisseminationArea)
-
-                stmt.on_conflict_do_nothing(index_elements=["DAUID"])
+                stmt = insert(DisseminationArea).on_conflict_do_nothing()
 
                 session.execute(stmt, rows)
 
@@ -63,4 +61,5 @@ if __name__ == "__main__":
     engine = create_engine(app_settings.POSTGRES_CONNECTION_STRING)
 
     with Session(engine) as session:
+        print("importing DAs...")
         import_das(args.archive_path, session)

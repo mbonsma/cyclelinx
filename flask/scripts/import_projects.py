@@ -88,4 +88,5 @@ if __name__ == "__main__":
     engine = create_engine(app_settings.POSTGRES_CONNECTION_STRING)
 
     with Session(engine) as session:
+        print("importing projects and arterials....")
         import_projects(args.archive_path, args.mapping_path, session)
