@@ -56,8 +56,9 @@ def get_budget_features(id):
     return db_data_to_geojson_features(budget.improvement_features)
 
 
-@cycling_api.route("/arterials/<int:id>/scores")
-def get_project_scores(id):
+# todo: this ought to be GEO_ID
+@cycling_api.route("/arterials/<int:geo_id>/scores")
+def get_project_scores(geo_id):
     arterial = db.session.execute(
         select(Arterial)
         .options(
@@ -65,12 +66,13 @@ def get_project_scores(id):
             .subqueryload(Project.scores)
             .subqueryload(ProjectScore.dissemination_area)
         )
-        .filter(Arterial.id == id)
+        .filter(Arterial.GEO_ID == geo_id)
     ).scalar()
 
     result = [
         {
             "score": score.score,
+            "metric": score.metric.name,
             "da": db_data_to_geojson_features([score.dissemination_area]),
         }
         for project in arterial.projects
