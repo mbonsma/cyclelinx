@@ -47,6 +47,7 @@ class Budget(db.Model):
         secondary=budgets_improvement_features,
         back_populates="budgets",
     )
+    scores = db.relationship("BudgetScore", back_populates="budget")
 
 
 class Feature(db.Model):
@@ -133,7 +134,7 @@ class DisseminationArea(db.Model):
     Shape_Leng = Column(Float, nullable=True)
     Shape_Area = Column(Float, nullable=True)
     geometry = Column(Geometry("MULTIPOLYGON"), nullable=False)
-    scores = db.relationship("ProjectScore", back_populates="dissemination_area")
+    scores = db.relationship("BudgetScore", back_populates="dissemination_area")
 
 
 class Metric(db.Model):
@@ -142,29 +143,29 @@ class Metric(db.Model):
     name = Column(String, nullable=False, unique=True)
 
 
+# Not sure we're using these right now but will keep just in case
 class Project(db.Model):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True, index=True)
     orig_id = Column(Integer, unique=True)
-    scores = db.relationship("ProjectScore", back_populates="project")
     arterials: Mapped[List["Arterial"]] = db.relationship(
         secondary=arterials_projects,
         back_populates="projects",
     )
 
 
-class ProjectScore(db.Model):
-    __tablename__ = "project_scores"
+class BudgetScore(db.Model):
+    __tablename__ = "budget_scores"
     id = Column(Integer, primary_key=True)
     metric_id = Column(Integer, ForeignKey("metrics.id"), nullable=False)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    budget_id = Column(Integer, ForeignKey("budgets.id"), nullable=False)
     dissemination_area_id = Column(
         Integer, ForeignKey("dissemination_areas.id"), nullable=False
     )
     score = Column(Float, nullable=False)
 
-    __table_args__ = (UniqueConstraint(dissemination_area_id, metric_id, project_id),)
+    __table_args__ = (UniqueConstraint(dissemination_area_id, metric_id, budget_id),)
 
-    project = db.relationship("Project", back_populates="scores")
+    budget = db.relationship("Budget", back_populates="scores")
     metric = db.relationship("Metric")
     dissemination_area = db.relationship("DisseminationArea", back_populates="scores")

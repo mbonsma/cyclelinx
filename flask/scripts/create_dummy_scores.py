@@ -12,16 +12,17 @@ from shapely import wkb
 
 from api.models import (
     Arterial,
+    Budget,
+    BudgetScore,
     DisseminationArea,
-    Project,
-    ProjectScore,
+    ImprovementFeature,
     Metric,
 )
 from api.settings import app_settings
 
 
-def get_nearby_das(arterial: Arterial, session: Session, limit=10):
-    location = wkb.loads(str(arterial.geometry))
+def get_nearby_das(feature: ImprovementFeature, session: Session, limit=10):
+    location = wkb.loads(str(feature.geometry))
 
     x, y = next(zip(location.xy[0], location.xy[1]))
 
@@ -46,7 +47,7 @@ def get_nearby_das(arterial: Arterial, session: Session, limit=10):
 def create_dummy_scores(session: Session, metrics=["recreation", "food", "employment"]):
 
     # to make the dummy data, we're just going to take the first arterial of the project as the location
-    projects = session.execute(select(Project)).scalars().all()
+    budgets = session.execute(select(Budget)).scalars().all()
 
     metrics_models = []
 
@@ -59,26 +60,28 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
 
         metrics_models.append(m)
 
-    for project in projects:
-        print(f"creating scores for project {project.id}...")
-        if not project.arterials:
-            print(f"project id {project.id} has no arterials...!")
-            continue
-        nearby_das = get_nearby_das(project.arterials[0], session)
-        for da in nearby_das:
-            for metric in metrics_models:
-                score = random.randint(1, 10)
-                row = {
-                    "project_id": project.id,
-                    "dissemination_area_id": da.id,
-                    "metric_id": metric.id,
-                    "score": score,
-                }
+    for budget in budgets:
+        print(f"creating scores for budget {budget.id}...")
+        # here we're using the actual streets, rather than arterials....
+        for segment in budget.improvement_features:
+            # right now, this will just lead to redundancy, as we'll get the same nearby_da for a whole bunch
+            # of features, when we need just one, so it might be wisest to first get the nearest project
+            # or we could just let it cycle through repeat budget/da combos and ignore (easiest for now)
+            nearby_das = get_nearby_das(segment, session)
+            for da in nearby_das:
+                for metric in metrics_models:
+                    score = random.randint(1, 10)
+                    row = {
+                        "budget_id": budget.id,
+                        "dissemination_area_id": da.id,
+                        "metric_id": metric.id,
+                        "score": score,
+                    }
 
-                stmt = insert(ProjectScore).on_conflict_do_nothing()
+                    stmt = insert(BudgetScore).on_conflict_do_nothing()
 
-                session.execute(stmt, row)
-                session.commit()
+                    session.execute(stmt, row)
+                    session.commit()
 
 
 if __name__ == "__main__":

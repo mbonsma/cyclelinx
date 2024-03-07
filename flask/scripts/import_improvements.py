@@ -19,7 +19,7 @@ def get_budget(filename: str, session: Session):
         raise ValueError(
             (
                 "Import filename does not include the",
-                "word budget followed by budget amount"
+                "word budget followed by budget amount",
                 "(e.g., `efficiency-n2000_id33_summary_args_job-budget480.shp`)!",
             )
         )

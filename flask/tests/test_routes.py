@@ -1,17 +1,16 @@
-from api.models import Metric, ProjectScore
+from api.models import Metric, BudgetScore
 
 from tests.factories import (
-    arterial_model_factory,
     budget_model_factory,
     dissemination_area_factory,
     improvement_feature_model_factory,
-    project_model_factory,
 )
 
 
-def test_get_empty_budget(client):
+def test_get_empty_budget(client, fresh_db):
     response = client.get("/budgets")
     assert response.status_code == 200
+    print(len(response.json))
     assert response.json == []
 
 
@@ -32,19 +31,15 @@ def test_get_budget_improvements(client, fresh_db):
     assert len(response.json["features"]) == 10
 
 
-def test_get_arterial_scores(client, fresh_db):
-    arterial = arterial_model_factory(fresh_db.session).create()
-    project = project_model_factory(fresh_db.session).create()
-    arterial.projects = [project]
-    fresh_db.session.add(arterial)
-    fresh_db.session.commit()
+def test_get_budget_scores(client, fresh_db):
+    budget = budget_model_factory(fresh_db.session).create()
     das = dissemination_area_factory(fresh_db.session).create_batch(5)
     metric = Metric(name="a")
     fresh_db.session.add(metric)
     fresh_db.session.commit()
     for da in das:
-        score = ProjectScore(
-            project=project,
+        score = BudgetScore(
+            budget=budget,
             dissemination_area=da,
             metric=metric,
             score=2,
@@ -52,6 +47,6 @@ def test_get_arterial_scores(client, fresh_db):
         fresh_db.session.add(score)
         fresh_db.session.commit()
 
-    response = client.get(f"/arterials/{arterial.id}/scores")
+    response = client.get(f"/budgets/{budget.id}/scores")
     assert response.status_code == 200
     assert len(response.json) == 5

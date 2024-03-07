@@ -1,7 +1,7 @@
 import json
 import logging
 
-from flask import Blueprint, Flask, jsonify
+from flask import Blueprint, Flask
 from flask_cors import CORS
 import logging
 from sqlalchemy import select
@@ -10,7 +10,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
 
-from api.models import db, Arterial, Budget, ImprovementFeature, Project, ProjectScore
+from api.models import db, Budget, BudgetScore
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
 
@@ -56,17 +56,12 @@ def get_budget_features(id):
     return db_data_to_geojson_features(budget.improvement_features)
 
 
-# todo: this ought to be GEO_ID
-@cycling_api.route("/arterials/<int:geo_id>/scores")
-def get_project_scores(geo_id):
-    arterial = db.session.execute(
-        select(Arterial)
-        .options(
-            joinedload(Arterial.projects)
-            .subqueryload(Project.scores)
-            .subqueryload(ProjectScore.dissemination_area)
-        )
-        .filter(Arterial.GEO_ID == geo_id)
+@cycling_api.route("/budgets/<int:budget_id>/scores")
+def get_project_scores(budget_id):
+    budget = db.session.execute(
+        select(Budget)
+        .options(joinedload(Budget.scores).subqueryload(BudgetScore.dissemination_area))
+        .filter(Budget.id == budget_id)
     ).scalar()
 
     result = [
@@ -75,8 +70,7 @@ def get_project_scores(geo_id):
             "metric": score.metric.name,
             "da": db_data_to_geojson_features([score.dissemination_area]),
         }
-        for project in arterial.projects
-        for score in project.scores
+        for score in budget.scores
     ]
 
     return result

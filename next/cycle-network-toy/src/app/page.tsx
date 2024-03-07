@@ -40,7 +40,7 @@ export default function Home() {
         container
         flexGrow={1}
         item
-        maxWidth={1096}
+        // maxWidth={1096}
         direction="column"
       >
         <Grid

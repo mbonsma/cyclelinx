@@ -40,7 +40,7 @@ def import_rows(dir_path: str, session: Session):
 
 
 def import_das(archive_path: str, session: Session):
-    """We assume the .shp file has a suffix like budget\d+.shp"""
+    """We assume the .shp file has a suffix like budget\\d+.shp"""
     ext_dir = extract_files(archive_path)
 
     import_rows(ext_dir, session)
