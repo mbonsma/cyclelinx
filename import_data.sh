@@ -4,6 +4,11 @@ set -e
 
 DATA_DIR="${1:-}"
 
+if [[ -z $DATA_DIR ]]; then
+    echo "DATA_DIR not specified!"
+    exit 1
+fi
+
 #./import_data.sh /home/conor/cycle-network-toy/flask/data
 
 docker compose run --rm \
