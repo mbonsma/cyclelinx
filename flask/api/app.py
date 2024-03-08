@@ -10,7 +10,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
 
-from api.models import db, Budget, BudgetScore
+from api.models import db, Budget, BudgetScore, ExistingLane
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
 
@@ -74,6 +74,12 @@ def get_project_scores(budget_id):
     ]
 
     return result
+
+
+@cycling_api.route("/existing-lanes")
+def get_existing_laness():
+    lanes = db.session.execute(select(ExistingLane)).scalars().all()
+    return db_data_to_geojson_features(lanes)
 
 
 # https://flask.palletsprojects.com/en/2.2.x/errorhandling/#generic-exception-handlers

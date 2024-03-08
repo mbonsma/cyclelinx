@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   Grid,
@@ -12,10 +12,11 @@ import {
   RadioGroup,
   Radio,
   FormControlLabel,
+  Checkbox,
+  checkboxClasses,
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { scaleLinear, scaleOrdinal } from "d3-scale";
-
 import { Budget } from "@/lib/ts/types";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
@@ -25,20 +26,79 @@ const MapViewer = dynamic(() => import("./../components/MapViewer"), {
 const METRICS = ["recreation", "food", "employment"];
 const SCORE_RANGE = [1, 10];
 
-const metricScale = scaleOrdinal(METRICS, ["red", "green", "blue"]);
-const opacityScale = scaleLinear(SCORE_RANGE, [0.1, 0.75]);
+export const metricScale = scaleOrdinal(METRICS, ["red", "green", "blue"]);
+export const opacityScale = scaleLinear(SCORE_RANGE, [0.1, 0.75]);
+
+const existingLaneTypes: EXISTING_LANE_TYPE[] = [
+  "Multi-Use Trail",
+  "Sharrows",
+  "Cycle Track",
+  "Park Road",
+  "Signed Route",
+  "Multi-Use Trail",
+  "Bike Lane",
+];
+
+export const existingScale = scaleOrdinal(existingLaneTypes, [
+  "orange",
+  "brown",
+  "pink",
+  "purple",
+  "teal",
+  "magenta",
+  "yellow",
+]);
+
+export type EXISTING_LANE_TYPE =
+  | "Sharrows"
+  | "Multi-Use Trail"
+  | "Cycle Track"
+  | "Park Road"
+  | "Bike Lane"
+  | "Signed Route"
+  | "Signed Route (No Pavement Markings)"
+  | "Multi-Use Trail";
+
+export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
+  ["Sharrows - Wayfinding"]: "Sharrows",
+  ["Multi-Use Trail"]: "Multi-Use Trail",
+  ["Multi-Use Trail - Entrance"]: "Multi-Use Trail",
+  ["Cycle Track"]: "Cycle Track",
+  ["Park Road"]: "Park Road",
+  ["Sharrows"]: "Sharrows",
+  ["Bike Lane"]: "Bike Lane",
+  ["Bi-Directional Cycle Track"]: "Cycle Track",
+  ["Signed Route (No Pavement Markings)"]:
+    "Signed Route (No Pavement Markings)",
+  ["Bike Lane - Buffered"]: "Bike Lane",
+  ["Multi-Use Trail - Connector"]: "Multi-Use Trail",
+  ["Multi-Use Trail - Boulevard"]: "Multi-Use Trail",
+  ["Multi-Use Trail - Existing Connector"]: "Multi-Use Trail",
+  ["Bike Lane - Contraflow"]: "Bike Lane",
+  ["Sharrows - Arterial"]: "Sharrows",
+  ["Sharrows - Arterial - Connector"]: "Sharrows",
+  ["Cycle Track - Contraflow"]: "Cycle Track",
+};
 
 export default function Home() {
   const [budgetId, setBudgetId] = useState<number>();
   const [budgets, setBudgets] = useState<Budget[]>();
   const [features, setFeatures] = useState<any>();
   const [scores, setScores] = useState<any>();
-  const [selectedMetric, setSelectedMetric] = useState<string>();
+  const [existingLanes, setExistingLanes] = useState<any>();
+  const [visibleExistingLanes, setVisibleExistingLanes] = useState<
+    EXISTING_LANE_TYPE[]
+  >([]);
+  const [selectedMetric, setSelectedMetric] = useState<string>(METRICS[0]);
 
   useEffect(() => {
     axios
       .get<Budget[]>("http://localhost:9033/budgets")
       .then((r) => setBudgets(r.data));
+
+    axios
+      .get(`http://localhost:9033/existing-lanes`)
+      .then((r) => setExistingLanes(r.data));
   }, []);
 
   useEffect(() => {
@@ -115,10 +175,51 @@ export default function Home() {
                     {METRICS.map((m) => (
                       <FormControlLabel
                         key={m}
-                        value={m}
                         control={<Radio />}
                         onChange={() => setSelectedMetric(m)}
                         label={m}
+                        value={m}
+                      />
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+              )}
+            </Grid>
+            <Grid item>
+              {existingLanes && (
+                <FormControl fullWidth>
+                  <FormLabel id="checkbox-group-legend">
+                    Existing Lanes
+                  </FormLabel>
+                  <RadioGroup
+                    aria-labelledby="checkbox-group-legend"
+                    name="checkbox-group"
+                  >
+                    {Array.from(
+                      new Set(Object.values(EXISTING_LANE_NAME_MAP))
+                    ).map((m: EXISTING_LANE_TYPE) => (
+                      <FormControlLabel
+                        key={m}
+                        control={
+                          <Checkbox
+                            sx={{
+                              [`&, &.${checkboxClasses.checked}`]: {
+                                color: existingScale(m),
+                              },
+                            }}
+                          />
+                        }
+                        onChange={() =>
+                          visibleExistingLanes.includes(m)
+                            ? setVisibleExistingLanes(
+                                visibleExistingLanes.filter((l) => l !== m)
+                              )
+                            : setVisibleExistingLanes(
+                                visibleExistingLanes.concat(m)
+                              )
+                        }
+                        label={m}
+                        value={m}
                       />
                     ))}
                   </RadioGroup>
@@ -128,11 +229,11 @@ export default function Home() {
           </Grid>
           <Grid item xs={12} md={10} flexGrow={1}>
             <MapViewer
-              metricScale={metricScale}
-              opacityScale={opacityScale}
+              existingLanes={existingLanes}
               features={features}
               scores={scores}
               selectedMetric={selectedMetric}
+              visibleExistingLanes={visibleExistingLanes}
             />
           </Grid>
         </Grid>

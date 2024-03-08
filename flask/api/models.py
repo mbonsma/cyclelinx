@@ -104,6 +104,40 @@ class Arterial(Feature):
     )
 
 
+class ExistingLane(db.Model):
+    __tablename__ = "existing_lanes"
+    id = Column(Integer, primary_key=True, index=True)
+    _id = Column(Integer, nullable=True)
+    OBJECTID = Column(Integer, nullable=True)
+    SEGMENT_ID = Column(Integer, nullable=True)
+    INSTALLED = Column(Integer, nullable=True)
+    UPGRADED = Column(Integer, nullable=True)
+    PRE_AMALGAMATION = Column(String, nullable=True)
+    STREET_NAME = Column(String, nullable=True)
+    FROM_STREET = Column(String, nullable=True)
+    TO_STREET = Column(String, nullable=True)
+    ROADCLASS = Column(String, nullable=True)
+    CNPCLASS = Column(String, nullable=True)
+    SURFACE = Column(String, nullable=True)
+    OWNER = Column(String, nullable=True)
+    DIR_LOWORDER = Column(String, nullable=True)
+    INFRA_LOWORDER = Column(String, nullable=True)
+    SEPA_LOWORDER = Column(String, nullable=True)
+    SEPB_LOWORDER = Column(String, nullable=True)
+    ORIG_LOWORDER_INFRA = Column(String, nullable=True)
+    DIR_HIGHORDER = Column(String, nullable=True)
+    INFRA_HIGHORDER = Column(String, nullable=True)
+    SEPA_HIGHORDER = Column(String, nullable=True)
+    SEPB_HIGHORDER = Column(String, nullable=True)
+    ORIG_HIGHORDER = Column(String, nullable=True)
+    BYLAWED = Column(String, nullable=True)
+    EDITOR = Column(String, nullable=True)
+    LAST_EDIT_DATE = Column(String, nullable=True)
+    UPGRADE_DESCRIPTION = Column(String, nullable=True)
+    CONVERTED = Column(String, nullable=True)
+    geometry = Column(Geometry("MultiLineString"), nullable=False)
+
+
 class DisseminationArea(db.Model):
 
     __tablename__ = "dissemination_areas"

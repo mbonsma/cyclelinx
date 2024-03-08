@@ -1,37 +1,47 @@
 "use client";
 
 import React, { useEffect } from "react";
-import axios from "axios";
 import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
-import { ScaleLinear, ScaleOrdinal } from "d3-scale";
+import {
+  EXISTING_LANE_TYPE,
+  EXISTING_LANE_NAME_MAP,
+  metricScale,
+  opacityScale,
+  existingScale,
+} from "@/app/page";
 
 /*
     This is basically a context consumer...
     We place it in the component and it is then nested in the context provider and we can access it
 */
 const Handler: React.FC<{
+  existingLanes?: any;
   selected: any;
   scores: any;
-  metricScale: ScaleOrdinal<string, string>;
-  opacityScale: ScaleLinear<number, number>;
   selectedMetric?: string;
-}> = ({ selected, scores, metricScale, opacityScale, selectedMetric }) => {
+  visibleExistingLanes: EXISTING_LANE_TYPE[];
+}> = ({
+  selected,
+  scores,
+  selectedMetric,
+  existingLanes,
+  visibleExistingLanes,
+}) => {
   const map = useMap();
 
   useEffect(() => {
     map.eachLayer((l) => {
       if (l?.feature && l?.feature.geometry.type === "MultiPolygon") {
-        console.log("removing");
         map.removeLayer(l);
       }
     });
 
     if (scores && selectedMetric) {
       scores
-        .filter((d) => d.metric === selectedMetric)
+        .filter((d: any) => d.metric === selectedMetric)
         .forEach((d: any) => {
           map.addLayer(
             new LGeoJSON(d.da as GeoJsonObject, {
@@ -40,11 +50,69 @@ const Handler: React.FC<{
                 fillOpacity: opacityScale(d.score),
                 stroke: false,
               },
+              onEachFeature: (f, l) => {
+                l.bindPopup(
+                  `<div><strong>DAUID:</strong>&nbsp;${f.properties.DAUID}</div>`
+                );
+              },
             })
           );
         });
     }
   }, [scores, selectedMetric]);
+
+  useEffect(() => {
+    if (existingLanes) {
+      let removal = false;
+      let toAdd = [...visibleExistingLanes];
+
+      map.eachLayer((l: any) => {
+        const layerProps = l?.feature?.geometry.properties;
+        //remove removed or filter out those that already exist from add list
+        if (
+          layerProps &&
+          layerProps.hasOwnProperty("UPGRADED") &&
+          !visibleExistingLanes.includes(
+            EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+          )
+        ) {
+          map.removeLayer(l);
+          removal = true;
+        } else if (
+          layerProps &&
+          toAdd.includes(EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER])
+        ) {
+          toAdd = toAdd.filter(
+            (l: any) => l !== EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+          );
+        }
+      });
+
+      if (!removal) {
+        existingLanes.features.forEach((l: any) => {
+          const layerProps = l.properties;
+          if (
+            layerProps &&
+            toAdd.includes(EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER])
+          ) {
+            map.addLayer(
+              new LGeoJSON(l as GeoJsonObject, {
+                style: {
+                  fillColor: existingScale(
+                    EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+                  ),
+                  color: existingScale(
+                    EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+                  ),
+                  fillOpacity: 0.75,
+                },
+              })
+            );
+          }
+        });
+      }
+    }
+  }, [existingLanes, visibleExistingLanes]);
 
   useEffect(() => {
     if (selected) {
@@ -101,12 +169,18 @@ const c1 = new LatLng(43.72, -79.21);
 const c2 = new LatLng(43.61, -79.45);
 
 const MapViewer: React.FC<{
+  existingLanes?: any;
   features: any;
   scores: any;
-  metricScale: ScaleOrdinal<string, string>;
-  opacityScale: ScaleLinear<number, number>;
   selectedMetric?: string;
-}> = ({ features, scores, metricScale, opacityScale, selectedMetric }) => (
+  visibleExistingLanes: EXISTING_LANE_TYPE[];
+}> = ({
+  existingLanes,
+  features,
+  scores,
+  selectedMetric,
+  visibleExistingLanes,
+}) => (
   <StyledLeafletContainer
     bounds={new LatLngBounds(c1, c2)}
     scrollWheelZoom={true}
@@ -116,11 +190,11 @@ const MapViewer: React.FC<{
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     />
     <Handler
+      existingLanes={existingLanes}
       selected={features}
       scores={scores}
-      metricScale={metricScale}
-      opacityScale={opacityScale}
       selectedMetric={selectedMetric}
+      visibleExistingLanes={visibleExistingLanes}
     />
   </StyledLeafletContainer>
 );

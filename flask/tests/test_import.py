@@ -3,12 +3,29 @@ import pickle
 
 from sqlalchemy import select
 
-from api.models import Arterial, DisseminationArea, ImprovementFeature, Project
+from api.models import (
+    Arterial,
+    DisseminationArea,
+    ExistingLane,
+    ImprovementFeature,
+    Project,
+)
 from api.utils import extract_files
 from scripts.import_das import import_das
 from scripts.import_improvements import import_improvements
 from scripts.import_projects import import_arterials, _import_projects
+from scripts.import_existing_lanes import import_geojson
 from tests.factories import arterial_model_factory
+
+
+def test_import_existing(app_ctx, fresh_db):
+    session = fresh_db.session
+    test_import_path = path.join(
+        path.dirname(__file__), "fixtures", "cycling-network.geojson"
+    )
+    import_geojson(test_import_path, session)
+    existing = fresh_db.session.execute(select(ExistingLane)).scalars().all()
+    assert len(existing) == 1445
 
 
 def test_import_features(app_ctx, fresh_db):

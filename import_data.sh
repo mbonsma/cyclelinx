@@ -5,11 +5,11 @@ set -e
 DATA_DIR="${1:-}"
 
 if [[ -z $DATA_DIR ]]; then
-    echo "DATA_DIR not specified!"
+    echo "DATA_DIR not provided!"
     exit 1
 fi
 
-#./import_data.sh /home/conor/cycle-network-toy/flask/data
+#./import_data.sh ~/cycle-network-toy/flask/data
 
 docker compose run --rm \
     -v ${DATA_DIR}/best.tar.xz:/tmp/upload.xz \
@@ -29,4 +29,15 @@ docker compose run --rm \
 
 docker compose run --rm \
     --entrypoint="python /code/scripts/create_dummy_scores.py" \
+    flask
+
+docker compose run --rm \
+    -v ${DATA_DIR}/cycling-network.geojson:/tmp/upload.geojson \
+    --entrypoint="python /code/scripts/import_existing_lanes.py --geojson_path /tmp/upload.geojson" \
+    flask
+
+
+docker compose run --rm \
+    -v ${DATA_DIR}/cycling-network.geojson:/tmp/upload.geojson \
+    --entrypoint="python /code/scripts/import_existing_lanes.py --geojson_path /tmp/upload.geojson" \
     flask
