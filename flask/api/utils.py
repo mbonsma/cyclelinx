@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 import tarfile
 import tempfile
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from geoalchemy2.shape import to_shape
 from shapely import to_geojson
@@ -40,8 +40,25 @@ def model_to_dict(Model: DeclarativeMeta):
 
 
 def db_data_to_geojson_features(
-    data: List[Any],
+    data: List[Any], extra_properties: Optional[List[dict[str, Any]]] = None
 ):
+    """
+    Convert a model with a ``geometry`` property to geojson
+
+        Parameters
+        ----------
+        data : Model, the SQLAlchemy model
+        extra_properties : any properties not on the model that should be added to the geojson ``properties``
+
+        Returns
+        -------
+        dict, the geojson in dictionary format
+
+    """
+
+    if extra_properties is not None and len(extra_properties) != len(data):
+        raise ValueError("Extra properties must be the same length as data!")
+
     fc = {
         "type": "FeatureCollection",
         "crs": {
@@ -51,11 +68,13 @@ def db_data_to_geojson_features(
         "features": [],
     }
 
-    for feature in data:
+    for i, feature in enumerate(data):
         properties = model_to_dict(feature)
         geometry = to_shape(properties.pop("geometry"))
         geojson = loads(to_geojson(geometry))
         geojson["properties"] = properties
+        if extra_properties is not None:
+            geojson["properties"] = {**geojson["properties"], **extra_properties[i]}
         fc["features"].append(geojson)
 
     return fc

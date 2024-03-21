@@ -17,7 +17,13 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { scaleLinear, scaleOrdinal } from "d3-scale";
-import { Budget } from "@/lib/ts/types";
+import {
+  Budget,
+  DAGeoJSON,
+  GroupedScoredDAs,
+  ScoreResponse,
+} from "@/lib/ts/types";
+import { Group } from "next/dist/shared/lib/router/utils/route-regex";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
   ssr: false,
@@ -84,7 +90,7 @@ export default function Home() {
   const [budgetId, setBudgetId] = useState<number>();
   const [budgets, setBudgets] = useState<Budget[]>();
   const [features, setFeatures] = useState<any>();
-  const [scores, setScores] = useState<any>();
+  const [scores, setScores] = useState<GroupedScoredDAs[]>();
   const [existingLanes, setExistingLanes] = useState<any>();
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
@@ -108,8 +114,35 @@ export default function Home() {
         .then((r) => setFeatures(r.data));
 
       axios
-        .get(`http://localhost:9033/budgets/${budgetId}/scores`)
-        .then((r) => setScores(r.data));
+        .get<ScoreResponse[]>(
+          `http://localhost:9033/budgets/${budgetId}/scores`
+        )
+        .then((r) => {
+          const byDa = r.data.reduce(
+            (acc, curr) => ({
+              ...acc,
+              [curr.da.features[0].properties.DAUID]: acc[
+                curr.da.features[0].properties.DAUID
+              ]
+                ? {
+                    ...acc[curr.da.features[0].properties.DAUID],
+                    scores: {
+                      [curr.metric]: curr.score,
+                      ...acc[curr.da.features[0].properties.DAUID].scores,
+                    },
+                  }
+                : {
+                    scores: { [curr.metric]: curr.score },
+                    geojson: curr.da,
+                  },
+            }),
+            {} as Record<
+              string,
+              { geojson: DAGeoJSON; scores: Record<string, number> }
+            >
+          );
+          setScores(Object.values(byDa) as GroupedScoredDAs[]);
+        });
     }
   }, [budgetId]);
 

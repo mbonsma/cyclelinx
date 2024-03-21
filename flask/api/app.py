@@ -68,7 +68,9 @@ def get_project_scores(budget_id):
         {
             "score": score.score,
             "metric": score.metric.name,
-            "da": db_data_to_geojson_features([score.dissemination_area]),
+            "da": db_data_to_geojson_features(
+                [score.dissemination_area],
+            ),
         }
         for score in budget.scores
     ]

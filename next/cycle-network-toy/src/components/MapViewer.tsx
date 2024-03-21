@@ -12,15 +12,16 @@ import {
   opacityScale,
   existingScale,
 } from "@/app/page";
+import { GroupedScoredDAs, ScoreResponse } from "@/lib/ts/types";
 
 /*
-    This is basically a context consumer...
+    This is basically a context consumer
     We place it in the component and it is then nested in the context provider and we can access it
 */
 const Handler: React.FC<{
   existingLanes?: any;
   selected: any;
-  scores: any;
+  scores: GroupedScoredDAs[];
   selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
@@ -40,24 +41,26 @@ const Handler: React.FC<{
     });
 
     if (scores && selectedMetric) {
-      scores
-        .filter((d: any) => d.metric === selectedMetric)
-        .forEach((d: any) => {
-          map.addLayer(
-            new LGeoJSON(d.da as GeoJsonObject, {
-              style: {
-                fillColor: metricScale(d.metric),
-                fillOpacity: opacityScale(d.score),
-                stroke: false,
-              },
-              onEachFeature: (f, l) => {
-                l.bindPopup(
-                  `<div><strong>DAUID:</strong>&nbsp;${f.properties.DAUID}</div>`
-                );
-              },
-            })
-          );
-        });
+      scores.forEach((d) => {
+        map.addLayer(
+          new LGeoJSON(d.geojson as GeoJsonObject, {
+            style: {
+              fillColor: metricScale(selectedMetric),
+              fillOpacity: opacityScale(d.scores[selectedMetric]),
+              stroke: false,
+            },
+            onEachFeature: (f, l) => {
+              l.bindPopup(
+                `<div><strong>DAUID:</strong>&nbsp;${f.properties.DAUID}</div>
+                <div><strong>Recreation:</strong>&nbsp;${d.scores.recreation}</div>
+                <div><strong>Food:</strong>&nbsp;${d.scores.food}</div>
+                <div><strong>Employment:</strong>&nbsp;${d.scores.employment}</div>
+                `
+              );
+            },
+          })
+        );
+      });
     }
   }, [scores, selectedMetric]);
 
@@ -116,39 +119,7 @@ const Handler: React.FC<{
 
   useEffect(() => {
     if (selected) {
-      const layer = new LGeoJSON(selected as GeoJsonObject, {
-        //click handler for features
-        onEachFeature: (f, l) =>
-          l.on({
-            load: async () => {
-              return true;
-            },
-            click: async () => {
-              return true;
-              // const das = await axios.get<
-              //   {
-              //     score: number;
-              //     metric: string;
-              //     da: Record<string, any>;
-              //   }[]
-              // >(
-              //   `http://localhost:9033/arterials/${f.properties.GEO_ID}/scores`
-              // );
-              // // note that LGeoJSON options has setStyle and addData methods, the latter of which could be used to group by score (if scores often repeat)
-              // das.data.forEach((d) => {
-              //   map.addLayer(
-              //     new LGeoJSON(d.da as GeoJsonObject, {
-              //       style: {
-              //         fillColor: metricScale(d.metric),
-              //         fillOpacity: opacityScale(d.score),
-              //         stroke: false,
-              //       },
-              //     })
-              //   );
-              // });
-            },
-          }),
-      });
+      const layer = new LGeoJSON(selected as GeoJsonObject);
 
       map.eachLayer((l) => {
         if (
@@ -171,7 +142,7 @@ const c2 = new LatLng(43.61, -79.45);
 const MapViewer: React.FC<{
   existingLanes?: any;
   features: any;
-  scores: any;
+  scores: GroupedScoredDAs[];
   selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({

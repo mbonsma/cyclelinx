@@ -26,6 +26,11 @@ def test_can_make_geojson(app_ctx, fresh_db):
     # poor man's validation....
     geopandas.read_file(StringIO(json.dumps(geojson)))
 
+    geojson = db_data_to_geojson_features(results, [{"a": 1} for i in range(10)])
+
+    # poor man's validation....
+    geopandas.read_file(StringIO(json.dumps(geojson)))
+
     assert True
 
 

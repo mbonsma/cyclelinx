@@ -1,5 +1,6 @@
 from os import path
 import pickle
+from typing import Optional
 
 from sqlalchemy import select
 
