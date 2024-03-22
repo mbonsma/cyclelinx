@@ -112,6 +112,6 @@ def budget_model_factory(session):
             sqlalchemy_session = session
             sqlalchemy_session_persistence = "commit"
 
-        name = Faker("pystr")
+        name = Sequence(lambda n: n)
 
     return BudgetFactory

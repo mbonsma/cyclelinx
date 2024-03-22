@@ -11,7 +11,6 @@ from shapely import wkb
 
 
 from api.models import (
-    Arterial,
     Budget,
     BudgetScore,
     DisseminationArea,
@@ -60,17 +59,34 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
 
         metrics_models.append(m)
 
+    das = session.execute(select(DisseminationArea)).scalars().all()
+
+    for da in das:
+        for metric in metrics_models:
+            score = random.randint(1, 10)
+            row = {
+                "dissemination_area_id": da.id,
+                "metric_id": metric.id,
+                "score": score,
+            }
+
+            stmt = insert(BudgetScore)
+
+            session.execute(stmt, row)
+            session.commit()
+
     for budget in budgets:
         print(f"creating scores for budget {budget.id}...")
         # here we're using the actual streets, rather than arterials....
         for segment in budget.improvement_features:
             # right now, this will just lead to redundancy, as we'll get the same nearby_da for a whole bunch
-            # of features, when we need just one, so it might be wisest to first get the nearest project
+            # of features, when we need just one, so it might be wisest to first get the nearest
             # or we could just let it cycle through repeat budget/da combos and ignore (easiest for now)
+            # TODO: change this, it's too slow....
             nearby_das = get_nearby_das(segment, session)
             for da in nearby_das:
                 for metric in metrics_models:
-                    score = random.randint(1, 10)
+                    score = random.randint(11, 20) * (int(budget.name) * 0.1)
                     row = {
                         "budget_id": budget.id,
                         "dissemination_area_id": da.id,

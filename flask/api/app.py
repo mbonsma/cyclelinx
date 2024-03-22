@@ -1,5 +1,6 @@
 import json
 import logging
+from collections import defaultdict
 
 from flask import Blueprint, Flask
 from flask_cors import CORS
@@ -58,24 +59,57 @@ def get_budget_features(id):
 
 @cycling_api.route("/budgets/<int:budget_id>/scores")
 def get_project_scores(budget_id):
-    budget = db.session.execute(
+    budget: Budget = db.session.execute(
         select(Budget)
         .options(joinedload(Budget.scores).subqueryload(BudgetScore.dissemination_area))
         .filter(Budget.id == budget_id)
     ).scalar()
 
-    result = [
-        {
-            "score": score.score,
-            "metric": score.metric.name,
-            "da": db_data_to_geojson_features(
-                [score.dissemination_area],
-            ),
-        }
-        for score in budget.scores
-    ]
+    defaults: list[BudgetScore] = (
+        db.session.execute(
+            select(BudgetScore)
+            .options(joinedload(BudgetScore.dissemination_area))
+            .options(joinedload(BudgetScore.metric))
+            .filter(BudgetScore.budget == None)
+            .filter(
+                BudgetScore.dissemination_area_id.in_(
+                    [s.dissemination_area_id for s in budget.scores]
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
 
-    return result
+    default_dict = defaultdict(dict)
+
+    for d in defaults:
+        default_dict[d.dissemination_area_id][d.metric.name] = d.score
+
+    constructor = lambda: {
+        "da": None,
+        "scores": {"budget": {}, "default": {}, "diff": {}},
+    }
+
+    score_dict = defaultdict(constructor)
+
+    for score in budget.scores:
+        score_dict[score.dissemination_area_id]["da"] = (
+            db_data_to_geojson_features([score.dissemination_area])
+            if not score_dict[score.dissemination_area_id]["da"]
+            else score_dict[score.dissemination_area_id]["da"]
+        )
+        score_dict[score.dissemination_area_id]["scores"]["budget"][
+            score.metric.name
+        ] = score.score
+        score_dict[score.dissemination_area_id]["scores"]["default"][
+            score.metric.name
+        ] = default_dict[score.dissemination_area_id][score.metric.name]
+        score_dict[score.dissemination_area_id]["scores"]["diff"][score.metric.name] = (
+            score.score - default_dict[score.dissemination_area_id][score.metric.name]
+        )
+
+    return list(score_dict.values())
 
 
 @cycling_api.route("/existing-lanes")
@@ -106,9 +140,6 @@ def handle_exception(e: Exception):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
         return e
-
-    logger.error(e.args)
-
     return {
         "code": 500,
         "description": (

@@ -16,24 +16,16 @@ import {
   checkboxClasses,
 } from "@mui/material";
 import dynamic from "next/dynamic";
-import { scaleLinear, scaleOrdinal } from "d3-scale";
-import {
-  Budget,
-  DAGeoJSON,
-  GroupedScoredDAs,
-  ScoreResponse,
-} from "@/lib/ts/types";
-import { Group } from "next/dist/shared/lib/router/utils/route-regex";
+import { scaleOrdinal } from "d3-scale";
+import { Budget, GroupedScoredDA } from "@/lib/ts/types";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
   ssr: false,
 });
 
 const METRICS = ["recreation", "food", "employment"];
-const SCORE_RANGE = [1, 10];
 
 export const metricScale = scaleOrdinal(METRICS, ["red", "green", "blue"]);
-export const opacityScale = scaleLinear(SCORE_RANGE, [0.1, 0.75]);
 
 const existingLaneTypes: EXISTING_LANE_TYPE[] = [
   "Multi-Use Trail",
@@ -90,8 +82,8 @@ export default function Home() {
   const [budgetId, setBudgetId] = useState<number>();
   const [budgets, setBudgets] = useState<Budget[]>();
   const [features, setFeatures] = useState<any>();
-  const [scores, setScores] = useState<GroupedScoredDAs[]>();
   const [existingLanes, setExistingLanes] = useState<any>();
+  const [scores, setScores] = useState<GroupedScoredDA[]>();
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
@@ -114,35 +106,10 @@ export default function Home() {
         .then((r) => setFeatures(r.data));
 
       axios
-        .get<ScoreResponse[]>(
+        .get<GroupedScoredDA[]>(
           `http://localhost:9033/budgets/${budgetId}/scores`
         )
-        .then((r) => {
-          const byDa = r.data.reduce(
-            (acc, curr) => ({
-              ...acc,
-              [curr.da.features[0].properties.DAUID]: acc[
-                curr.da.features[0].properties.DAUID
-              ]
-                ? {
-                    ...acc[curr.da.features[0].properties.DAUID],
-                    scores: {
-                      [curr.metric]: curr.score,
-                      ...acc[curr.da.features[0].properties.DAUID].scores,
-                    },
-                  }
-                : {
-                    scores: { [curr.metric]: curr.score },
-                    geojson: curr.da,
-                  },
-            }),
-            {} as Record<
-              string,
-              { geojson: DAGeoJSON; scores: Record<string, number> }
-            >
-          );
-          setScores(Object.values(byDa) as GroupedScoredDAs[]);
-        });
+        .then((r) => setScores(r.data));
     }
   }, [budgetId]);
 
@@ -188,11 +155,13 @@ export default function Home() {
                   onChange={(e) => setBudgetId(+e.target.value)}
                 >
                   {budgets &&
-                    budgets.map((b) => (
-                      <MenuItem key={b.id} value={b.id}>
-                        {b.name}
-                      </MenuItem>
-                    ))}
+                    budgets
+                      .sort((a, b) => (+a.name < +b.name ? -1 : 1))
+                      .map((b) => (
+                        <MenuItem key={b.id} value={b.id}>
+                          {b.name}
+                        </MenuItem>
+                      ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -264,7 +233,7 @@ export default function Home() {
             <MapViewer
               existingLanes={existingLanes}
               features={features}
-              scores={scores}
+              scores={scores!}
               selectedMetric={selectedMetric}
               visibleExistingLanes={visibleExistingLanes}
             />

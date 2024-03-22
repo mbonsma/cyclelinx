@@ -192,7 +192,7 @@ class BudgetScore(db.Model):
     __tablename__ = "budget_scores"
     id = Column(Integer, primary_key=True)
     metric_id = Column(Integer, ForeignKey("metrics.id"), nullable=False)
-    budget_id = Column(Integer, ForeignKey("budgets.id"), nullable=False)
+    budget_id = Column(Integer, ForeignKey("budgets.id"), nullable=True)
     dissemination_area_id = Column(
         Integer, ForeignKey("dissemination_areas.id"), nullable=False
     )

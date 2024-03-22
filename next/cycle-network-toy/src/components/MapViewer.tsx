@@ -5,14 +5,15 @@ import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
+import { scaleLinear } from "d3-scale";
+import { extent } from "d3-array";
 import {
   EXISTING_LANE_TYPE,
   EXISTING_LANE_NAME_MAP,
   metricScale,
-  opacityScale,
   existingScale,
 } from "@/app/page";
-import { GroupedScoredDAs, ScoreResponse } from "@/lib/ts/types";
+import { GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
 
 /*
     This is basically a context consumer
@@ -21,7 +22,7 @@ import { GroupedScoredDAs, ScoreResponse } from "@/lib/ts/types";
 const Handler: React.FC<{
   existingLanes?: any;
   selected: any;
-  scores: GroupedScoredDAs[];
+  scores: GroupedScoredDA[];
   selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
@@ -41,20 +42,25 @@ const Handler: React.FC<{
     });
 
     if (scores && selectedMetric) {
+      const scoreRange = extent(
+        scores.map((s) => s.scores.budget[selectedMetric])
+      ) as [number, number];
+      const opacityScale = scaleLinear(scoreRange, [0.1, 0.75]);
+
       scores.forEach((d) => {
         map.addLayer(
-          new LGeoJSON(d.geojson as GeoJsonObject, {
+          new LGeoJSON(d.da as GeoJsonObject, {
             style: {
               fillColor: metricScale(selectedMetric),
-              fillOpacity: opacityScale(d.scores[selectedMetric]),
+              fillOpacity: opacityScale(d.scores.budget[selectedMetric]),
               stroke: false,
             },
             onEachFeature: (f, l) => {
               l.bindPopup(
                 `<div><strong>DAUID:</strong>&nbsp;${f.properties.DAUID}</div>
-                <div><strong>Recreation:</strong>&nbsp;${d.scores.recreation}</div>
-                <div><strong>Food:</strong>&nbsp;${d.scores.food}</div>
-                <div><strong>Employment:</strong>&nbsp;${d.scores.employment}</div>
+                <div><strong>Recreation:</strong>&nbsp;${d.scores.budget.recreation}</div>
+                <div><strong>Food:</strong>&nbsp;${d.scores.budget.food}</div>
+                <div><strong>Employment:</strong>&nbsp;${d.scores.budget.employment}</div>
                 `
               );
             },
@@ -142,7 +148,7 @@ const c2 = new LatLng(43.61, -79.45);
 const MapViewer: React.FC<{
   existingLanes?: any;
   features: any;
-  scores: GroupedScoredDAs[];
+  scores: GroupedScoredDA[];
   selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({

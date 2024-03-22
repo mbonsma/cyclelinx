@@ -15,6 +15,7 @@
     "@mui/material": "^5.15.4",
     "@mui/material-nextjs": "^5.15.3",
     "axios": "^1.6.7",
+    "d3-array": "^3.2.4",
     "d3-scale": "^4.0.2",
     "leaflet": "^1.9.4",
     "next": "14.0.4",
@@ -23,6 +24,7 @@
     "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
+    "@types/d3-array": "^3.2.1",
     "@types/d3-scale": "^4.0.8",
     "@types/leaflet": "^1.9.8",
     "@types/node": "^20",

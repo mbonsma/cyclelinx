@@ -46,6 +46,15 @@ def test_get_budget_scores(client, fresh_db):
         )
         fresh_db.session.add(score)
         fresh_db.session.commit()
+        # defaults
+        score = BudgetScore(
+            budget=None,
+            dissemination_area=da,
+            metric=metric,
+            score=1,
+        )
+        fresh_db.session.add(score)
+        fresh_db.session.commit()
 
     response = client.get(f"/budgets/{budget.id}/scores")
     assert response.status_code == 200

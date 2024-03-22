@@ -1,6 +1,6 @@
 import { MultiPolygon, Position, GeoJsonObject } from "geojson";
 
-interface Budget {
+export interface Budget {
   name: string;
   id: number;
 }
@@ -65,7 +65,13 @@ export interface ScoreResponse {
   score: number;
 }
 
-export interface GroupedScoredDAs {
-  geojson: DAGeoJSON;
-  scores: Record<string, number>;
+export interface ScoreSet {
+  budget: Record<string, number>;
+  default: Record<string, number>;
+  diff: Record<string, number>;
+}
+
+export interface GroupedScoredDA {
+  da: DAGeoJSON;
+  scores: ScoreSet;
 }

@@ -71,4 +71,5 @@ def test_create_dummy_scores(fresh_db):
     create_dummy_scores(session, ["a", "b", "c"])
 
     scores = session.execute(select(BudgetScore)).scalars().all()
-    assert len(scores) == 5 * 3 * 3
+    # 5 * 3 for "default" scores with no budget
+    assert len(scores) == (5 * 3 * 3) + (5 * 3)
