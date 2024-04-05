@@ -16,9 +16,11 @@ import {
   checkboxClasses,
   Divider,
   Box,
+  Typography,
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { scaleLinear, scaleOrdinal } from "d3-scale";
+import { schemeDark2, schemeSet2 } from "d3-scale-chromatic";
 import { Budget, GroupedScoredDA } from "@/lib/ts/types";
 import { extent } from "d3-array";
 import LegendGradient from "@/components/LinearLegend";
@@ -29,7 +31,20 @@ const MapViewer = dynamic(() => import("./../components/MapViewer"), {
 
 const METRICS = ["recreation", "food", "employment"];
 
-export const metricScale = scaleOrdinal(METRICS, ["red", "green", "blue"]);
+export const metricScale = scaleOrdinal(
+  METRICS,
+  schemeDark2.slice(0, METRICS.length)
+);
+
+export type EXISTING_LANE_TYPE =
+  | "Sharrows"
+  | "Multi-Use Trail"
+  | "Cycle Track"
+  | "Park Road"
+  | "Bike Lane"
+  | "Signed Route"
+  | "Signed Route (No Pavement Markings)"
+  | "Multi-Use Trail";
 
 const existingLaneTypes: EXISTING_LANE_TYPE[] = [
   "Multi-Use Trail",
@@ -41,25 +56,10 @@ const existingLaneTypes: EXISTING_LANE_TYPE[] = [
   "Bike Lane",
 ];
 
-export const existingScale = scaleOrdinal(existingLaneTypes, [
-  "orange",
-  "brown",
-  "pink",
-  "purple",
-  "teal",
-  "magenta",
-  "yellow",
-]);
-
-export type EXISTING_LANE_TYPE =
-  | "Sharrows"
-  | "Multi-Use Trail"
-  | "Cycle Track"
-  | "Park Road"
-  | "Bike Lane"
-  | "Signed Route"
-  | "Signed Route (No Pavement Markings)"
-  | "Multi-Use Trail";
+export const existingScale = scaleOrdinal(
+  existingLaneTypes,
+  schemeSet2.slice(0, existingLaneTypes.length)
+);
 
 export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
   ["Sharrows - Wayfinding"]: "Sharrows",
@@ -208,14 +208,21 @@ export default function Home() {
                   <Box
                     sx={{ display: "flex", justifyContent: "space-between" }}
                   >
-                    <span>{opacityScale.domain()[0]}</span>
-                    <span>{opacityScale.domain()[1]}</span>
+                    <span>
+                      <Typography variant="caption">
+                        {opacityScale.domain()[0]}
+                      </Typography>
+                    </span>
+                    <span>
+                      <Typography variant="caption">
+                        {opacityScale.domain()[1]}
+                      </Typography>
+                    </span>
                   </Box>
                   <LegendGradient
                     color={metricScale(selectedMetric)}
                     scale={opacityScale}
-                    height={1}
-                    width={7}
+                    height={5}
                   />
                 </Grid>
               </>

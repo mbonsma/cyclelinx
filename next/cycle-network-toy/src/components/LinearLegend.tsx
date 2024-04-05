@@ -1,3 +1,5 @@
+import { useHandleResize } from "@/hooks";
+import { Box } from "@mui/material";
 import { range } from "d3-array";
 import { rgb } from "d3-color";
 import { ScaleLinear } from "d3-scale";
@@ -8,32 +10,42 @@ interface LegendGradientProps {
   color: string;
   height: number;
   scale: ScaleLinear<number, number>;
-  width: number;
 }
 
 const LegendGradient: React.FC<LegendGradientProps> = ({
   color,
   height,
   scale,
-  width,
 }) => {
   const selector = useRef(
     `legend-gradient-${Math.random().toString(36).slice(3)}`
   );
 
-  useLayoutEffect(() => {
-    renderLinearLegend(`.${selector.current}`, scale, height, width, color);
-    //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scale]);
+  const containerRef = useRef<HTMLSpanElement>(null);
 
-  return <span className={selector.current} />;
+  const w = useHandleResize(containerRef);
+
+  useLayoutEffect(() => {
+    if (w) {
+      renderLinearLegend(`.${selector.current}`, scale, height, w, color);
+    }
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scale, w]);
+
+  return (
+    <Box
+      sx={{ display: "flex" }}
+      ref={containerRef}
+      className={selector.current}
+    />
+  );
 };
 
 const renderLinearLegend = (
   selector: string,
   scale: ScaleLinear<number, number>,
   height: number,
-  width: number,
+  width: number | string,
   color: string
 ) => {
   const gradientId = `legendGradient-${Math.random().toString(36).slice(3)}`;
@@ -42,6 +54,7 @@ const renderLinearLegend = (
     .selectAll("svg")
     .data([1], Math.random)
     .join("svg")
+    .style("flex-grow", 1)
     .attr("viewBox", `0 0 ${width} ${height}`);
 
   svg

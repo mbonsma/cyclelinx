@@ -89,13 +89,13 @@ def create_dummy_scores(
             to_insert.append(row)
 
     stmt = insert(BudgetScore)
-    # stmt = insert(BudgetScore).on_conflict_do_nothing()
 
     session.execute(stmt, to_insert)
     session.commit()
 
     # TODO: add greenspace metric, we want to know whether it existed before or is a new thing the lane gives access to
     # TODO: downtown scores are typically much, much higher
+    # TODO: most features are DA borders, meaning that we only get "half" the DAs along a route, might need get_nearby_das after all
 
     for budget in budgets:
 
