@@ -30,7 +30,7 @@ def test_import_existing(app_ctx, fresh_db):
 
 
 def test_import_features(app_ctx, fresh_db):
-    test_import_path = path.join(path.dirname(__file__), "fixtures", "budget_40.xz")
+    test_import_path = path.join(path.dirname(__file__), "fixtures", "budget_40.tar.xz")
     import_improvements(test_import_path, fresh_db.session)
     features = fresh_db.session.execute(select(ImprovementFeature)).scalars().all()
     assert len(features) == 118
@@ -38,7 +38,7 @@ def test_import_features(app_ctx, fresh_db):
 
 
 def test_import_das(app_ctx, fresh_db):
-    test_import_path = path.join(path.dirname(__file__), "fixtures", "das.xz")
+    test_import_path = path.join(path.dirname(__file__), "fixtures", "das.tar.xz")
     import_das(test_import_path, fresh_db.session)
     das = fresh_db.session.execute(select(DisseminationArea)).scalars().all()
     assert len(das) == 3702
@@ -46,7 +46,7 @@ def test_import_das(app_ctx, fresh_db):
 
 def test_import_arterials(app_ctx, fresh_db):
     extracted_path = extract_files(
-        path.join(path.dirname(__file__), "fixtures", "arterial.xz")
+        path.join(path.dirname(__file__), "fixtures", "arterial.tar.xz")
     )
 
     import_arterials(extracted_path, fresh_db.session)

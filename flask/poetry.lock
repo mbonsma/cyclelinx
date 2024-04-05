@@ -378,6 +378,17 @@ SQLAlchemy = ">=1.4"
 shapely = ["Shapely (>=1.7)"]
 
 [[package]]
+name = "geojson"
+version = "3.1.0"
+description = "Python bindings and utilities for GeoJSON"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "geojson-3.1.0-py3-none-any.whl", hash = "sha256:68a9771827237adb8c0c71f8527509c8f5bef61733aa434cefc9c9d4f0ebe8f3"},
+    {file = "geojson-3.1.0.tar.gz", hash = "sha256:58a7fa40727ea058efc28b0e9ff0099eadf6d0965e04690830208d3ef571adac"},
+]
+
+[[package]]
 name = "geopandas"
 version = "0.14.3"
 description = "Geographic pandas extensions"
@@ -1478,4 +1489,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d2684977b0e00c0dd961c4a2d7c1650f11b14c4826a4c57f8f8bef089fb5e8b5"
+content-hash = "31e9cdc4231f3aa8c5a80f03911c2c0c239af96aad2dc8773745b08793f9f679"

@@ -14,10 +14,14 @@ import {
   FormControlLabel,
   Checkbox,
   checkboxClasses,
+  Divider,
+  Box,
 } from "@mui/material";
 import dynamic from "next/dynamic";
-import { scaleOrdinal } from "d3-scale";
+import { scaleLinear, scaleOrdinal } from "d3-scale";
 import { Budget, GroupedScoredDA } from "@/lib/ts/types";
+import { extent } from "d3-array";
+import LegendGradient from "@/components/LinearLegend";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
   ssr: false,
@@ -98,6 +102,15 @@ export default function Home() {
       .get(`http://localhost:9033/existing-lanes`)
       .then((r) => setExistingLanes(r.data));
   }, []);
+
+  const opacityScale = useMemo(() => {
+    if (scores && selectedMetric) {
+      const scoreRange = extent(
+        scores.map((s) => s.scores.budget[selectedMetric])
+      ) as [number, number];
+      return scaleLinear(scoreRange, [0.1, 0.75]);
+    }
+  }, [scores, selectedMetric]);
 
   useEffect(() => {
     if (budgetId) {
@@ -187,6 +200,27 @@ export default function Home() {
                 </FormControl>
               )}
             </Grid>
+            {opacityScale && (
+              <>
+                {/* <Grid item>{opacityScale.domain()[0]}</Grid>
+                <Grid item>{opacityScale.domain()[1]}</Grid> */}
+                <Grid item>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <span>{opacityScale.domain()[0]}</span>
+                    <span>{opacityScale.domain()[1]}</span>
+                  </Box>
+                  <LegendGradient
+                    color={metricScale(selectedMetric)}
+                    scale={opacityScale}
+                    height={1}
+                    width={7}
+                  />
+                </Grid>
+              </>
+            )}
+            <Divider sx={{ margin: 2 }} />
             <Grid item>
               {existingLanes && (
                 <FormControl fullWidth>
@@ -233,6 +267,7 @@ export default function Home() {
             <MapViewer
               existingLanes={existingLanes}
               features={features}
+              opacityScale={opacityScale}
               scores={scores!}
               selectedMetric={selectedMetric}
               visibleExistingLanes={visibleExistingLanes}

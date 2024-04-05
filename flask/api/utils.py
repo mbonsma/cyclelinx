@@ -6,7 +6,8 @@ import tempfile
 from typing import Any, Dict, List, Optional
 
 from geoalchemy2.shape import to_shape
-from shapely import to_geojson
+import geojson
+from shapely import to_geojson, wkb
 from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -43,39 +44,40 @@ def db_data_to_geojson_features(
     data: List[Any], extra_properties: Optional[List[dict[str, Any]]] = None
 ):
     """
-    Convert a model with a ``geometry`` property to geojson
+    Convert a model with a ``geometry`` property to a geojson FeatureCollection
 
         Parameters
         ----------
-        data : Model, the SQLAlchemy model
+        data : Model, the SQLAlchemy model, with 'geometry' property
         extra_properties : any properties not on the model that should be added to the geojson ``properties``
 
         Returns
         -------
-        dict, the geojson in dictionary format
+        FeatureCollection
+
 
     """
-
     if extra_properties is not None and len(extra_properties) != len(data):
         raise ValueError("Extra properties must be the same length as data!")
 
-    fc = {
-        "type": "FeatureCollection",
-        "crs": {
-            "type": "name",
-            "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"},
-        },
-        "features": [],
-    }
+    features = []
 
     for i, feature in enumerate(data):
         properties = model_to_dict(feature)
-        geometry = to_shape(properties.pop("geometry"))
-        geojson = loads(to_geojson(geometry))
-        geojson["properties"] = properties
+        properties.pop("geometry")
         if extra_properties is not None:
-            geojson["properties"] = {**geojson["properties"], **extra_properties[i]}
-        fc["features"].append(geojson)
+            properties = {**properties, **extra_properties[i]}
+        geom = wkb.loads(str(feature.geometry))
+        f = geojson.loads(to_geojson(geom))
+        features.append(geojson.Feature(geometry=f, properties=properties))
+
+    fc = geojson.FeatureCollection(
+        features,
+        crs={
+            "type": "name",
+            "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"},
+        },
+    )
 
     return fc
 

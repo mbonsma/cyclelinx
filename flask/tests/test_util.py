@@ -17,6 +17,7 @@ from tests.factories import (
 # TODO: we might be losing a decimal of precision with float
 def test_can_make_geojson(app_ctx, fresh_db):
     improvement_feature_model_factory(fresh_db.session).create_batch(10)
+
     # sanity check on our database reset
     results = fresh_db.session.execute(select(ImprovementFeature)).scalars().all()
     assert len(results) == 10
@@ -24,11 +25,10 @@ def test_can_make_geojson(app_ctx, fresh_db):
     geojson = db_data_to_geojson_features(results)
 
     # poor man's validation....
-    geopandas.read_file(StringIO(json.dumps(geojson)))
+    geopandas.GeoDataFrame.from_features(geojson)
 
     geojson = db_data_to_geojson_features(results, [{"a": 1} for i in range(10)])
 
-    # poor man's validation....
     geopandas.read_file(StringIO(json.dumps(geojson)))
 
     assert True

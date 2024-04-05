@@ -47,23 +47,28 @@ interface DAProperties {
   id: number;
 }
 
-interface GeoJSONC<T extends GeoJsonObject> {
+interface FeatureCollection<
+  T extends GeoJsonObject,
+  P extends Record<string, any>
+> {
   crs: {
     properties: {
       name: string;
     };
     type: string;
   };
-  features: T[];
-  type: string;
+  features: {
+    geometry: T;
+    properties: P;
+    type: "Feature";
+  };
+  type: "FeatureCollection";
 }
 
-export type DAGeoJSON = GeoJSONC<MultiPolygonFeatures<DAProperties>>;
-export interface ScoreResponse {
-  da: DAGeoJSON;
-  metric: string;
-  score: number;
-}
+export type DAGeoJSON = FeatureCollection<
+  MultiPolygonFeatures<DAProperties>,
+  Omit<DA, "geometry">
+>;
 
 export interface ScoreSet {
   budget: Record<string, number>;

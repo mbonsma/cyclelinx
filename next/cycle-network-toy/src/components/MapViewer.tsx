@@ -5,15 +5,17 @@ import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
-import { scaleLinear } from "d3-scale";
-import { extent } from "d3-array";
+import { format } from "d3-format";
 import {
   EXISTING_LANE_TYPE,
   EXISTING_LANE_NAME_MAP,
   metricScale,
   existingScale,
 } from "@/app/page";
-import { GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
+import { GroupedScoredDA } from "@/lib/ts/types";
+import { ScaleLinear } from "d3-scale";
+
+const formatPct = format(".0%");
 
 /*
     This is basically a context consumer
@@ -21,19 +23,22 @@ import { GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
 */
 const Handler: React.FC<{
   existingLanes?: any;
+  opacityScale?: ScaleLinear<number, number>;
   selected: any;
-  scores: GroupedScoredDA[];
   selectedMetric?: string;
+  scores: GroupedScoredDA[];
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
+  existingLanes,
+  opacityScale,
   selected,
   scores,
   selectedMetric,
-  existingLanes,
   visibleExistingLanes,
 }) => {
   const map = useMap();
 
+  /* Update DAs */
   useEffect(() => {
     map.eachLayer((l) => {
       if (l?.feature && l?.feature.geometry.type === "MultiPolygon") {
@@ -41,12 +46,7 @@ const Handler: React.FC<{
       }
     });
 
-    if (scores && selectedMetric) {
-      const scoreRange = extent(
-        scores.map((s) => s.scores.budget[selectedMetric])
-      ) as [number, number];
-      const opacityScale = scaleLinear(scoreRange, [0.1, 0.75]);
-
+    if (scores && selectedMetric && opacityScale) {
       scores.forEach((d) => {
         map.addLayer(
           new LGeoJSON(d.da as GeoJsonObject, {
@@ -55,12 +55,25 @@ const Handler: React.FC<{
               fillOpacity: opacityScale(d.scores.budget[selectedMetric]),
               stroke: false,
             },
+            //todo: this needs to be a loop
             onEachFeature: (f, l) => {
               l.bindPopup(
                 `<div><strong>DAUID:</strong>&nbsp;${f.properties.DAUID}</div>
-                <div><strong>Recreation:</strong>&nbsp;${d.scores.budget.recreation}</div>
-                <div><strong>Food:</strong>&nbsp;${d.scores.budget.food}</div>
-                <div><strong>Employment:</strong>&nbsp;${d.scores.budget.employment}</div>
+                <div><strong>Recreation:</strong>&nbsp;${
+                  d.scores.budget.recreation
+                }&nbsp(+${formatPct(
+                  d.scores.budget.recreation / d.scores.default.recreation
+                )})</div>
+                <div><strong>Food:</strong>&nbsp;${
+                  d.scores.budget.food
+                }&nbsp(+${formatPct(
+                  d.scores.budget.food / d.scores.default.food
+                )})</div>
+                <div><strong>Employment:</strong>&nbsp;${
+                  d.scores.budget.employment
+                }&nbsp(+${formatPct(
+                  d.scores.budget.employment / d.scores.default.employment
+                )})</div>
                 `
               );
             },
@@ -68,7 +81,7 @@ const Handler: React.FC<{
         );
       });
     }
-  }, [scores, selectedMetric]);
+  }, [scores, selectedMetric, opacityScale]);
 
   useEffect(() => {
     if (existingLanes) {
@@ -76,7 +89,7 @@ const Handler: React.FC<{
       let toAdd = [...visibleExistingLanes];
 
       map.eachLayer((l: any) => {
-        const layerProps = l?.feature?.geometry.properties;
+        const layerProps = l?.feature?.properties;
         //remove removed or filter out those that already exist from add list
         if (
           layerProps &&
@@ -128,9 +141,7 @@ const Handler: React.FC<{
       const layer = new LGeoJSON(selected as GeoJsonObject);
 
       map.eachLayer((l) => {
-        if (
-          l?.feature?.geometry.properties.feature_type == "improvement_feature"
-        ) {
+        if (l?.feature?.properties.feature_type == "improvement_feature") {
           map.removeLayer(l);
         }
       });
@@ -148,12 +159,14 @@ const c2 = new LatLng(43.61, -79.45);
 const MapViewer: React.FC<{
   existingLanes?: any;
   features: any;
+  opacityScale?: ScaleLinear<number, number>;
   scores: GroupedScoredDA[];
   selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   existingLanes,
   features,
+  opacityScale,
   scores,
   selectedMetric,
   visibleExistingLanes,
@@ -168,6 +181,7 @@ const MapViewer: React.FC<{
     />
     <Handler
       existingLanes={existingLanes}
+      opacityScale={opacityScale}
       selected={features}
       scores={scores}
       selectedMetric={selectedMetric}
