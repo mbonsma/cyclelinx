@@ -169,6 +169,13 @@ class DisseminationArea(db.Model):
     Shape_Area = Column(Float, nullable=True)
     geometry = Column(Geometry("MULTIPOLYGON"), nullable=False)
     scores = db.relationship("BudgetScore", back_populates="dissemination_area")
+    improvement_features = db.relationship(
+        "ImprovementFeature",
+        primaryjoin="func.ST_Contains(foreign(DisseminationArea.geometry), ImprovementFeature.geometry).as_comparison(1, 2)",
+        backref=db.backref("dissemination_area", uselist=False),
+        viewonly=True,
+        uselist=True,
+    )
 
 
 class Metric(db.Model):

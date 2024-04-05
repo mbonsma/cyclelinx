@@ -1,8 +1,10 @@
 import json
 
-from sqlalchemy import select
 import geopandas
 from io import StringIO
+import shapely.geometry
+from sqlalchemy import select
+import shapely
 
 from api.models import ImprovementFeature, BudgetScore
 from api.utils import db_data_to_geojson_features
@@ -60,16 +62,24 @@ def test_get_nearby_das(fresh_db):
 
 def test_create_dummy_scores(fresh_db):
     session = fresh_db.session
-    dissemination_area_factory(session).create_batch(5)
+    poly = shapely.geometry.MultiPolygon(
+        [(((0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)),)]
+    )
+    ls_in = shapely.geometry.LineString([(0, 0), (1, 1)])
+    ls_out = shapely.geometry.LineString([(9, 9), (10, 10)])
+
+    dissemination_area_factory(session).create_batch(5, geometry=poly.wkt)
     budgets = budget_model_factory(session).create_batch(3)
     for budget in budgets:
-        i = improvement_feature_model_factory(session).create()
+        i = improvement_feature_model_factory(session).create(geometry=ls_in.wkt)
         budget.improvement_features = [i]
         session.add(budget)
+    improvement_feature_model_factory(session).create(geometry=ls_out.wkt)
     session.commit()
 
     create_dummy_scores(session, ["a", "b", "c"])
 
     scores = session.execute(select(BudgetScore)).scalars().all()
-    # 5 * 3 for "default" scores with no budget
-    assert len(scores) == (5 * 3 * 3) + (5 * 3)
+    # 5 * 4 for "default" scores with no budget
+    # plus 1 da * 3 budgets * 3 metrics
+    assert len(scores) == (1 * 3 * 3) + (5 * 3)

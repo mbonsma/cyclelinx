@@ -5,7 +5,7 @@ import random
 from geoalchemy2.comparator import Comparator
 from geoalchemy2 import functions as func
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.dialects.postgresql import insert
 from shapely import wkb
 
@@ -21,6 +21,7 @@ from api.settings import app_settings
 
 
 def get_nearby_das(feature: ImprovementFeature, session: Session, limit=10):
+    """Currently unused but keeping it around"""
     location = wkb.loads(str(feature.geometry))
 
     x, y = next(zip(location.xy[0], location.xy[1]))
@@ -43,9 +44,22 @@ def get_nearby_das(feature: ImprovementFeature, session: Session, limit=10):
     return nearby_das
 
 
-def create_dummy_scores(session: Session, metrics=["recreation", "food", "employment"]):
+def create_dummy_scores(
+    session: Session, metrics=["recreation", "food", "greenspace", "employment"]
+):
 
-    budgets = session.execute(select(Budget)).scalars().all()
+    budgets = (
+        session.execute(
+            select(Budget).options(
+                joinedload(Budget.improvement_features).options(
+                    joinedload(ImprovementFeature.dissemination_area)
+                )
+            )
+        )
+        .scalars()
+        .unique()
+        .all()
+    )
 
     metrics_models = []
 
@@ -61,6 +75,8 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
     das = session.execute(select(DisseminationArea)).scalars().all()
 
     # create baseline scores
+    # todo: for greenspace, some should be zero
+    to_insert = []
     for da in das:
         for metric in metrics_models:
             score = random.randint(1, 10)
@@ -70,48 +86,44 @@ def create_dummy_scores(session: Session, metrics=["recreation", "food", "employ
                 "score": score,
             }
 
-            stmt = insert(BudgetScore)
+            to_insert.append(row)
 
-            session.execute(stmt, row)
-            session.commit()
+    stmt = insert(BudgetScore)
+    # stmt = insert(BudgetScore).on_conflict_do_nothing()
+
+    session.execute(stmt, to_insert)
+    session.commit()
 
     # TODO: add greenspace metric, we want to know whether it existed before or is a new thing the lane gives access to
     # TODO: downtown scores are typically much, much higher
-    #
 
     for budget in budgets:
-        """
-        1. here we need a score for every DA, so it would be best if we could somehow group feature by DA
-            - well, we could keep a list of inserted DAs, then check if the feature is in there
-            - we could do this with geopandas....
-            - is it possible to do it with shapely? ls = wkb.loads(str(feature.geometry)); ls.overlaps(/some da?/)
-        2. we need a downtown check (need the coordinates for downtown toronto)
-        3. would be good if we could legitimately check greenspace. Do we have parks? Would be good to have those shape files and load in.
 
-        """
+        das = {
+            feature.dissemination_area
+            for feature in budget.improvement_features
+            if feature.dissemination_area is not None
+        }
 
-        seen_das = set()
+        to_insert = []
 
-        print(f"creating scores for budget {budget.id}...")
-        # here we're using the actual streets, rather than arterials
-        for segment in budget.improvement_features:
-            # we're looking up way more DAs than we need, but at least we're not trying to insert them all....
-            nearby_das = get_nearby_das(segment, session)
-            for da in set([da.id for da in nearby_das]).difference(seen_das):
-                for metric in metrics_models:
-                    score = random.randint(11, 20) * (int(budget.name) * 0.1)
-                    row = {
-                        "budget_id": budget.id,
-                        "dissemination_area_id": da,
-                        "metric_id": metric.id,
-                        "score": score,
-                    }
+        for da in das:
+            for metric in metrics_models:
+                score = random.randint(11, 20) * (int(budget.name) * 0.1)
+                row = {
+                    "budget_id": budget.id,
+                    "dissemination_area_id": da.id,
+                    "metric_id": metric.id,
+                    "score": score,
+                }
+                to_insert.append(row)
 
-                    stmt = insert(BudgetScore)
+        stmt = insert(
+            BudgetScore
+        ).on_conflict_do_nothing()  # unless we keep a list of touched DAs, we'll have overlap
 
-                    session.execute(stmt, row)
-                    session.commit()
-                    seen_das.add(da)
+        session.execute(stmt, to_insert)
+        session.commit()
 
 
 if __name__ == "__main__":

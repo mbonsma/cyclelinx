@@ -5,7 +5,6 @@ import tarfile
 import tempfile
 from typing import Any, Dict, List, Optional
 
-from geoalchemy2.shape import to_shape
 import geojson
 from shapely import to_geojson, wkb
 from sqlalchemy import inspect
@@ -42,9 +41,9 @@ def model_to_dict(Model: DeclarativeMeta):
 
 def db_data_to_geojson_features(
     data: List[Any], extra_properties: Optional[List[dict[str, Any]]] = None
-):
+) -> geojson.FeatureCollection:
     """
-    Convert a model with a ``geometry`` property to a geojson FeatureCollection
+    Convert a list of models with a ``geometry`` property to a geojson FeatureCollection
 
         Parameters
         ----------
