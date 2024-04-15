@@ -1,4 +1,3 @@
-from json import loads
 from logging import getLogger
 from pathlib import Path
 import tarfile

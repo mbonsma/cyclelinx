@@ -80,6 +80,6 @@ def test_create_dummy_scores(fresh_db):
     create_dummy_scores(session, ["a", "b", "c"])
 
     scores = session.execute(select(BudgetScore)).scalars().all()
-    # 5 * 4 for "default" scores with no budget
-    # plus 1 da * 3 budgets * 3 metrics
-    assert len(scores) == (1 * 3 * 3) + (5 * 3)
+    # 5 * 3 for "default" scores with no budget
+    # plus 3 das * 3 budgets * 3 metrics
+    assert len(scores) == (3 * 3 * 3) + (5 * 3)

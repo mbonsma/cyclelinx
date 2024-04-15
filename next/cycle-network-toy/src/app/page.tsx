@@ -17,21 +17,42 @@ import {
   Divider,
   Box,
   Typography,
+  Collapse,
+  Link,
+  FormGroup,
 } from "@mui/material";
 import dynamic from "next/dynamic";
-import { scaleLinear, scaleOrdinal } from "d3-scale";
+import {
+  ScaleQuantile,
+  scaleLinear,
+  scaleLog,
+  scaleOrdinal,
+  scaleQuantile,
+  scaleSymlog,
+} from "d3-scale";
+import { format } from "d3-format";
 import { schemeDark2, schemeSet2 } from "d3-scale-chromatic";
-import { Budget, GroupedScoredDA } from "@/lib/ts/types";
+import { Budget, GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
 import { extent } from "d3-array";
 import LegendGradient from "@/components/LinearLegend";
+import QuartileLegend from "@/components/QuartileLegend";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
   ssr: false,
 });
 
-const METRICS = ["recreation", "food", "employment"];
+const formatScale = format(".3f");
 
-export const metricScale = scaleOrdinal(
+export type MetricType = "greenspace" | "recreation" | "food" | "employment";
+
+const METRICS: MetricType[] = [
+  "greenspace",
+  "recreation",
+  "food",
+  "employment",
+];
+
+export const metricTypeScale = scaleOrdinal(
   METRICS,
   schemeDark2.slice(0, METRICS.length)
 );
@@ -82,16 +103,48 @@ export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
   ["Cycle Track - Contraflow"]: "Cycle Track",
 };
 
+type ScaleType = "linear" | "quantile" | "log" | "bin";
+
+const getScale = (scaleType: ScaleType, domain: [number, number]) => {
+  const opacityRange = [0.1, 0.75];
+
+  switch (scaleType) {
+    /*
+      This is an opacity scale, works better than interpolating the color and casting to hex, which it seems that
+      leaflet doesn't always handle well.
+    */
+
+    case "bin":
+      return scaleLinear([0, 1], [0, 0.8]);
+
+    case "log":
+      return scaleSymlog(domain, opacityRange);
+
+    case "linear":
+      return scaleLinear(domain, opacityRange);
+
+    case "quantile":
+      return scaleQuantile(domain, [0.2, 0.4, 0.6, 0.8]);
+  }
+};
+
+const maybeLog = (scaleType: ScaleType, value: number) =>
+  scaleType === "log" ? Math.log10(value) : value;
+
 export default function Home() {
   const [budgetId, setBudgetId] = useState<number>();
   const [budgets, setBudgets] = useState<Budget[]>();
   const [features, setFeatures] = useState<any>();
   const [existingLanes, setExistingLanes] = useState<any>();
+  const [measuresVisible, setMeasuresVisible] = useState<any>();
+  const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("budget");
+  const [scaleTypeVisible, setScaleTypeVisible] = useState<any>();
+  const [scaleType, setScaleType] = useState<ScaleType>("linear");
   const [scores, setScores] = useState<GroupedScoredDA[]>();
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
-  const [selectedMetric, setSelectedMetric] = useState<string>(METRICS[0]);
+  const [selectedMetric, setSelectedMetric] = useState<MetricType>(METRICS[0]);
 
   useEffect(() => {
     axios
@@ -103,14 +156,14 @@ export default function Home() {
       .then((r) => setExistingLanes(r.data));
   }, []);
 
-  const opacityScale = useMemo(() => {
+  const daScale = useMemo(() => {
     if (scores && selectedMetric) {
-      const scoreRange = extent(
-        scores.map((s) => s.scores.budget[selectedMetric])
+      const scoreExtent = extent(
+        scores.map((s) => s.scores[scoreSetType][selectedMetric])
       ) as [number, number];
-      return scaleLinear(scoreRange, [0.1, 0.75]);
+      return getScale(scaleType, scoreExtent);
     }
-  }, [scores, selectedMetric]);
+  }, [scores, selectedMetric, scaleType, scoreSetType]);
 
   useEffect(() => {
     if (budgetId) {
@@ -136,7 +189,6 @@ export default function Home() {
         container
         flexGrow={1}
         item
-        // maxWidth={1096}
         direction="column"
       >
         <Grid
@@ -200,44 +252,121 @@ export default function Home() {
                 </FormControl>
               )}
             </Grid>
-            {opacityScale && (
+            {daScale && (
               <>
-                {/* <Grid item>{opacityScale.domain()[0]}</Grid>
-                <Grid item>{opacityScale.domain()[1]}</Grid> */}
                 <Grid item>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
-                  >
-                    <span>
-                      <Typography variant="caption">
-                        {opacityScale.domain()[0]}
-                      </Typography>
-                    </span>
-                    <span>
-                      <Typography variant="caption">
-                        {opacityScale.domain()[1]}
-                      </Typography>
-                    </span>
-                  </Box>
-                  <LegendGradient
-                    color={metricScale(selectedMetric)}
-                    scale={opacityScale}
-                    height={5}
-                  />
+                  {["linear", "log"].includes(scaleType) && (
+                    <>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span>
+                          <Typography variant="caption">
+                            {formatScale(
+                              maybeLog(scaleType, daScale.domain()[0])
+                            )}
+                          </Typography>
+                        </span>
+                        <span>
+                          <Typography variant="caption">
+                            {formatScale(
+                              maybeLog(scaleType, daScale.domain()[1])
+                            )}
+                          </Typography>
+                        </span>
+                      </Box>
+
+                      <LegendGradient
+                        color={metricTypeScale(selectedMetric)}
+                        height={5}
+                        range={daScale.range() as [number, number]}
+                      />
+                    </>
+                  )}
+                  {scaleType == "quantile" && (
+                    <QuartileLegend
+                      color={metricTypeScale(selectedMetric)}
+                      height={7}
+                      scale={daScale as ScaleQuantile<number, number>}
+                    />
+                  )}
                 </Grid>
+                <Grid item>
+                  <Link
+                    href="#"
+                    onClick={() => setScaleTypeVisible(!scaleTypeVisible)}
+                  >
+                    <Typography variant="caption">
+                      {`${scaleTypeVisible ? "Hide" : "Show"}`} scale types
+                    </Typography>
+                  </Link>
+                  <Collapse in={scaleTypeVisible}>
+                    <FormControl fullWidth>
+                      <RadioGroup>
+                        {(["linear", "quantile", "log"] as ScaleType[]).map(
+                          (t) => {
+                            return (
+                              <FormControlLabel
+                                key={t}
+                                control={<Radio />}
+                                label={t}
+                                onChange={() => setScaleType(t)}
+                                checked={scaleType == t}
+                              />
+                            );
+                          }
+                        )}
+                      </RadioGroup>
+                    </FormControl>
+                  </Collapse>
+                </Grid>
+                <Grid item>
+                  <Link
+                    href="#"
+                    onClick={() => setMeasuresVisible(!measuresVisible)}
+                  >
+                    <Typography variant="caption">
+                      {`${measuresVisible ? "Hide" : "Show"}`} measures
+                    </Typography>
+                  </Link>
+                  <Collapse in={measuresVisible}>
+                    <FormControl fullWidth>
+                      <RadioGroup>
+                        <FormControlLabel
+                          control={<Radio />}
+                          label="After Improvement"
+                          onChange={() => setScoreSetType("budget")}
+                          checked={scoreSetType === "budget"}
+                        />
+                        <FormControlLabel
+                          control={<Radio />}
+                          label="Diff"
+                          onChange={() => setScoreSetType("diff")}
+                          checked={scoreSetType === "diff"}
+                        />
+                        <FormControlLabel
+                          control={<Radio />}
+                          label="Binary"
+                          onChange={() => setScoreSetType("bin")}
+                          checked={scoreSetType === "bin"}
+                        />
+                      </RadioGroup>
+                    </FormControl>
+                  </Collapse>
+                </Grid>
+                <Divider sx={{ margin: 2 }} />
               </>
             )}
-            <Divider sx={{ margin: 2 }} />
             <Grid item>
               {existingLanes && (
                 <FormControl fullWidth>
                   <FormLabel id="checkbox-group-legend">
                     Existing Lanes
                   </FormLabel>
-                  <RadioGroup
-                    aria-labelledby="checkbox-group-legend"
-                    name="checkbox-group"
-                  >
+                  <FormGroup aria-labelledby="checkbox-group-legend">
                     {Array.from(
                       new Set(Object.values(EXISTING_LANE_NAME_MAP))
                     ).map((m: EXISTING_LANE_TYPE) => (
@@ -265,17 +394,18 @@ export default function Home() {
                         value={m}
                       />
                     ))}
-                  </RadioGroup>
+                  </FormGroup>
                 </FormControl>
               )}
             </Grid>
           </Grid>
           <Grid item xs={12} md={10} flexGrow={1}>
             <MapViewer
+              daScale={daScale}
               existingLanes={existingLanes}
               features={features}
-              opacityScale={opacityScale}
               scores={scores!}
+              scoreSet={scoreSetType}
               selectedMetric={selectedMetric}
               visibleExistingLanes={visibleExistingLanes}
             />

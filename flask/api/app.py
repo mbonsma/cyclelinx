@@ -88,7 +88,7 @@ def get_project_scores(budget_id):
 
     constructor = lambda: {
         "da": None,
-        "scores": {"budget": {}, "default": {}, "diff": {}},
+        "scores": {"budget": {}, "default": {}, "diff": {}, "bin": {}},
     }
 
     score_dict = defaultdict(constructor)
@@ -107,6 +107,9 @@ def get_project_scores(budget_id):
         ] = default_dict[score.dissemination_area_id][score.metric.name]
         score_dict[score.dissemination_area_id]["scores"]["diff"][score.metric.name] = (
             score.score - default_dict[score.dissemination_area_id][score.metric.name]
+        )
+        score_dict[score.dissemination_area_id]["scores"]["bin"][score.metric.name] = (
+            0 if score.score == 0 else 1
         )
 
     return list(score_dict.values())

@@ -1,20 +1,20 @@
 """initial
 
-Revision ID: 195c2ec60033
+Revision ID: 68e474ab0d36
 Revises:
-Create Date: 2024-03-07 16:05:56.522039
+Create Date: 2024-04-12 19:38:11.531043
 
 """
 
 from typing import Sequence, Union
 
-import geoalchemy2
 from alembic import op
 import sqlalchemy as sa
+import geoalchemy2
 
 
 # revision identifiers, used by Alembic.
-revision: str = "195c2ec60033"
+revision: str = "68e474ab0d36"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -74,6 +74,53 @@ def upgrade() -> None:
 
     op.create_index(
         op.f("ix_dissemination_areas_id"), "dissemination_areas", ["id"], unique=False
+    )
+    op.create_table(
+        "existing_lanes",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("_id", sa.Integer(), nullable=True),
+        sa.Column("OBJECTID", sa.Integer(), nullable=True),
+        sa.Column("SEGMENT_ID", sa.Integer(), nullable=True),
+        sa.Column("INSTALLED", sa.Integer(), nullable=True),
+        sa.Column("UPGRADED", sa.Integer(), nullable=True),
+        sa.Column("PRE_AMALGAMATION", sa.String(), nullable=True),
+        sa.Column("STREET_NAME", sa.String(), nullable=True),
+        sa.Column("FROM_STREET", sa.String(), nullable=True),
+        sa.Column("TO_STREET", sa.String(), nullable=True),
+        sa.Column("ROADCLASS", sa.String(), nullable=True),
+        sa.Column("CNPCLASS", sa.String(), nullable=True),
+        sa.Column("SURFACE", sa.String(), nullable=True),
+        sa.Column("OWNER", sa.String(), nullable=True),
+        sa.Column("DIR_LOWORDER", sa.String(), nullable=True),
+        sa.Column("INFRA_LOWORDER", sa.String(), nullable=True),
+        sa.Column("SEPA_LOWORDER", sa.String(), nullable=True),
+        sa.Column("SEPB_LOWORDER", sa.String(), nullable=True),
+        sa.Column("ORIG_LOWORDER_INFRA", sa.String(), nullable=True),
+        sa.Column("DIR_HIGHORDER", sa.String(), nullable=True),
+        sa.Column("INFRA_HIGHORDER", sa.String(), nullable=True),
+        sa.Column("SEPA_HIGHORDER", sa.String(), nullable=True),
+        sa.Column("SEPB_HIGHORDER", sa.String(), nullable=True),
+        sa.Column("ORIG_HIGHORDER", sa.String(), nullable=True),
+        sa.Column("BYLAWED", sa.String(), nullable=True),
+        sa.Column("EDITOR", sa.String(), nullable=True),
+        sa.Column("LAST_EDIT_DATE", sa.String(), nullable=True),
+        sa.Column("UPGRADE_DESCRIPTION", sa.String(), nullable=True),
+        sa.Column("CONVERTED", sa.String(), nullable=True),
+        sa.Column(
+            "geometry",
+            geoalchemy2.types.Geometry(
+                geometry_type="MULTILINESTRING",
+                from_text="ST_GeomFromEWKT",
+                name="geometry",
+                nullable=False,
+            ),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+    op.create_index(
+        op.f("ix_existing_lanes_id"), "existing_lanes", ["id"], unique=False
     )
     op.create_table(
         "features",
@@ -154,7 +201,7 @@ def upgrade() -> None:
         "budget_scores",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("metric_id", sa.Integer(), nullable=False),
-        sa.Column("budget_id", sa.Integer(), nullable=False),
+        sa.Column("budget_id", sa.Integer(), nullable=True),
         sa.Column("dissemination_area_id", sa.Integer(), nullable=False),
         sa.Column("score", sa.Float(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -199,8 +246,13 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_metrics_id"), table_name="metrics")
     op.drop_table("metrics")
     op.drop_index(op.f("ix_features_id"), table_name="features")
+
     op.drop_table("features")
+    op.drop_index(op.f("ix_existing_lanes_id"), table_name="existing_lanes")
+
+    op.drop_table("existing_lanes")
     op.drop_index(op.f("ix_dissemination_areas_id"), table_name="dissemination_areas")
+
     op.drop_table("dissemination_areas")
     op.drop_index(op.f("ix_budgets_id"), table_name="budgets")
     op.drop_table("budgets")

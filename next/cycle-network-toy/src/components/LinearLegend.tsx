@@ -2,20 +2,19 @@ import { useHandleResize } from "@/hooks";
 import { Box } from "@mui/material";
 import { range } from "d3-array";
 import { rgb } from "d3-color";
-import { ScaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import React, { useRef, useLayoutEffect } from "react";
 
 interface LegendGradientProps {
   color: string;
   height: number;
-  scale: ScaleLinear<number, number>;
+  range: [number, number]; //opacity range
 }
 
 const LegendGradient: React.FC<LegendGradientProps> = ({
   color,
   height,
-  scale,
+  range,
 }) => {
   const selector = useRef(
     `legend-gradient-${Math.random().toString(36).slice(3)}`
@@ -27,10 +26,10 @@ const LegendGradient: React.FC<LegendGradientProps> = ({
 
   useLayoutEffect(() => {
     if (w) {
-      renderLinearLegend(`.${selector.current}`, scale, height, w, color);
+      renderLinearLegend(color, height, range, `.${selector.current}`, w);
     }
     //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scale, w]);
+  }, [w, color]);
 
   return (
     <Box
@@ -42,11 +41,11 @@ const LegendGradient: React.FC<LegendGradientProps> = ({
 };
 
 const renderLinearLegend = (
-  selector: string,
-  scale: ScaleLinear<number, number>,
+  color: string,
   height: number,
-  width: number | string,
-  color: string
+  opacityRange: [number, number],
+  selector: string,
+  width: number | string
 ) => {
   const gradientId = `legendGradient-${Math.random().toString(36).slice(3)}`;
 
@@ -62,16 +61,12 @@ const renderLinearLegend = (
     .append("linearGradient")
     .attr("id", gradientId)
     .selectAll("stop")
-    .data(range(0, 1, 0.01), Math.random)
+    .data(range(opacityRange[0], opacityRange[1], 0.01), Math.random)
     .join("stop")
     .attr("offset", (d) => `${d * 100}%`)
     .attr("stop-color", (d) => {
       const scaleColor = rgb(color);
-      //todo: I shouldn't need to provide the range here...?
-      scaleColor.opacity = scale.interpolate()(
-        scale.range()[0],
-        scale.range()[1]
-      )(d);
+      scaleColor.opacity = d;
       return scaleColor.toString();
     });
 

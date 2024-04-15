@@ -74,6 +74,7 @@ export interface ScoreSet {
   budget: Record<string, number>;
   default: Record<string, number>;
   diff: Record<string, number>;
+  bin: Record<string, number>;
 }
 
 export interface GroupedScoredDA {
