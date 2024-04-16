@@ -14,7 +14,7 @@ import {
   MetricType,
 } from "@/app/page";
 import { GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
-import { ScaleLinear, ScaleQuantile } from "d3-scale";
+import { ScaleLinear, ScaleQuantile, ScaleSymLog } from "d3-scale";
 
 //const formatPct = format(".0%");
 const formatDec = format(".3f");
@@ -36,7 +36,10 @@ const buildValueTooltip = (item: MetricType, data: Record<string, number>) =>
 */
 const Handler: React.FC<{
   existingLanes?: any;
-  daScale?: ScaleLinear<number, number> | ScaleQuantile<number, never>;
+  daScale?:
+    | ScaleLinear<number, number>
+    | ScaleQuantile<number, never>
+    | ScaleSymLog<number, number, never>;
   selected: any;
   selectedMetric?: MetricType;
   scores: GroupedScoredDA[];
@@ -70,7 +73,6 @@ const Handler: React.FC<{
               fillOpacity: daScale(d.scores[scoreSet][selectedMetric]),
               stroke: false,
             },
-            //todo: this needs to be a loop
             onEachFeature: (f, l) => {
               l.bindPopup(
                 `<div><strong>DAUID:</strong>&nbsp;${f.properties.DAUID}</div>` +
@@ -84,7 +86,7 @@ const Handler: React.FC<{
         );
       });
     }
-  }, [scores, selectedMetric, daScale]);
+  }, [scores, selectedMetric, daScale, scoreSet, map]);
 
   useEffect(() => {
     if (existingLanes) {
@@ -137,7 +139,7 @@ const Handler: React.FC<{
         });
       }
     }
-  }, [existingLanes, visibleExistingLanes]);
+  }, [existingLanes, visibleExistingLanes, map]);
 
   useEffect(() => {
     if (selected) {
@@ -150,7 +152,7 @@ const Handler: React.FC<{
       });
       map.addLayer(layer);
     }
-  }, [selected]);
+  }, [selected, map]);
 
   return null;
 };
@@ -162,7 +164,10 @@ const c2 = new LatLng(43.61, -79.45);
 const MapViewer: React.FC<{
   existingLanes?: any;
   features: any;
-  daScale?: ScaleLinear<number, number> | ScaleQuantile<number, never>;
+  daScale?:
+    | ScaleLinear<number, number>
+    | ScaleQuantile<number, never>
+    | ScaleSymLog<number, number, never>;
   scores: GroupedScoredDA[];
   scoreSet: keyof ScoreSet;
   selectedMetric?: MetricType;

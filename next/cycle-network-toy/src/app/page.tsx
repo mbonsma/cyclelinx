@@ -25,7 +25,6 @@ import dynamic from "next/dynamic";
 import {
   ScaleQuantile,
   scaleLinear,
-  scaleLog,
   scaleOrdinal,
   scaleQuantile,
   scaleSymlog,
@@ -36,6 +35,7 @@ import { Budget, GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
 import { extent } from "d3-array";
 import LegendGradient from "@/components/LinearLegend";
 import QuartileLegend from "@/components/QuartileLegend";
+import BinaryLegend from "@/components/BinaryLegend";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
   ssr: false,
@@ -46,10 +46,10 @@ const formatScale = format(".3f");
 export type MetricType = "greenspace" | "recreation" | "food" | "employment";
 
 const METRICS: MetricType[] = [
-  "greenspace",
+  "employment",
   "recreation",
   "food",
-  "employment",
+  "greenspace",
 ];
 
 export const metricTypeScale = scaleOrdinal(
@@ -179,6 +179,18 @@ export default function Home() {
     }
   }, [budgetId]);
 
+  const setMetric = (metric: MetricType) => {
+    //for greenspace, we will automatically use binary, but binary cannot be used for other metrics
+    setSelectedMetric(metric);
+    if (metric !== "greenspace" && scaleType === "bin") {
+      setScaleType("linear");
+      setScoreSetType("budget");
+    } else if (metric === "greenspace") {
+      setScaleType("bin");
+      setScoreSetType("bin");
+    }
+  };
+
   return (
     /* Outer container */
     <Grid direction="row" container justifyContent="center">
@@ -243,7 +255,7 @@ export default function Home() {
                       <FormControlLabel
                         key={m}
                         control={<Radio />}
-                        onChange={() => setSelectedMetric(m)}
+                        onChange={() => setMetric(m)}
                         label={m}
                         value={m}
                       />
@@ -253,113 +265,125 @@ export default function Home() {
               )}
             </Grid>
             {daScale && (
-              <>
-                <Grid item>
-                  {["linear", "log"].includes(scaleType) && (
-                    <>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span>
-                          <Typography variant="caption">
-                            {formatScale(
-                              maybeLog(scaleType, daScale.domain()[0])
-                            )}
-                          </Typography>
-                        </span>
-                        <span>
-                          <Typography variant="caption">
-                            {formatScale(
-                              maybeLog(scaleType, daScale.domain()[1])
-                            )}
-                          </Typography>
-                        </span>
-                      </Box>
-
+              <Grid item container>
+                {["linear", "log"].includes(scaleType) && (
+                  <>
+                    <Grid item container justifyContent="space-between">
+                      <span>
+                        <Typography variant="caption">
+                          {formatScale(
+                            maybeLog(scaleType, daScale.domain()[0])
+                          )}
+                        </Typography>
+                      </span>
+                      <span>
+                        <Typography variant="caption">
+                          {formatScale(
+                            maybeLog(scaleType, daScale.domain()[1])
+                          )}
+                        </Typography>
+                      </span>
+                    </Grid>
+                    <Grid item width="100%">
                       <LegendGradient
                         color={metricTypeScale(selectedMetric)}
-                        height={5}
+                        height={7}
                         range={daScale.range() as [number, number]}
                       />
-                    </>
-                  )}
-                  {scaleType == "quantile" && (
-                    <QuartileLegend
-                      color={metricTypeScale(selectedMetric)}
-                      height={7}
-                      scale={daScale as ScaleQuantile<number, number>}
-                    />
-                  )}
-                </Grid>
-                <Grid item>
-                  <Link
-                    href="#"
-                    onClick={() => setScaleTypeVisible(!scaleTypeVisible)}
-                  >
-                    <Typography variant="caption">
-                      {`${scaleTypeVisible ? "Hide" : "Show"}`} scale types
-                    </Typography>
-                  </Link>
-                  <Collapse in={scaleTypeVisible}>
-                    <FormControl fullWidth>
-                      <RadioGroup>
-                        {(["linear", "quantile", "log"] as ScaleType[]).map(
-                          (t) => {
-                            return (
-                              <FormControlLabel
-                                key={t}
-                                control={<Radio />}
-                                label={t}
-                                onChange={() => setScaleType(t)}
-                                checked={scaleType == t}
-                              />
-                            );
-                          }
-                        )}
-                      </RadioGroup>
-                    </FormControl>
-                  </Collapse>
-                </Grid>
-                <Grid item>
-                  <Link
-                    href="#"
-                    onClick={() => setMeasuresVisible(!measuresVisible)}
-                  >
-                    <Typography variant="caption">
-                      {`${measuresVisible ? "Hide" : "Show"}`} measures
-                    </Typography>
-                  </Link>
-                  <Collapse in={measuresVisible}>
-                    <FormControl fullWidth>
-                      <RadioGroup>
+                    </Grid>
+                  </>
+                )}
+
+                {scaleType == "quantile" && (
+                  <QuartileLegend
+                    color={metricTypeScale(selectedMetric)}
+                    height={7}
+                    scale={daScale as ScaleQuantile<number, number>}
+                  />
+                )}
+
+                {scaleType == "bin" && (
+                  <BinaryLegend
+                    label="Greenspace Access"
+                    color={metricTypeScale(selectedMetric)}
+                    height={7}
+                  />
+                )}
+              </Grid>
+            )}
+
+            {!!daScale && selectedMetric !== "greenspace" && (
+              <Grid item>
+                <Link
+                  href="#"
+                  onClick={() => setScaleTypeVisible(!scaleTypeVisible)}
+                >
+                  <Typography variant="caption">
+                    {`${scaleTypeVisible ? "Hide" : "Show"}`} scale types
+                  </Typography>
+                </Link>
+                <Collapse in={scaleTypeVisible}>
+                  <FormControl fullWidth>
+                    <RadioGroup>
+                      {(["linear", "log", "quantile"] as ScaleType[]).map(
+                        (t) => {
+                          return (
+                            <FormControlLabel
+                              key={t}
+                              control={<Radio />}
+                              label={t}
+                              onChange={() => setScaleType(t)}
+                              checked={scaleType == t}
+                            />
+                          );
+                        }
+                      )}
+                    </RadioGroup>
+                  </FormControl>
+                </Collapse>
+              </Grid>
+            )}
+            {!!daScale && (
+              <Grid item>
+                <Link
+                  href="#"
+                  onClick={() => setMeasuresVisible(!measuresVisible)}
+                >
+                  <Typography variant="caption">
+                    {`${measuresVisible ? "Hide" : "Show"}`} measures
+                  </Typography>
+                </Link>
+                <Collapse in={measuresVisible}>
+                  <FormControl fullWidth>
+                    <RadioGroup>
+                      {selectedMetric !== "greenspace" && (
                         <FormControlLabel
                           control={<Radio />}
-                          label="After Improvement"
+                          label="Projected Total"
                           onChange={() => setScoreSetType("budget")}
                           checked={scoreSetType === "budget"}
                         />
+                      )}
+                      {selectedMetric == "greenspace" && (
                         <FormControlLabel
                           control={<Radio />}
-                          label="Diff"
-                          onChange={() => setScoreSetType("diff")}
-                          checked={scoreSetType === "diff"}
-                        />
-                        <FormControlLabel
-                          control={<Radio />}
-                          label="Binary"
+                          label="Projected Total"
                           onChange={() => setScoreSetType("bin")}
                           checked={scoreSetType === "bin"}
                         />
-                      </RadioGroup>
-                    </FormControl>
-                  </Collapse>
-                </Grid>
-                <Divider sx={{ margin: 2 }} />
-              </>
+                      )}
+                      <FormControlLabel
+                        control={<Radio />}
+                        label="Change over Present"
+                        onChange={() => setScoreSetType("diff")}
+                        checked={scoreSetType === "diff"}
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Collapse>
+              </Grid>
             )}
+            <Divider sx={{ margin: 2 }} />
             <Grid item>
               {existingLanes && (
                 <FormControl fullWidth>

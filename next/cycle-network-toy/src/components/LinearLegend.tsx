@@ -33,7 +33,7 @@ const LegendGradient: React.FC<LegendGradientProps> = ({
 
   return (
     <Box
-      sx={{ display: "flex" }}
+      sx={{ display: "flex", flexGrow: 1, width: "100%" }}
       ref={containerRef}
       className={selector.current}
     />
