@@ -1,3 +1,5 @@
+"use client";
+
 import { useHandleResize } from "@/hooks";
 import { Box } from "@mui/material";
 import { range } from "d3-array";

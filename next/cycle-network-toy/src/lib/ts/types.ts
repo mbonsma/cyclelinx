@@ -5,11 +5,9 @@ export interface Budget {
   id: number;
 }
 
-interface Score {}
-
 interface DA {}
 
-interface Metric {}
+export type ScaleType = "linear" | "quantile" | "log" | "bin";
 
 // type is geojson[multipolygon]
 
