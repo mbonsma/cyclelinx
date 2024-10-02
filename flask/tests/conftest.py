@@ -43,7 +43,7 @@ def connection():
 def app():
     from api.app import create_app
 
-    app = create_app(testing=True)
+    app = create_app(testing=True, cache=None, compress=None)
     app.config.update({"TESTING": True})
 
     yield app

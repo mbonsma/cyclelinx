@@ -2,7 +2,9 @@ import json
 import logging
 from collections import defaultdict
 
-from flask import Blueprint, Flask
+from flask import Blueprint, Flask, Response
+from flask_caching import Cache
+from flask_compress import Compress
 from flask_cors import CORS
 import logging
 from sqlalchemy import select
@@ -22,10 +24,26 @@ cycling_api = Blueprint(
     __name__,
 )
 
+default_cache = Cache(
+    config={
+        "CACHE_TYPE": "simple",
+        "CACHE_DEFAULT_TIMEOUT": 60 * 60,  # 1 hour cache timeout
+    },
+)
 
-def create_app(testing=False):
+compress = Compress()
+
+
+def get_cache_key(request):
+    return request.path
+
+
+def create_app(
+    testing=False,
+    cache: None | Cache = default_cache,
+    compress: None | Compress = compress,
+):
     app = Flask(__name__)
-    # app.config.from_pyfile(config_filename)
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         app_settings.POSTGRES_CONNECTION_STRING
         if not testing
@@ -34,6 +52,21 @@ def create_app(testing=False):
     db.init_app(app)
     app.register_blueprint(cycling_api)
     CORS(app)
+
+    if compress:
+        compress.init_app(app)
+
+    if cache:
+        cache.init_app(app)
+
+    if compress and cache:
+        compress.cache = cache
+        compress.cache_key = get_cache_key
+    # we could remove the cache decorator(s) and let compression deal with it
+    # as it will take care of caching the compressed content, which is nice (keeps cache smaller)
+    # but the best performance is with regular cache and compression, for some reason.
+    # note also that we don't need the compressed decorator
+
     return app
 
 
@@ -58,6 +91,7 @@ def get_budget_features(id):
 
 
 @cycling_api.route("/budgets/<int:budget_id>/scores")
+# @default_cache.cached()
 def get_project_scores(budget_id):
     budget: Budget = db.session.execute(
         select(Budget)
@@ -128,9 +162,13 @@ def get_metrics():
 
 
 @cycling_api.route("/existing-lanes")
-def get_existing_laness():
+# @default_cache.cached(key_prefix="/existing-lanes")
+def get_existing_lanes():
     lanes = db.session.execute(select(ExistingLane)).scalars().all()
-    return db_data_to_geojson_features(lanes)
+    data = db_data_to_geojson_features(lanes)
+    # it returns geojson, so we can safely convert to string w/o using slow jsonify
+    res = Response(str(data), content_type="application/json")
+    return res
 
 
 # https://flask.palletsprojects.com/en/2.2.x/errorhandling/#generic-exception-handlers

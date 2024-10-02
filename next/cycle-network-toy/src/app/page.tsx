@@ -107,9 +107,13 @@ export default async function Home() {
   const budgets = await fetch(`http://flask:5000/budgets`);
   const b = await budgets.json();
   const existingLanes = await fetch(`http://flask:5000/existing-lanes`, {
+    headers: {
+      "Accept-Encoding": "gzip",
+      Accept: "application/json",
+    },
     cache: "no-store",
   });
-  // sigh.... it's a lot of data, unfortunately.... 10mb --- we don't need all the properties, I would say... gzip?
+  // it's a lot of data, unfortunately, even gzipped (should not be 2 mb gzipped!)
   // dropping the properties only gets like a 15% reduction in size....
   const e = await existingLanes.json();
 
