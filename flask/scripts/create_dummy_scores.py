@@ -133,16 +133,6 @@ def create_dummy_scores(
 
     for budget in budgets:
         print(f"creating scores for budget {budget.id}")
-
-        # this just uses a postgres spatial join to grab the DA containing the feature
-        # unfortunately this does not grab all DAs that might be contiguous to a feature, so
-        # we'll be a bit inefficient and churn through all the nearby DAs for every feature
-        # leading to lots of duplication.....
-        # das = {
-        #     feature.dissemination_area
-        #     for feature in budget.improvement_features
-        #     if feature.dissemination_area is not None
-        # }
         to_insert = []
         for feature in budget.improvement_features:
             nearby_das = get_nearby_das(feature, session)

@@ -11,7 +11,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
 
-from api.models import db, Budget, BudgetScore, ExistingLane
+from api.models import db, Budget, BudgetScore, ExistingLane, Metric
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
 
@@ -113,6 +113,12 @@ def get_project_scores(budget_id):
         )
 
     return list(score_dict.values())
+
+
+@cycling_api.route("/metrics")
+def get_metrics():
+    metrics = db.session.execute(select(Metric)).scalars().all()
+    return [model_to_dict(metric) for metric in metrics]
 
 
 @cycling_api.route("/existing-lanes")

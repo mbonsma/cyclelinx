@@ -81,3 +81,8 @@ export interface GroupedScoredDA {
   da: DAGeoJSON;
   scores: ScoreSet;
 }
+
+export interface Metric {
+  id: number;
+  name: string;
+}

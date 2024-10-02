@@ -9,17 +9,20 @@ import { format } from "d3-format";
 import {
   EXISTING_LANE_TYPE,
   EXISTING_LANE_NAME_MAP,
-  metricTypeScale,
   existingScale,
-  MetricType,
 } from "@/app/page";
 import { GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
-import { ScaleLinear, ScaleQuantile, ScaleSymLog } from "d3-scale";
+import {
+  ScaleLinear,
+  ScaleOrdinal,
+  ScaleQuantile,
+  ScaleSymLog,
+} from "d3-scale";
 
 //const formatPct = format(".0%");
 const formatDec = format(".3f");
 
-const buildValueTooltip = (item: MetricType, data: Record<string, number>) =>
+const buildValueTooltip = (item: string, data: Record<string, number>) =>
   `<div><strong>${
     item.slice(0, 1).toUpperCase() + item.slice(1)
   }:</strong>&nbsp;${formatDec(data[item])}`;
@@ -40,14 +43,16 @@ const Handler: React.FC<{
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
+  metricTypeScale: ScaleOrdinal<string, string, never>;
   selected: any;
-  selectedMetric?: MetricType;
+  selectedMetric?: string;
   scores: GroupedScoredDA[];
   scoreSet: keyof ScoreSet;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   existingLanes,
   daScale,
+  metricTypeScale,
   selected,
   scores,
   scoreSet,
@@ -86,7 +91,7 @@ const Handler: React.FC<{
         );
       });
     }
-  }, [scores, selectedMetric, daScale, scoreSet, map]);
+  }, [scores, selectedMetric, daScale, scoreSet, metricTypeScale, map]);
 
   useEffect(() => {
     if (existingLanes) {
@@ -168,14 +173,16 @@ const MapViewer: React.FC<{
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
+  metricTypeScale: ScaleOrdinal<string, string, never>;
   scores: GroupedScoredDA[];
   scoreSet: keyof ScoreSet;
-  selectedMetric?: MetricType;
+  selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   existingLanes,
   features,
   daScale,
+  metricTypeScale,
   scores,
   scoreSet,
   selectedMetric,
@@ -192,6 +199,7 @@ const MapViewer: React.FC<{
     <Handler
       existingLanes={existingLanes}
       daScale={daScale}
+      metricTypeScale={metricTypeScale}
       selected={features}
       scores={scores}
       scoreSet={scoreSet}

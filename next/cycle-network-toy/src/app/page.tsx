@@ -15,7 +15,6 @@ import {
   Checkbox,
   checkboxClasses,
   Divider,
-  Box,
   Typography,
   Collapse,
   Link,
@@ -23,6 +22,7 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import {
+  ScaleOrdinal,
   ScaleQuantile,
   scaleLinear,
   scaleOrdinal,
@@ -31,7 +31,7 @@ import {
 } from "d3-scale";
 import { format } from "d3-format";
 import { schemeDark2, schemeSet2 } from "d3-scale-chromatic";
-import { Budget, GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
+import { Budget, GroupedScoredDA, Metric, ScoreSet } from "@/lib/ts/types";
 import { extent } from "d3-array";
 import LegendGradient from "@/components/LinearLegend";
 import QuartileLegend from "@/components/QuartileLegend";
@@ -42,20 +42,6 @@ const MapViewer = dynamic(() => import("./../components/MapViewer"), {
 });
 
 const formatScale = format(".3f");
-
-export type MetricType = "greenspace" | "recreation" | "food" | "employment";
-
-const METRICS: MetricType[] = [
-  "employment",
-  "recreation",
-  "food",
-  "greenspace",
-];
-
-export const metricTypeScale = scaleOrdinal(
-  METRICS,
-  schemeDark2.slice(0, METRICS.length)
-);
 
 export type EXISTING_LANE_TYPE =
   | "Sharrows"
@@ -135,6 +121,7 @@ export default function Home() {
   const [budgetId, setBudgetId] = useState<number>();
   const [budgets, setBudgets] = useState<Budget[]>();
   const [features, setFeatures] = useState<any>();
+  const [metrics, setMetrics] = useState<Metric[]>();
   const [existingLanes, setExistingLanes] = useState<any>();
   const [measuresVisible, setMeasuresVisible] = useState<any>();
   const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("budget");
@@ -144,7 +131,20 @@ export default function Home() {
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
-  const [selectedMetric, setSelectedMetric] = useState<MetricType>(METRICS[0]);
+  const [selectedMetric, setSelectedMetric] = useState<string>();
+
+  const metricTypeScale: ScaleOrdinal<string, string, never> | undefined =
+    useMemo(() => {
+      if (metrics) {
+        const scale = scaleOrdinal(
+          metrics.map((r) => r.name),
+          schemeDark2.slice(0, metrics.length)
+        );
+        return scale;
+      } else {
+        return undefined;
+      }
+    }, [metrics]);
 
   useEffect(() => {
     axios
@@ -154,6 +154,10 @@ export default function Home() {
     axios
       .get(`http://localhost:9033/existing-lanes`)
       .then((r) => setExistingLanes(r.data));
+
+    axios.get<Metric[]>(`http://localhost:9033/metrics`).then((r) => {
+      setMetrics(r.data);
+    });
   }, []);
 
   const daScale = useMemo(() => {
@@ -179,7 +183,7 @@ export default function Home() {
     }
   }, [budgetId]);
 
-  const setMetric = (metric: MetricType) => {
+  const setMetric = (metric: string) => {
     //for greenspace, we will automatically use binary, but binary cannot be used for other metrics
     setSelectedMetric(metric);
     if (metric !== "greenspace" && scaleType === "bin") {
@@ -243,21 +247,21 @@ export default function Home() {
               </FormControl>
             </Grid>
             <Grid item>
-              {!!budgetId && (
+              {!!budgetId && !!metrics && (
                 <FormControl fullWidth>
                   <FormLabel id="radio-group-legend">Metric</FormLabel>
                   <RadioGroup
                     aria-labelledby="radio-group-legend"
-                    defaultValue={METRICS[0]}
+                    defaultValue={metrics[0]}
                     name="radio-buttons-group"
                   >
-                    {METRICS.map((m) => (
+                    {metrics.map((m) => (
                       <FormControlLabel
-                        key={m}
+                        key={m.id}
                         control={<Radio />}
-                        onChange={() => setMetric(m)}
-                        label={m}
-                        value={m}
+                        onChange={() => setMetric(m.name)}
+                        label={m.name}
+                        value={m.name}
                       />
                     ))}
                   </RadioGroup>
@@ -284,31 +288,37 @@ export default function Home() {
                         </Typography>
                       </span>
                     </Grid>
-                    <Grid item width="100%">
-                      <LegendGradient
-                        color={metricTypeScale(selectedMetric)}
-                        height={7}
-                        range={daScale.range() as [number, number]}
-                      />
-                    </Grid>
+                    {!!selectedMetric && !!metricTypeScale && (
+                      <Grid item width="100%">
+                        <LegendGradient
+                          color={metricTypeScale(selectedMetric)}
+                          height={7}
+                          range={daScale.range() as [number, number]}
+                        />
+                      </Grid>
+                    )}
                   </>
                 )}
 
-                {scaleType == "quantile" && (
-                  <QuartileLegend
-                    color={metricTypeScale(selectedMetric)}
-                    height={7}
-                    scale={daScale as ScaleQuantile<number, number>}
-                  />
-                )}
+                {!!selectedMetric &&
+                  scaleType == "quantile" &&
+                  !!metricTypeScale && (
+                    <QuartileLegend
+                      color={metricTypeScale(selectedMetric)}
+                      height={7}
+                      scale={daScale as ScaleQuantile<number, number>}
+                    />
+                  )}
 
-                {scaleType == "bin" && (
-                  <BinaryLegend
-                    label="Greenspace Access"
-                    color={metricTypeScale(selectedMetric)}
-                    height={7}
-                  />
-                )}
+                {!!selectedMetric &&
+                  scaleType == "bin" &&
+                  !!metricTypeScale && (
+                    <BinaryLegend
+                      label="Greenspace Access"
+                      color={metricTypeScale(selectedMetric)}
+                      height={7}
+                    />
+                  )}
               </Grid>
             )}
 
@@ -424,15 +434,18 @@ export default function Home() {
             </Grid>
           </Grid>
           <Grid item xs={12} md={10} flexGrow={1}>
-            <MapViewer
-              daScale={daScale}
-              existingLanes={existingLanes}
-              features={features}
-              scores={scores!}
-              scoreSet={scoreSetType}
-              selectedMetric={selectedMetric}
-              visibleExistingLanes={visibleExistingLanes}
-            />
+            {!!metricTypeScale && (
+              <MapViewer
+                daScale={daScale}
+                existingLanes={existingLanes}
+                features={features}
+                scores={scores!}
+                scoreSet={scoreSetType}
+                selectedMetric={selectedMetric}
+                visibleExistingLanes={visibleExistingLanes}
+                metricTypeScale={metricTypeScale}
+              />
+            )}
           </Grid>
         </Grid>
       </Grid>
