@@ -46,7 +46,7 @@ def extract_scores(
                 {
                     "metric_id": metric_id,
                     "dissemination_area_id": da_id,
-                    "score": score + baseline_score,
+                    "score": score,
                     "budget_id": budget_id,
                 }
             )

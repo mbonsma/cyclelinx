@@ -5,11 +5,11 @@ import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
-import { format } from "d3-format";
 import {
   EXISTING_LANE_TYPE,
   EXISTING_LANE_NAME_MAP,
   existingScale,
+  formatDigit,
 } from "@/app/page";
 import { GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
 import {
@@ -20,12 +20,11 @@ import {
 } from "d3-scale";
 
 //const formatPct = format(".0%");
-const formatDec = format(".3f");
 
 const buildValueTooltip = (item: string, data: Record<string, number>) =>
   `<div><strong>${
     item.slice(0, 1).toUpperCase() + item.slice(1)
-  }:</strong>&nbsp;${formatDec(data[item])}`;
+  }:</strong>&nbsp;${formatDigit(data[item])}`;
 
 // const buildValueTooltip = (item: MetricType, data: Record<string, number>) =>
 //   `<div><strong>${

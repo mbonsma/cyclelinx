@@ -36,12 +36,60 @@ import { extent } from "d3-array";
 import LegendGradient from "@/components/LinearLegend";
 import QuartileLegend from "@/components/QuartileLegend";
 import BinaryLegend from "@/components/BinaryLegend";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 const MapViewer = dynamic(() => import("./../components/MapViewer"), {
   ssr: false,
 });
 
-const formatScale = format(".3f");
+/**
+ * Round number and return
+ *
+ * @param {number} value
+ * @param {number} sd significant digits
+ * @returns {number}
+ */
+export const roundDigit = (value: number, sd?: number): number => {
+  let fmt = "";
+  if (!value) {
+    return value;
+  } else if (sd) {
+    fmt = `.${sd}~r`;
+  } else if (sd === undefined) {
+    //for smaller numbers, use 3 sig digits, stripping trailing zeroes
+    if (Math.abs(value) < 10) {
+      fmt = `.3~r`;
+      //for larger, round to 2 decimal places, stripping trailing zeroes
+    } else {
+      fmt = `.2~f`;
+    }
+  }
+  let res: number;
+  try {
+    //for negative numbers, replace d3's dash with javascript's hyphen
+    res = +format(fmt)(value).replace("−", "-");
+    return res;
+  } catch (e) {
+    //we don't want the app to blow up if this function can't handle something
+    //eslint-disable-next-line no-console
+    console.error(e);
+    return value;
+  }
+};
+
+/**
+ * Convert number to string, adding commas to numbers greater than a thousand,
+ *     otherwise use decimal notation, varying significant digits by size
+ *
+ * @param {number} value
+ * @returns {string}
+ */
+export const formatDigit = (value: number, d?: number) => {
+  const rounded = roundDigit(value, d);
+  if (rounded > 1000) {
+    return format(",d")(rounded);
+  } else return rounded;
+};
 
 export type EXISTING_LANE_TYPE =
   | "Sharrows"
@@ -121,9 +169,10 @@ export default function Home() {
   const [budgetId, setBudgetId] = useState<number>();
   const [budgets, setBudgets] = useState<Budget[]>();
   const [features, setFeatures] = useState<any>();
-  const [metrics, setMetrics] = useState<Metric[]>();
   const [existingLanes, setExistingLanes] = useState<any>();
+  const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState<any>();
+  const [metrics, setMetrics] = useState<Metric[]>();
   const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("budget");
   const [scaleTypeVisible, setScaleTypeVisible] = useState<any>();
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
@@ -147,17 +196,34 @@ export default function Home() {
     }, [metrics]);
 
   useEffect(() => {
-    axios
-      .get<Budget[]>("http://localhost:9033/budgets")
-      .then((r) => setBudgets(r.data));
+    setLoading(true);
 
-    axios
-      .get(`http://localhost:9033/existing-lanes`)
-      .then((r) => setExistingLanes(r.data));
+    const promises = [
+      axios.get<Budget[]>("http://localhost:9033/budgets"), // 0
+      axios.get(`http://localhost:9033/existing-lanes`), // 1
+      axios.get<Metric[]>(`http://localhost:9033/metrics`), // 2
+    ];
 
-    axios.get<Metric[]>(`http://localhost:9033/metrics`).then((r) => {
-      setMetrics(r.data);
-    });
+    Promise.allSettled(promises)
+      .then((results) =>
+        results.forEach((result, i) => {
+          switch (i) {
+            case 0:
+              if (result.status === "fulfilled") {
+                setBudgets(result.value.data);
+              }
+            case 1:
+              if (result.status === "fulfilled") {
+                setExistingLanes(result.value.data);
+              }
+            case 2:
+              if (result.status === "fulfilled") {
+                setMetrics(result.value.data);
+              }
+          }
+        })
+      )
+      .finally(() => setLoading(false));
   }, []);
 
   const daScale = useMemo(() => {
@@ -171,15 +237,31 @@ export default function Home() {
 
   useEffect(() => {
     if (budgetId) {
-      axios
-        .get(`http://localhost:9033/budgets/${budgetId}/features`)
-        .then((r) => setFeatures(r.data));
+      setLoading(true);
 
-      axios
-        .get<GroupedScoredDA[]>(
-          `http://localhost:9033/budgets/${budgetId}/scores`
+      const promises = [
+        axios.get(`http://localhost:9033/budgets/${budgetId}/features`), // 0
+        axios.get<GroupedScoredDA[]>(
+          `http://localhost:9033/budgets/${budgetId}/scores` // 1
+        ),
+      ];
+
+      Promise.allSettled(promises)
+        .then((results) =>
+          results.forEach((result, i) => {
+            switch (i) {
+              case 0:
+                if (result.status === "fulfilled") {
+                  setFeatures(result.value.data);
+                }
+              case 1:
+                if (result.status === "fulfilled") {
+                  setScores(result.value.data);
+                }
+            }
+          })
         )
-        .then((r) => setScores(r.data));
+        .finally(() => setLoading(false));
     }
   }, [budgetId]);
 
@@ -275,14 +357,14 @@ export default function Home() {
                     <Grid item container justifyContent="space-between">
                       <span>
                         <Typography variant="caption">
-                          {formatScale(
+                          {formatDigit(
                             maybeLog(scaleType, daScale.domain()[0])
                           )}
                         </Typography>
                       </span>
                       <span>
                         <Typography variant="caption">
-                          {formatScale(
+                          {formatDigit(
                             maybeLog(scaleType, daScale.domain()[1])
                           )}
                         </Typography>
@@ -449,6 +531,7 @@ export default function Home() {
           </Grid>
         </Grid>
       </Grid>
+      <LoadingOverlay open={loading} />
     </Grid>
   );
 }

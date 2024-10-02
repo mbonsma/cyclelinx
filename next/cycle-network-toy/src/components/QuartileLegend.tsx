@@ -1,9 +1,7 @@
 import React from "react";
 import { ScaleQuantile } from "d3-scale";
-import { format } from "d3-format";
 import { Box, Grid, Typography } from "@mui/material";
-
-const formatNm = format(".1f");
+import { formatDigit } from "@/app/page";
 
 interface QuartileLegendProps {
   color: string;
@@ -27,16 +25,21 @@ const QuartileLegend: React.FC<QuartileLegendProps> = ({
     >
       {scale.range().map((r) => {
         const [v0, v1] = scale.invertExtent(r);
-        const label = `${formatNm(v0)}-${formatNm(v1)}`;
+        const label = `${formatDigit(v0)}-${formatDigit(v1)}`;
         return (
-          <Grid key={r} direction="column" item container>
+          <Grid
+            key={r}
+            direction="column"
+            item
+            container
+            justifyContent="space-between"
+          >
             <Grid item>
               <Typography variant="caption">{label}</Typography>
             </Grid>
             <Grid
               item
               component={Box}
-              flexGrow={1}
               sx={{ backgroundColor: color, opacity: r, height }}
             />
           </Grid>

@@ -99,15 +99,21 @@ def get_project_scores(budget_id):
             if not score_dict[score.dissemination_area_id]["da"]
             else score_dict[score.dissemination_area_id]["da"]
         )
-        score_dict[score.dissemination_area_id]["scores"]["budget"][
-            score.metric.name
-        ] = score.score
+
+        baseline_score = default_dict[score.dissemination_area_id][score.metric.name]
+
         score_dict[score.dissemination_area_id]["scores"]["default"][
             score.metric.name
-        ] = default_dict[score.dissemination_area_id][score.metric.name]
-        score_dict[score.dissemination_area_id]["scores"]["diff"][score.metric.name] = (
-            score.score - default_dict[score.dissemination_area_id][score.metric.name]
-        )
+        ] = baseline_score
+
+        score_dict[score.dissemination_area_id]["scores"]["budget"][
+            score.metric.name
+        ] = (score.score + baseline_score)
+
+        score_dict[score.dissemination_area_id]["scores"]["diff"][
+            score.metric.name
+        ] = score.score
+
         score_dict[score.dissemination_area_id]["scores"]["bin"][score.metric.name] = (
             0 if score.score == 0 else 1
         )
