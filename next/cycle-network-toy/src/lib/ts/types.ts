@@ -59,7 +59,7 @@ interface FeatureCollection<
     geometry: T;
     properties: P;
     type: "Feature";
-  };
+  }[];
   type: "FeatureCollection";
 }
 
@@ -70,11 +70,19 @@ export type DAGeoJSON = FeatureCollection<
 
 export interface ScoreSet {
   budget: Record<string, number>;
-  default: Record<string, number>;
+  original: Record<string, number>;
   diff: Record<string, number>;
   bin: Record<string, number>;
 }
 
+export interface ScoreResults {
+  [key: string]: {
+    da: number;
+    scores: ScoreSet;
+  };
+}
+
+// todo: drop this
 export interface GroupedScoredDA {
   da: DAGeoJSON;
   scores: ScoreSet;

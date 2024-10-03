@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
@@ -11,46 +11,35 @@ import {
   existingScale,
   formatDigit,
 } from "@/app/page";
-import { GroupedScoredDA, ScoreSet } from "@/lib/ts/types";
+import { ScoreResults, ScoreSet } from "@/lib/ts/types";
 import {
   ScaleLinear,
   ScaleOrdinal,
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
-
-//const formatPct = format(".0%");
+import { DAContext } from "@/providers/DAContextProvider";
 
 const buildValueTooltip = (item: string, data: Record<string, number>) =>
   `<div><strong>${
     item.slice(0, 1).toUpperCase() + item.slice(1)
   }:</strong>&nbsp;${formatDigit(data[item])}`;
 
-// const buildValueTooltip = (item: MetricType, data: Record<string, number>) =>
-//   `<div><strong>${
-//     item.slice(0, 1).toUpperCase() + item.slice(1)
-//   }:</strong>&nbsp;${formatDec(data[item])}&nbsp(+${formatPct(
-//     data[item] / baselineData[item]
-//   )})</div>`;
-/*
-    This is basically a context consumer
-    We place it in the component and it is then nested in the context provider and we can access it
-*/
 const Handler: React.FC<{
   existingLanes?: any;
-  daScale?:
+  scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
   selected: any;
   selectedMetric?: string;
-  scores: GroupedScoredDA[];
+  scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   existingLanes,
-  daScale,
+  scoreScale,
   metricTypeScale,
   selected,
   scores,
@@ -58,39 +47,57 @@ const Handler: React.FC<{
   selectedMetric,
   visibleExistingLanes,
 }) => {
+  const [dasSet, setDasSet] = useState(false);
   const map = useMap();
+  const das = useContext(DAContext);
 
-  /* Update DAs */
   useEffect(() => {
-    map.eachLayer((l) => {
-      if (l?.feature && l?.feature.geometry.type === "MultiPolygon") {
-        map.removeLayer(l);
-      }
-    });
+    if (!dasSet && !!map && !!scores) {
+      //this will create a single layer for each feature in the bundle
+      map.addLayer(
+        new LGeoJSON(das as GeoJsonObject, {
+          style: {
+            stroke: false,
+            fillColor: "none",
+            fillOpacity: 0,
+          },
+          attribution: "DAs", //using this as a handle
+        })
+      );
+      setDasSet(true);
+    }
+  }, [das, dasSet, map, setDasSet, scores]);
 
-    if (scores && selectedMetric && daScale) {
-      scores.forEach((d) => {
-        map.addLayer(
-          new LGeoJSON(d.da as GeoJsonObject, {
-            style: {
-              fillColor: metricTypeScale(selectedMetric),
-              fillOpacity: daScale(d.scores[scoreSet][selectedMetric]),
-              stroke: false,
-            },
-            onEachFeature: (f, l) => {
-              l.bindPopup(
-                `<div><strong>DAUID:</strong>&nbsp;${f.properties.DAUID}</div>` +
-                  metricTypeScale
-                    .domain()
-                    .map((v) => buildValueTooltip(v, d.scores[scoreSet]))
-                    .join("\n")
-              );
-            },
-          })
-        );
+  useEffect(() => {
+    if (!!scores && !!selectedMetric && !!scoreScale) {
+      map.eachLayer((l) => {
+        //it seems we have the full feature layer as well as layers broken out...
+        if (l.options.attribution === "DAs" && !!l.feature) {
+          l.setStyle({
+            fillColor: metricTypeScale(selectedMetric),
+            fillOpacity: scoreScale(
+              scores[l.feature.properties.id.toString()].scores[scoreSet][
+                selectedMetric
+              ]
+            ),
+          });
+
+          l.bindPopup(
+            `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
+              metricTypeScale
+                .domain()
+                .map((v) =>
+                  buildValueTooltip(
+                    v,
+                    scores[l.feature.properties.id.toString()].scores[scoreSet]
+                  )
+                )
+                .join("\n")
+          );
+        }
       });
     }
-  }, [scores, selectedMetric, daScale, scoreSet, metricTypeScale, map]);
+  }, [das, scores, selectedMetric, scoreScale, scoreSet, metricTypeScale, map]);
 
   useEffect(() => {
     if (existingLanes) {
@@ -168,19 +175,19 @@ const c2 = new LatLng(43.61, -79.45);
 const MapViewer: React.FC<{
   existingLanes?: any;
   features: any;
-  daScale?:
+  scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
-  scores: GroupedScoredDA[];
+  scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
   selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   existingLanes,
   features,
-  daScale,
+  scoreScale,
   metricTypeScale,
   scores,
   scoreSet,
@@ -197,7 +204,7 @@ const MapViewer: React.FC<{
     />
     <Handler
       existingLanes={existingLanes}
-      daScale={daScale}
+      scoreScale={scoreScale}
       metricTypeScale={metricTypeScale}
       selected={features}
       scores={scores}

@@ -5,6 +5,7 @@ import { format } from "d3-format";
 import { schemeSet2 } from "d3-scale-chromatic";
 
 import { MainViewPanel } from "@/components";
+import DAContextProvider from "@/providers/DAContextProvider";
 
 /**
  * Round number and return
@@ -113,24 +114,32 @@ export default async function Home() {
     },
     cache: "no-store",
   });
-  // it's a lot of data, unfortunately, even gzipped (should not be 2 mb gzipped!)
-  // dropping the properties only gets like a 15% reduction in size....
   const e = await existingLanes.json();
+  const das = await fetch(`http://flask:5000/das`, {
+    headers: {
+      "Accept-Encoding": "gzip",
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const d = await das.json();
 
   return (
-    /* Outer container */
-    <Grid direction="row" container justifyContent="center">
-      {/* Inner column container */}
-      <Grid
-        alignItems="center"
-        spacing={5}
-        container
-        flexGrow={1}
-        item
-        direction="column"
-      >
-        <MainViewPanel budgets={b} existingLanes={e} metrics={m} />
+    <DAContextProvider das={d}>
+      {/* Outer container */}
+      <Grid direction="row" container justifyContent="center">
+        {/* Inner column container */}
+        <Grid
+          alignItems="center"
+          spacing={5}
+          container
+          flexGrow={1}
+          item
+          direction="column"
+        >
+          <MainViewPanel budgets={b} existingLanes={e} metrics={m} />
+        </Grid>
       </Grid>
-    </Grid>
+    </DAContextProvider>
   );
 }

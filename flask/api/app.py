@@ -13,7 +13,7 @@ from sqlalchemy.orm import joinedload
 from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
-from api.models import db, Budget, BudgetScore, ExistingLane, Metric
+from api.models import db, Budget, BudgetScore, DisseminationArea, ExistingLane, Metric
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
 
@@ -90,6 +90,14 @@ def get_budget_features(id):
     return db_data_to_geojson_features(budget.improvement_features)
 
 
+# d-dicts must have module-level constructors to be pickled by cache
+def dd_constructor():
+    return {
+        "da": None,
+        "scores": {"budget": {}, "original": {}, "diff": {}, "bin": {}},
+    }
+
+
 @cycling_api.route("/budgets/<int:budget_id>/scores")
 @default_cache.cached()
 def get_project_scores(budget_id):
@@ -120,26 +128,18 @@ def get_project_scores(budget_id):
     for d in defaults:
         default_dict[d.dissemination_area_id][d.metric.name] = d.score
 
-    constructor = lambda: {
-        "da": None,
-        "scores": {"budget": {}, "default": {}, "diff": {}, "bin": {}},
-    }
-
-    score_dict = defaultdict(constructor)
+    score_dict = defaultdict(dd_constructor)
 
     for score in budget.scores:
         score_dict[score.dissemination_area_id]["da"] = (
-            # can't decode here b/c it will get decoded twice
-            # might just want 2 requests (cache the DAs anyway in a map, store them in react context, just indicate by IDs here)
-            # yeah just preload all the DAs and don't bother sending them around like this
-            db_data_to_geojson_features([score.dissemination_area])
+            score.dissemination_area.id
             if not score_dict[score.dissemination_area_id]["da"]
             else score_dict[score.dissemination_area_id]["da"]
         )
 
         baseline_score = default_dict[score.dissemination_area_id][score.metric.name]
 
-        score_dict[score.dissemination_area_id]["scores"]["default"][
+        score_dict[score.dissemination_area_id]["scores"]["original"][
             score.metric.name
         ] = baseline_score
 
@@ -155,7 +155,7 @@ def get_project_scores(budget_id):
             0 if score.score == 0 else 1
         )
 
-    return list(score_dict.values())
+    return score_dict
 
 
 @cycling_api.route("/metrics")
@@ -170,6 +170,15 @@ def get_existing_lanes():
     lanes = db.session.execute(select(ExistingLane)).scalars().all()
     data = db_data_to_geojson_features(lanes)
     # dumping is much faster than jsonify
+    res = Response(geojson.dumps(data), content_type="application/json")
+    return res
+
+
+@cycling_api.route("/das")
+@default_cache.cached(key_prefix="/das")
+def get_das():
+    das = db.session.execute(select(DisseminationArea)).scalars().all()
+    data = db_data_to_geojson_features(das)
     res = Response(geojson.dumps(data), content_type="application/json")
     return res
 

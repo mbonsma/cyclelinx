@@ -21,6 +21,13 @@ def test_get_budgets(client, fresh_db):
     assert len(response.json) == 10
 
 
+def test_get_das(client, fresh_db):
+    dissemination_area_factory(fresh_db.session).create_batch(10)
+    response = client.get("/das")
+    assert response.status_code == 200
+    assert len(response.json["features"]) == 10
+
+
 def test_get_budget_improvements(client, fresh_db):
     budget = budget_model_factory(fresh_db.session).create()
     improvements = improvement_feature_model_factory(fresh_db.session).create_batch(10)
@@ -58,4 +65,4 @@ def test_get_budget_scores(client, fresh_db):
 
     response = client.get(f"/budgets/{budget.id}/scores")
     assert response.status_code == 200
-    assert len(response.json) == 5
+    assert len(response.json) == 5  # dict w/ 5 keyes

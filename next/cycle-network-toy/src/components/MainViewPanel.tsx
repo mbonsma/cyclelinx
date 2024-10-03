@@ -9,6 +9,7 @@ import {
   Metric,
   ScoreSet,
   ScaleType,
+  ScoreResults,
 } from "@/lib/ts/types";
 import {
   EXISTING_LANE_NAME_MAP,
@@ -99,7 +100,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState<any>();
   const [scaleTypeVisible, setScaleTypeVisible] = useState<any>();
-  const [scores, setScores] = useState<GroupedScoredDA[]>();
+  const [scores, setScores] = useState<ScoreResults>();
   const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("budget");
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
 
@@ -127,7 +128,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
 
       const promises = [
         axios.get(`http://localhost:9033/budgets/${budgetId}/features`), // 0
-        axios.get<GroupedScoredDA[]>(
+        axios.get<ScoreResults>(
           `http://localhost:9033/budgets/${budgetId}/scores` // 1
         ),
       ];
@@ -151,10 +152,10 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
     }
   }, [budgetId]);
 
-  const daScale = useMemo(() => {
+  const scoreScale = useMemo(() => {
     if (scores && selectedMetric) {
       const scoreExtent = extent(
-        scores.map((s) => s.scores[scoreSetType][selectedMetric])
+        Object.values(scores).map((s) => s.scores[scoreSetType][selectedMetric])
       ) as [number, number];
       return getScale(scaleType, scoreExtent);
     }
@@ -234,19 +235,19 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
             </FormControl>
           )}
         </Grid>
-        {daScale && (
+        {scoreScale && (
           <Grid item container>
             {["linear", "log"].includes(scaleType) && (
               <>
                 <Grid item container justifyContent="space-between">
                   <span>
                     <Typography variant="caption">
-                      {formatDigit(maybeLog(scaleType, daScale.domain()[0]))}
+                      {formatDigit(maybeLog(scaleType, scoreScale.domain()[0]))}
                     </Typography>
                   </span>
                   <span>
                     <Typography variant="caption">
-                      {formatDigit(maybeLog(scaleType, daScale.domain()[1]))}
+                      {formatDigit(maybeLog(scaleType, scoreScale.domain()[1]))}
                     </Typography>
                   </span>
                 </Grid>
@@ -255,7 +256,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
                     <LegendGradient
                       color={metricTypeScale(selectedMetric)}
                       height={7}
-                      range={daScale.range() as [number, number]}
+                      range={scoreScale.range() as [number, number]}
                     />
                   </Grid>
                 )}
@@ -268,7 +269,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
                 <QuartileLegend
                   color={metricTypeScale(selectedMetric)}
                   height={7}
-                  scale={daScale as ScaleQuantile<number, number>}
+                  scale={scoreScale as ScaleQuantile<number, number>}
                 />
               )}
 
@@ -282,7 +283,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
           </Grid>
         )}
 
-        {!!daScale && selectedMetric !== "greenspace" && (
+        {!!scoreScale && selectedMetric !== "greenspace" && (
           <Grid item>
             <Link
               href="#"
@@ -311,7 +312,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
             </Collapse>
           </Grid>
         )}
-        {!!daScale && (
+        {!!scoreScale && (
           <Grid item>
             <Link href="#" onClick={() => setMeasuresVisible(!measuresVisible)}>
               <Typography variant="caption">
@@ -389,10 +390,10 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
       <Grid item xs={12} md={10} flexGrow={1}>
         {!!metricTypeScale && (
           <MapViewer
-            daScale={daScale}
+            scoreScale={scoreScale}
             existingLanes={existingLanes}
             features={features}
-            scores={scores!}
+            scores={scores}
             scoreSet={scoreSetType}
             selectedMetric={selectedMetric}
             visibleExistingLanes={visibleExistingLanes}
