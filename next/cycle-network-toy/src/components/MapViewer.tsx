@@ -19,11 +19,24 @@ import {
   ScaleSymLog,
 } from "d3-scale";
 import { DAContext } from "@/providers/DAContextProvider";
+import { format } from "d3-format";
 
-const buildValueTooltip = (item: string, data: Record<string, number>) =>
-  `<div><strong>${
-    item.slice(0, 1).toUpperCase() + item.slice(1)
-  }:</strong>&nbsp;${formatDigit(data[item])}`;
+const formatPct = format(",.1%");
+
+const buildValueTooltip = (
+  metric: string,
+  scores: ScoreSet,
+  score_type: keyof ScoreSet
+) => {
+  const diff = scores.diff[metric] / scores.original[metric];
+
+  const pctChange =
+    score_type === "diff" ? (diff ? ` (${formatPct(diff)})` : " (N/A)") : "";
+
+  return `<div><strong>${
+    metric.slice(0, 1).toUpperCase() + metric.slice(1)
+  }:</strong>&nbsp;${formatDigit(scores[score_type][metric])}${pctChange}`;
+};
 
 const Handler: React.FC<{
   existingLanes?: any;
@@ -73,25 +86,19 @@ const Handler: React.FC<{
       map.eachLayer((l) => {
         //it seems we have the full feature layer as well as layers broken out...
         if (l.options.attribution === "DAs" && !!l.feature) {
+          const da_score_set =
+            scores[l.feature.properties.id.toString()].scores;
+          const da_scores = da_score_set[scoreSet];
           l.setStyle({
             fillColor: metricTypeScale(selectedMetric),
-            fillOpacity: scoreScale(
-              scores[l.feature.properties.id.toString()].scores[scoreSet][
-                selectedMetric
-              ]
-            ),
+            fillOpacity: scoreScale(da_scores[selectedMetric]),
           });
 
           l.bindPopup(
             `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
               metricTypeScale
                 .domain()
-                .map((v) =>
-                  buildValueTooltip(
-                    v,
-                    scores[l.feature.properties.id.toString()].scores[scoreSet]
-                  )
-                )
+                .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
                 .join("\n")
           );
         }

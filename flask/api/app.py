@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 
 import geojson
-from flask import Blueprint, Flask, Response
+from flask import Blueprint, Flask, Response, jsonify
 from flask_caching import Cache
 from flask_compress import Compress
 from flask_cors import CORS
@@ -155,7 +155,7 @@ def get_project_scores(budget_id):
             0 if score.score == 0 else 1
         )
 
-    return score_dict
+    return jsonify(score_dict)
 
 
 @cycling_api.route("/metrics")

@@ -101,7 +101,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
   const [measuresVisible, setMeasuresVisible] = useState<any>();
   const [scaleTypeVisible, setScaleTypeVisible] = useState<any>();
   const [scores, setScores] = useState<ScoreResults>();
-  const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("budget");
+  const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("diff");
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
 
   const [selectedMetric, setSelectedMetric] = useState<string>();
@@ -322,6 +322,12 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
             <Collapse in={measuresVisible}>
               <FormControl fullWidth>
                 <RadioGroup>
+                  <FormControlLabel
+                    control={<Radio />}
+                    label="Change over Present"
+                    onChange={() => setScoreSetType("diff")}
+                    checked={scoreSetType === "diff"}
+                  />
                   {selectedMetric !== "greenspace" && (
                     <FormControlLabel
                       control={<Radio />}
@@ -338,12 +344,6 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
                       checked={scoreSetType === "bin"}
                     />
                   )}
-                  <FormControlLabel
-                    control={<Radio />}
-                    label="Change over Present"
-                    onChange={() => setScoreSetType("diff")}
-                    checked={scoreSetType === "diff"}
-                  />
                 </RadioGroup>
               </FormControl>
             </Collapse>
