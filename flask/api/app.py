@@ -2,6 +2,7 @@ import json
 import logging
 from collections import defaultdict
 
+import geojson
 from flask import Blueprint, Flask, Response
 from flask_caching import Cache
 from flask_compress import Compress
@@ -11,7 +12,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
-
 
 from api.models import db, Budget, BudgetScore, ExistingLane, Metric
 from api.settings import app_settings
@@ -34,8 +34,8 @@ default_cache = Cache(
 compress = Compress()
 
 
-def get_cache_key(request):
-    return request.path
+# def get_cache_key(request):
+#     return request.path
 
 
 def create_app(
@@ -59,9 +59,9 @@ def create_app(
     if cache:
         cache.init_app(app)
 
-    if compress and cache:
-        compress.cache = cache
-        compress.cache_key = get_cache_key
+    # if compress and cache:
+    #     compress.cache = cache
+    #     compress.cache_key = get_cache_key
     # we could remove the cache decorator(s) and let compression deal with it
     # as it will take care of caching the compressed content, which is nice (keeps cache smaller)
     # but the best performance is with regular cache and compression, for some reason.
@@ -91,7 +91,7 @@ def get_budget_features(id):
 
 
 @cycling_api.route("/budgets/<int:budget_id>/scores")
-# @default_cache.cached()
+@default_cache.cached()
 def get_project_scores(budget_id):
     budget: Budget = db.session.execute(
         select(Budget)
@@ -129,6 +129,9 @@ def get_project_scores(budget_id):
 
     for score in budget.scores:
         score_dict[score.dissemination_area_id]["da"] = (
+            # can't decode here b/c it will get decoded twice
+            # might just want 2 requests (cache the DAs anyway in a map, store them in react context, just indicate by IDs here)
+            # yeah just preload all the DAs and don't bother sending them around like this
             db_data_to_geojson_features([score.dissemination_area])
             if not score_dict[score.dissemination_area_id]["da"]
             else score_dict[score.dissemination_area_id]["da"]
@@ -162,12 +165,12 @@ def get_metrics():
 
 
 @cycling_api.route("/existing-lanes")
-# @default_cache.cached(key_prefix="/existing-lanes")
+@default_cache.cached(key_prefix="/existing-lanes")
 def get_existing_lanes():
     lanes = db.session.execute(select(ExistingLane)).scalars().all()
     data = db_data_to_geojson_features(lanes)
-    # it returns geojson, so we can safely convert to string w/o using slow jsonify
-    res = Response(str(data), content_type="application/json")
+    # dumping is much faster than jsonify
+    res = Response(geojson.dumps(data), content_type="application/json")
     return res
 
 
