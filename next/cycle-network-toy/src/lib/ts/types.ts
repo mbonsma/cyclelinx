@@ -1,19 +1,41 @@
-import { MultiPolygon, Position, GeoJsonObject } from "geojson";
+import { MultiPolygon, Position, LineString, GeoJsonObject } from "geojson";
 
 export interface Budget {
   name: string;
   id: number;
 }
 
-interface DA {}
-
 export type ScaleType = "linear" | "quantile" | "log" | "bin";
 
-// type is geojson[multipolygon]
-
-interface MultiPolygonFeatures<T extends Record<string, any>>
-  extends MultiPolygon {
-  properties: T;
+interface ExistingLaneProperties {
+  id: number;
+  OBJECTID: number;
+  SEGMENT_ID: number;
+  INSTALLED: number;
+  UPGRADED: number;
+  PRE_AMALGAMATION: string;
+  STREET_NAME: string;
+  FROM_STREET: string;
+  TO_STREET: string;
+  ROADCLASS: string;
+  CNPCLASS: string;
+  SURFACE: string;
+  OWNER: string;
+  DIR_LOWORDER: string;
+  INFRA_LOWORDER: string;
+  SEPA_LOWORDER: string;
+  SEPB_LOWORDER: string;
+  ORIG_LOWORDER_INFRA: string;
+  DIR_HIGHORDER: string;
+  INFRA_HIGHORDER: string;
+  SEPA_HIGHORDER: string;
+  SEPB_HIGHORDER: string;
+  ORIG_HIGHORDER: string;
+  BYLAWED: string;
+  EDITOR: string;
+  LAST_EDIT_DATE: string;
+  UPGRADE_DESCRIPTION: string;
+  CONVERTED: string;
 }
 
 interface DAProperties {
@@ -45,6 +67,36 @@ interface DAProperties {
   id: number;
 }
 
+interface FeatureProperties {
+  ADDRESS_L: string;
+  ADDRESS_R: string;
+  CP_TYPE: string;
+  DIR_CODE_D: string;
+  FCODE: number;
+  FCODE_DESC: string;
+  feature_type: string;
+  FNODE: number;
+  GEO_ID: number;
+  geometry: string;
+  HINUML: number;
+  HINUMR: number;
+  JURIS_CODE: string;
+  length_in_: number;
+  LFN_ID: number;
+  LF_NAME: string;
+  LONUMR: number;
+  LONUML: number;
+  NBRLANES_2: number;
+  OBJECTID: number;
+  OE_FLAG_L: string;
+  OE_FLAG_R: string;
+  ONE_WAY_DI: number;
+  Shape_Leng: number;
+  SPEED: number;
+  TNODE: number;
+  U500_20: string;
+}
+
 interface FeatureCollection<
   T extends GeoJsonObject,
   P extends Record<string, any>
@@ -63,9 +115,16 @@ interface FeatureCollection<
   type: "FeatureCollection";
 }
 
-export type DAGeoJSON = FeatureCollection<
-  MultiPolygonFeatures<DAProperties>,
-  Omit<DA, "geometry">
+export type DAGeoJSON = FeatureCollection<MultiPolygon, DAProperties>;
+
+export type BaseFeatureGeoJSON = FeatureCollection<
+  LineString,
+  FeatureProperties
+>;
+
+export type ExistingLaneGeoJSON = FeatureCollection<
+  LineString,
+  ExistingLaneProperties
 >;
 
 export interface ScoreSet {
@@ -80,12 +139,6 @@ export interface ScoreResults {
     da: number;
     scores: ScoreSet;
   };
-}
-
-// todo: drop this
-export interface GroupedScoredDA {
-  da: DAGeoJSON;
-  scores: ScoreSet;
 }
 
 export interface Metric {

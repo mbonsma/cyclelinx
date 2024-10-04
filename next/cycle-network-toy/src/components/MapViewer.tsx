@@ -11,7 +11,12 @@ import {
   existingScale,
   formatDigit,
 } from "@/app/page";
-import { ScoreResults, ScoreSet } from "@/lib/ts/types";
+import {
+  BaseFeatureGeoJSON,
+  ExistingLaneGeoJSON,
+  ScoreResults,
+  ScoreSet,
+} from "@/lib/ts/types";
 import {
   ScaleLinear,
   ScaleOrdinal,
@@ -40,7 +45,7 @@ const buildValueTooltip = (
 };
 
 const Handler: React.FC<{
-  existingLanes?: any;
+  existingLanes?: ExistingLaneGeoJSON;
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
@@ -178,8 +183,6 @@ const Handler: React.FC<{
       map.addLayer(layer);
     }
   }, [selected, map, theme]);
-
-  return null;
 };
 
 //GTA, more or less
@@ -187,8 +190,8 @@ const c1 = new LatLng(43.72, -79.21);
 const c2 = new LatLng(43.61, -79.45);
 
 const MapViewer: React.FC<{
-  existingLanes?: any;
-  features: any;
+  existingLanes?: ExistingLaneGeoJSON;
+  features: BaseFeatureGeoJSON;
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>

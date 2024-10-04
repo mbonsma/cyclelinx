@@ -5,11 +5,12 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Budget,
-  GroupedScoredDA,
   Metric,
   ScoreSet,
   ScaleType,
   ScoreResults,
+  ExistingLaneGeoJSON,
+  BaseFeatureGeoJSON,
 } from "@/lib/ts/types";
 import {
   EXISTING_LANE_NAME_MAP,
@@ -62,7 +63,7 @@ const MapViewer = dynamic(() => import("./MapViewer"), {
 
 interface ViewPanelProps {
   budgets: Budget[];
-  existingLanes: any[];
+  existingLanes: ExistingLaneGeoJSON;
   metrics: Metric[];
 }
 
@@ -98,10 +99,10 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
   metrics,
 }) => {
   const [budgetId, setBudgetId] = useState<number>();
-  const [features, setFeatures] = useState<any>();
+  const [features, setFeatures] = useState<BaseFeatureGeoJSON>();
   const [loading, setLoading] = useState(false);
-  const [measuresVisible, setMeasuresVisible] = useState<any>();
-  const [scaleTypeVisible, setScaleTypeVisible] = useState<any>();
+  const [measuresVisible, setMeasuresVisible] = useState(false);
+  const [scaleTypeVisible, setScaleTypeVisible] = useState(false);
   const [scores, setScores] = useState<ScoreResults>();
   const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("diff");
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
@@ -228,7 +229,9 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
                 }}
               />
             </Grid>
-            <Grid item>Proposed New Bike Lane</Grid>
+            <Grid item>
+              <Typography variant="caption">Proposed New Bike Lane</Typography>
+            </Grid>
           </Grid>
         )}
         <Grid item>
