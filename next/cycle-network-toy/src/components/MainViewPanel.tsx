@@ -198,20 +198,21 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
       >
         <Grid item>
           <FormControl fullWidth>
-            <InputLabel id="budget-select-label">Budget</InputLabel>
+            <InputLabel id="budget-select-label">Budget (in km)</InputLabel>
             <Select
               labelId="budget-select-label"
               id="budget-select"
               value={budgetId || ""}
-              label="Age"
+              label="Budget (in km)"
               onChange={(e) => setBudgetId(+e.target.value)}
             >
               {budgets &&
                 budgets
                   .sort((a, b) => (+a.name < +b.name ? -1 : 1))
+                  .map((b) => ({ ["km"]: Number(b.name) / 4, ...b }))
                   .map((b) => (
                     <MenuItem key={b.id} value={b.id}>
-                      {b.name}
+                      {b.km}
                     </MenuItem>
                   ))}
             </Select>
