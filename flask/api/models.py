@@ -185,6 +185,7 @@ class Metric(db.Model):
 
 
 # Not sure we're using these right now but will keep just in case
+# These are the improvement features! However, we don't know what they actually are...
 class Project(db.Model):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True, index=True)

@@ -2,6 +2,15 @@
 import { Roboto } from "next/font/google";
 import { createTheme } from "@mui/material/styles";
 
+declare module "@mui/material/styles" {
+  interface Palette {
+    projectColor: string;
+  }
+  interface PaletteOptions {
+    projectColor: string;
+  }
+}
+
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
@@ -20,5 +29,6 @@ export default createTheme({
     secondary: {
       main: "#A69F98",
     },
+    projectColor: "blue",
   },
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
@@ -20,6 +20,7 @@ import {
 } from "d3-scale";
 import { DAContext } from "@/providers/DAContextProvider";
 import { format } from "d3-format";
+import { useTheme } from "@mui/material";
 
 const formatPct = format(",.1%");
 
@@ -63,6 +64,7 @@ const Handler: React.FC<{
   const [dasSet, setDasSet] = useState(false);
   const map = useMap();
   const das = useContext(DAContext);
+  const theme = useTheme();
 
   useEffect(() => {
     if (!dasSet && !!map && !!scores) {
@@ -160,8 +162,13 @@ const Handler: React.FC<{
   }, [existingLanes, visibleExistingLanes, map]);
 
   useEffect(() => {
+    /* Add the propsed new lanes */
     if (selected) {
-      const layer = new LGeoJSON(selected as GeoJsonObject);
+      const layer = new LGeoJSON(selected as GeoJsonObject, {
+        style: {
+          color: theme.palette.projectColor,
+        },
+      });
 
       map.eachLayer((l) => {
         if (l?.feature?.properties.feature_type == "improvement_feature") {
@@ -170,7 +177,7 @@ const Handler: React.FC<{
       });
       map.addLayer(layer);
     }
-  }, [selected, map]);
+  }, [selected, map, theme]);
 
   return null;
 };

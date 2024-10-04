@@ -75,8 +75,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        prog="Import Improvements",
-        description="Add features related to a budget from a compressed archive.",
+        prog="Import projects",
+        description="Add a project and its child arterials.",
     )
 
     parser.add_argument("--archive_path")

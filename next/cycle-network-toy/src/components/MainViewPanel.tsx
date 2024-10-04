@@ -29,6 +29,7 @@ import { schemeDark2 } from "d3-scale-chromatic";
 import axios from "axios";
 import { extent } from "d3-array";
 import {
+  Box,
   Checkbox,
   checkboxClasses,
   Collapse,
@@ -45,6 +46,7 @@ import {
   RadioGroup,
   Select,
   Typography,
+  useTheme,
 } from "@mui/material";
 import {
   LegendGradient,
@@ -108,6 +110,8 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
+
+  const theme = useTheme();
 
   const metricTypeScale: ScaleOrdinal<string, string, never> | undefined =
     useMemo(() => {
@@ -213,6 +217,19 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
             </Select>
           </FormControl>
         </Grid>
+        {!!budgetId && (
+          <Grid item container spacing={3} alignItems="center" direction="row">
+            <Grid item flexGrow={1}>
+              <Box
+                style={{
+                  backgroundColor: theme.palette.projectColor,
+                  height: "5px",
+                }}
+              />
+            </Grid>
+            <Grid item>Proposed New Bike Lane</Grid>
+          </Grid>
+        )}
         <Grid item>
           {!!budgetId && !!metrics && (
             <FormControl fullWidth>
