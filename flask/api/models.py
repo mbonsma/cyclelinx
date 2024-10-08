@@ -30,7 +30,7 @@ budgets_projects = Table(
 arterials_projects = Table(
     "arterials_projects",
     db.Model.metadata,
-    Column("arterial_id", ForeignKey("features.id"), primary_key=True),
+    Column("arterial_id", ForeignKey("arterials.id"), primary_key=True),
     Column(
         "project_id",
         ForeignKey("projects.id"),
@@ -51,7 +51,7 @@ class Budget(db.Model):
 
 
 class Arterial(db.Model):
-    __tablename__ = "features"
+    __tablename__ = "arterials"
     import_idx = Column(Integer, nullable=True)
     id = Column(Integer, primary_key=True, index=True)
     ADDRESS_L = Column(String, nullable=True)

@@ -90,7 +90,6 @@ def get_budgets():
 
 @cycling_api.route("/budgets/<int:id>/arterials")
 def get_budget_arterials(id):
-    print("yo")
 
     arterials = (
         db.session.execute(
@@ -104,6 +103,7 @@ def get_budget_arterials(id):
     )
 
     projects = [{"project_id_orig": p.orig_id} for a in arterials for p in a.projects]
+    # is every arterial in only one project?
 
     return db_data_to_geojson_features(arterials, projects)
 
