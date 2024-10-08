@@ -13,7 +13,16 @@ from sqlalchemy.orm import joinedload
 from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers.response import Response
 
-from api.models import db, Budget, BudgetScore, DisseminationArea, ExistingLane, Metric
+from api.models import (
+    db,
+    Arterial,
+    Budget,
+    BudgetScore,
+    DisseminationArea,
+    ExistingLane,
+    Metric,
+    Project,
+)
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
 
@@ -79,15 +88,24 @@ def get_budgets():
     return [model_to_dict(result) for result in results]
 
 
-@cycling_api.route("/budgets/<int:id>/features")
-def get_budget_features(id):
-    budget = db.session.execute(
-        select(Budget)
-        .options(joinedload(Budget.improvement_features))
-        .filter(Budget.id == id)
-    ).scalar()
+@cycling_api.route("/budgets/<int:id>/arterials")
+def get_budget_arterials(id):
+    print("yo")
 
-    return db_data_to_geojson_features(budget.improvement_features)
+    arterials = (
+        db.session.execute(
+            select(Arterial)
+            .options(joinedload(Arterial.projects).joinedload(Project.budgets))
+            .filter(Budget.id == id)
+        )
+        .scalars()
+        .unique()
+        .all()
+    )
+
+    projects = [{"project_id_orig": p.orig_id} for a in arterials for p in a.projects]
+
+    return db_data_to_geojson_features(arterials, projects)
 
 
 # d-dicts must have module-level constructors to be pickled by cache

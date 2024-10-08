@@ -16,13 +16,13 @@ from sqlalchemy.orm import Mapped
 
 db = SQLAlchemy()
 
-budgets_improvement_features = Table(
-    "budgets_improvement_features",
+budgets_projects = Table(
+    "budets_projects",
     db.Model.metadata,
     Column("budget_id", ForeignKey("budgets.id"), primary_key=True),
     Column(
-        "improvement_feature_id",
-        ForeignKey("features.id"),
+        "project_id",
+        ForeignKey("projects.id"),
         primary_key=True,
     ),
 )
@@ -43,15 +43,16 @@ class Budget(db.Model):
     __tablename__ = "budgets"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
-    improvement_features: Mapped[List["ImprovementFeature"]] = db.relationship(
-        secondary=budgets_improvement_features,
+    projects: Mapped[List["Project"]] = db.relationship(
+        secondary=budgets_projects,
         back_populates="budgets",
     )
     scores = db.relationship("BudgetScore", back_populates="budget")
 
 
-class Feature(db.Model):
+class Arterial(db.Model):
     __tablename__ = "features"
+    import_idx = Column(Integer, nullable=True)
     id = Column(Integer, primary_key=True, index=True)
     ADDRESS_L = Column(String, nullable=True)
     ADDRESS_R = Column(String, nullable=True)
@@ -59,7 +60,6 @@ class Feature(db.Model):
     DIR_CODE_D = Column(String, nullable=True)
     FCODE = Column(Integer, nullable=True)
     FCODE_DESC = Column(String, nullable=True)
-    feature_type = Column(String(255), nullable=False)
     FNODE = Column(Integer, nullable=True)
     GEO_ID = Column(Integer, nullable=False)
     geometry = Column(Geometry("LINESTRING"), nullable=False)
@@ -81,24 +81,6 @@ class Feature(db.Model):
     TNODE = Column(Integer, nullable=True)
     U500_20 = Column(String, nullable=True)
     total_length = Column(Float, nullable=False)
-    __mapper_args__ = {"polymorphic_on": "feature_type"}
-    __table_args__ = (UniqueConstraint(GEO_ID, feature_type),)
-
-
-class ImprovementFeature(Feature):
-    budgets: Mapped[List[Budget]] = db.relationship(
-        secondary=budgets_improvement_features,
-        back_populates="improvement_features",
-    )
-    __mapper_args__ = {"polymorphic_identity": "improvement_feature"}
-
-
-class Arterial(Feature):
-
-    import_idx = Column(Integer, nullable=True)
-
-    __mapper_args__ = {"polymorphic_identity": "arterial"}
-
     projects: Mapped[List["Project"]] = db.relationship(
         secondary=arterials_projects,
         back_populates="arterials",
@@ -111,6 +93,10 @@ class Project(db.Model):
     orig_id = Column(Integer, unique=True)
     arterials: Mapped[List["Arterial"]] = db.relationship(
         secondary=arterials_projects,
+        back_populates="projects",
+    )
+    budgets: Mapped[List["Budget"]] = db.relationship(
+        secondary=budgets_projects,
         back_populates="projects",
     )
 
@@ -181,13 +167,6 @@ class DisseminationArea(db.Model):
     Shape_Area = Column(Float, nullable=True)
     geometry = Column(Geometry("MULTIPOLYGON"), nullable=False)
     scores = db.relationship("BudgetScore", back_populates="dissemination_area")
-    improvement_features = db.relationship(
-        "ImprovementFeature",
-        primaryjoin="func.ST_Contains(foreign(DisseminationArea.geometry), ImprovementFeature.geometry).as_comparison(1, 2)",
-        backref=db.backref("dissemination_area", uselist=False),
-        viewonly=True,
-        uselist=True,
-    )
 
 
 class Metric(db.Model):

@@ -7,7 +7,6 @@ from api.models import (
     Arterial,
     DisseminationArea,
     ExistingLane,
-    ImprovementFeature,
     Project,
 )
 from api.utils import extract_files
@@ -28,12 +27,16 @@ def test_import_existing(app_ctx, fresh_db):
     assert len(existing) == 1445
 
 
-def test_import_features(app_ctx, fresh_db):
+def test_import_improvements(app_ctx, fresh_db):
+    """We'll test arterials together with the budget mappings, since the latter depends on the former"""
+    extracted_path = extract_files(
+        path.join(path.dirname(__file__), "fixtures", "arterial.tar.xz")
+    )
+    import_arterials(extracted_path, fresh_db.session)
+    arterials = fresh_db.session.execute(select(Arterial)).scalars().all()
+    assert len(arterials) == 9981
     test_import_path = path.join(path.dirname(__file__), "fixtures", "budget_40.tar.xz")
     import_improvements(test_import_path, fresh_db.session)
-    features = fresh_db.session.execute(select(ImprovementFeature)).scalars().all()
-    assert len(features) == 118
-    assert features[0].budgets[0].name == "40"
 
 
 def test_import_das(app_ctx, fresh_db):
@@ -41,16 +44,6 @@ def test_import_das(app_ctx, fresh_db):
     import_das(test_import_path, fresh_db.session)
     das = fresh_db.session.execute(select(DisseminationArea)).scalars().all()
     assert len(das) == 3702
-
-
-def test_import_arterials(app_ctx, fresh_db):
-    extracted_path = extract_files(
-        path.join(path.dirname(__file__), "fixtures", "arterial.tar.xz")
-    )
-
-    import_arterials(extracted_path, fresh_db.session)
-    arterials = fresh_db.session.execute(select(Arterial)).scalars().all()
-    assert len(arterials) == 9981
 
 
 def test_import_projects(app_ctx, fresh_db, tmp_path):

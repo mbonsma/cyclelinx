@@ -1,16 +1,15 @@
 #! /usr/bin/env python
+# Script assumes that Arterials have already been imported
 
 from os import walk, path
 import re
 
-from geoalchemy2.elements import WKTElement
 import geopandas
 from pyproj import Geod
-from shapely.wkt import loads
 from sqlalchemy import select, create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, subqueryload
 
-from api.models import Budget, ImprovementFeature
+from api.models import Budget, Arterial
 from api.settings import app_settings
 from api.utils import extract_files
 
@@ -41,6 +40,16 @@ def get_budget(filename: str, session: Session):
 
 def import_rows(dir_path: str, session: Session):
     geod = Geod(ellps="WGS84")
+
+    art_dict = {
+        a.GEO_ID: a.projects
+        for a in (
+            session.execute(select(Arterial).options(subqueryload(Arterial.projects)))
+            .scalars()
+            .all()
+        )
+    }
+
     for root, dirs, filenames in walk(dir_path):
         for filename in filenames:
             if filename.endswith(".shp"):
@@ -49,24 +58,11 @@ def import_rows(dir_path: str, session: Session):
                 features = geopandas.read_file(path.join(root, filename))
                 rows = [entry[1].to_dict() for entry in features.iterrows()]
                 for row in rows:
-                    existing_feature = session.execute(
-                        select(ImprovementFeature).filter(
-                            ImprovementFeature.GEO_ID == row["GEO_ID"]
-                        )
-                    ).scalar()
-
-                    if existing_feature is None:
-                        geom = str(row["geometry"])
-                        row["geometry"] = WKTElement(geom)
-                        row["total_length"] = geod.geometry_length(loads(geom))
-                        feature = ImprovementFeature(**row)
-                        feature.budgets.append(budget)
-                        session.add(feature)
-                        session.commit()
-                    elif budget.name not in [b.name for b in existing_feature.budgets]:
-                        existing_feature.budgets.append(budget)
-                        session.add(existing_feature)
-                        session.commit()
+                    projects = art_dict[row["GEO_ID"]]
+                    if projects is None:
+                        raise ValueError(f"No record found for GEO_ID {row['GEO_ID']}!")
+                    budget.projects = projects
+                    session.commit()
 
 
 def import_improvements(archive_path: str, session: Session):

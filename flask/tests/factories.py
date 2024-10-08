@@ -6,14 +6,13 @@ import api.models as Models
 # Faker providers: https://faker.readthedocs.io/en/latest/providers.html
 
 
-def improvement_feature_model_factory(session):
-    class ImprovementFeatureFactory(SQLAlchemyModelFactory):
+def arterial_model_factory(session):
+    class ArterialModelFactory(SQLAlchemyModelFactory):
         class Meta:
-            model = Models.ImprovementFeature
+            model = Models.Arterial
             sqlalchemy_session = session
             sqlalchemy_session_persistence = "commit"
 
-        feature_type = "improvement_feature"
         GEO_ID = Faker("pyint")
         LFN_ID = Faker("pyint")
         LF_NAME = Faker("pyint")
@@ -42,19 +41,7 @@ def improvement_feature_model_factory(session):
         geometry = "LINESTRING (-79.40082705472463 43.64430503964604, -79.40083825308278 43.64430275536802, -79.4027055361314 43.64392631444804)"
         total_length = Faker("pyfloat")
 
-    return ImprovementFeatureFactory
-
-
-def arterial_model_factory(session):
-    class ArterialFactory(improvement_feature_model_factory(session)):
-        class Meta:
-            model = Models.Arterial
-            sqlalchemy_session = session
-            sqlalchemy_session_persistence = "commit"
-
-        feature_type = "arterial"
-
-    return ArterialFactory
+    return ArterialModelFactory
 
 
 def project_model_factory(session):
