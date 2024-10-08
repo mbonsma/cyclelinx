@@ -1,4 +1,4 @@
-import { MultiPolygon, Position, LineString, GeoJsonObject } from "geojson";
+import { MultiPolygon, LineString, GeoJsonObject } from "geojson";
 
 export interface Budget {
   name: string;
@@ -36,6 +36,7 @@ interface ExistingLaneProperties {
   LAST_EDIT_DATE: string;
   UPGRADE_DESCRIPTION: string;
   CONVERTED: string;
+  total_length: number;
 }
 
 interface DAProperties {
@@ -95,6 +96,7 @@ interface FeatureProperties {
   SPEED: number;
   TNODE: number;
   U500_20: string;
+  total_length: number;
 }
 
 interface FeatureCollection<

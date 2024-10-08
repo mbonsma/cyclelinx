@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-import json
-
 from geoalchemy2.elements import WKTElement
 import geopandas
+from pyproj import Geod
+from shapely.wkt import loads
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
@@ -14,11 +14,14 @@ from api.settings import app_settings
 
 def import_geojson(geojson_path: str, session: Session):
     rows = []
+    geod = Geod(ellps="WGS84")
     # need to use geopandas or else proper metadata not set
     geojson = geopandas.read_file(geojson_path)
     for entry in geojson.iterrows():
         row = entry[1].to_dict()
-        row["geometry"] = WKTElement(str(row["geometry"]))
+        geom = str(row["geometry"])
+        row["geometry"] = WKTElement(geom)
+        row["total_length"] = geod.geometry_length(loads(geom))
         rows.append(row)
 
     stmt = insert(ExistingLane).on_conflict_do_nothing()

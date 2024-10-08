@@ -5,6 +5,8 @@ import re
 
 from geoalchemy2.elements import WKTElement
 import geopandas
+from pyproj import Geod
+from shapely.wkt import loads
 from sqlalchemy import select, create_engine
 from sqlalchemy.orm import Session
 
@@ -38,6 +40,7 @@ def get_budget(filename: str, session: Session):
 
 
 def import_rows(dir_path: str, session: Session):
+    geod = Geod(ellps="WGS84")
     for root, dirs, filenames in walk(dir_path):
         for filename in filenames:
             if filename.endswith(".shp"):
@@ -53,7 +56,9 @@ def import_rows(dir_path: str, session: Session):
                     ).scalar()
 
                     if existing_feature is None:
-                        row["geometry"] = WKTElement(str(row["geometry"]))
+                        geom = str(row["geometry"])
+                        row["geometry"] = WKTElement(geom)
+                        row["total_length"] = geod.geometry_length(loads(geom))
                         feature = ImprovementFeature(**row)
                         feature.budgets.append(budget)
                         session.add(feature)

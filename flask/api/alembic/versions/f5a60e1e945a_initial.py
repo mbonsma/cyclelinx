@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 68e474ab0d36
+Revision ID: f5a60e1e945a
 Revises:
-Create Date: 2024-04-12 19:38:11.531043
+Create Date: 2024-10-04 20:17:27.991000
 
 """
 
@@ -14,7 +14,7 @@ import geoalchemy2
 
 
 # revision identifiers, used by Alembic.
-revision: str = "68e474ab0d36"
+revision: str = "f5a60e1e945a"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -71,7 +71,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("DAUID"),
     )
-
     op.create_index(
         op.f("ix_dissemination_areas_id"), "dissemination_areas", ["id"], unique=False
     )
@@ -116,6 +115,7 @@ def upgrade() -> None:
             ),
             nullable=False,
         ),
+        sa.Column("total_length", sa.Float(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -161,6 +161,7 @@ def upgrade() -> None:
         sa.Column("SPEED", sa.Integer(), nullable=True),
         sa.Column("TNODE", sa.Integer(), nullable=True),
         sa.Column("U500_20", sa.String(), nullable=True),
+        sa.Column("total_length", sa.Float(), nullable=False),
         sa.Column("import_idx", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("GEO_ID", "feature_type"),
@@ -246,13 +247,23 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_metrics_id"), table_name="metrics")
     op.drop_table("metrics")
     op.drop_index(op.f("ix_features_id"), table_name="features")
-
+    op.drop_index(
+        "idx_features_geometry", table_name="features", postgresql_using="gist"
+    )
     op.drop_table("features")
     op.drop_index(op.f("ix_existing_lanes_id"), table_name="existing_lanes")
-
+    op.drop_index(
+        "idx_existing_lanes_geometry",
+        table_name="existing_lanes",
+        postgresql_using="gist",
+    )
     op.drop_table("existing_lanes")
     op.drop_index(op.f("ix_dissemination_areas_id"), table_name="dissemination_areas")
-
+    op.drop_index(
+        "idx_dissemination_areas_geometry",
+        table_name="dissemination_areas",
+        postgresql_using="gist",
+    )
     op.drop_table("dissemination_areas")
     op.drop_index(op.f("ix_budgets_id"), table_name="budgets")
     op.drop_table("budgets")

@@ -73,7 +73,7 @@ def db_data_to_geojson_features(
         features,
         crs={
             "type": "name",
-            "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"},
+            "properties": {"name": "urn:ogc:def:crs:EPSG::4326"},
         },
     )
 

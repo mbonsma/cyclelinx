@@ -80,6 +80,7 @@ class Feature(db.Model):
     SPEED = Column(Integer, nullable=True)
     TNODE = Column(Integer, nullable=True)
     U500_20 = Column(String, nullable=True)
+    total_length = Column(Float, nullable=False)
     __mapper_args__ = {"polymorphic_on": "feature_type"}
     __table_args__ = (UniqueConstraint(GEO_ID, feature_type),)
 
@@ -101,6 +102,16 @@ class Arterial(Feature):
     projects: Mapped[List["Project"]] = db.relationship(
         secondary=arterials_projects,
         back_populates="arterials",
+    )
+
+
+class Project(db.Model):
+    __tablename__ = "projects"
+    id = Column(Integer, primary_key=True, index=True)
+    orig_id = Column(Integer, unique=True)
+    arterials: Mapped[List["Arterial"]] = db.relationship(
+        secondary=arterials_projects,
+        back_populates="projects",
     )
 
 
@@ -136,6 +147,7 @@ class ExistingLane(db.Model):
     UPGRADE_DESCRIPTION = Column(String, nullable=True)
     CONVERTED = Column(String, nullable=True)
     geometry = Column(Geometry("MultiLineString"), nullable=False)
+    total_length = Column(Float, nullable=False)
 
 
 class DisseminationArea(db.Model):
@@ -182,18 +194,6 @@ class Metric(db.Model):
     __tablename__ = "metrics"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
-
-
-# Not sure we're using these right now but will keep just in case
-# These are the improvement features! However, we don't know what they actually are...
-class Project(db.Model):
-    __tablename__ = "projects"
-    id = Column(Integer, primary_key=True, index=True)
-    orig_id = Column(Integer, unique=True)
-    arterials: Mapped[List["Arterial"]] = db.relationship(
-        secondary=arterials_projects,
-        back_populates="projects",
-    )
 
 
 class BudgetScore(db.Model):

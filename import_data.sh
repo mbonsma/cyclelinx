@@ -28,14 +28,9 @@ docker compose run --rm \
     flask
 
 docker compose run --rm \
-    --entrypoint="python /code/scripts/create_dummy_scores.py" \
+    -v ${DATA_DIR}/scores_20241002.csv:/tmp/upload.csv \
+    --entrypoint="python /code/scripts/import_scores.py --csv_path /tmp/upload.csv" \
     flask
-
-docker compose run --rm \
-    -v ${DATA_DIR}/cycling-network.geojson:/tmp/upload.geojson \
-    --entrypoint="python /code/scripts/import_existing_lanes.py --geojson_path /tmp/upload.geojson" \
-    flask
-
 
 docker compose run --rm \
     -v ${DATA_DIR}/cycling-network.geojson:/tmp/upload.geojson \

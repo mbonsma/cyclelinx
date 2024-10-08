@@ -110,7 +110,7 @@ if __name__ == "__main__":
         description="Add scores from a 'wide' csv.",
     )
 
-    parser.add_argument("--csv_path")
+    parser.add_argument("--csv_path", required=True, type=str)
 
     args = parser.parse_args()
 

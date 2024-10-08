@@ -7,6 +7,8 @@ import pickle
 
 from geoalchemy2.elements import WKTElement
 import geopandas
+from pyproj import Geod
+from shapely.wkt import loads
 from sqlalchemy import select, create_engine
 from sqlalchemy.orm import Session
 
@@ -17,6 +19,7 @@ from api.utils import extract_files
 
 def import_arterials(dir_path: str, session: Session):
     i = 0
+    geod = Geod(ellps="WGS84")
     for root, dirs, filenames in walk(dir_path):
         for filename in filenames:
             if filename.endswith(".shp"):
@@ -29,7 +32,9 @@ def import_arterials(dir_path: str, session: Session):
                     ).scalar()
 
                     if existing_feature is None:
-                        row["geometry"] = WKTElement(str(row["geometry"]))
+                        geom = str(row["geometry"])
+                        row["geometry"] = WKTElement(geom)
+                        row["total_length"] = geod.geometry_length(loads(geom))
                         row["import_idx"] = i
                         feature = Arterial(**row)
 

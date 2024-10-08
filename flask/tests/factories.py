@@ -40,6 +40,7 @@ def improvement_feature_model_factory(session):
         Shape_Leng = Faker("pyfloat")
         U500_20 = Faker("pystr")
         geometry = "LINESTRING (-79.40082705472463 43.64430503964604, -79.40083825308278 43.64430275536802, -79.4027055361314 43.64392631444804)"
+        total_length = Faker("pyfloat")
 
     return ImprovementFeatureFactory
 
