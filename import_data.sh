@@ -24,7 +24,8 @@ docker compose run --rm \
 
 docker compose run --rm \
     -v ${DATA_DIR}/optimal_project_lists.csv:/tmp/optimal_project_lists.csv \
-    --entrypoint="python /code/scripts/import_improvements.py --csv_path /tmp/optimal_project_lists.csv" \
+    -v ${DATA_DIR}/proj2artid.pkl:/tmp/proj2artid.pkl \
+    --entrypoint="python /code/scripts/import_improvements.py --mapping_path /tmp/proj2artid.pkl --csv_path /tmp/optimal_project_lists.csv" \
     flask
 
 docker compose run --rm \

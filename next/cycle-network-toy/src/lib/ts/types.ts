@@ -72,6 +72,7 @@ interface FeatureProperties {
   ADDRESS_L: string;
   ADDRESS_R: string;
   CP_TYPE: string;
+  default_project_id: number;
   DIR_CODE_D: string;
   FCODE: number;
   FCODE_DESC: string;
@@ -122,6 +123,15 @@ export type DAGeoJSON = FeatureCollection<MultiPolygon, DAProperties>;
 export type BaseFeatureGeoJSON = FeatureCollection<
   LineString,
   FeatureProperties
+>;
+
+interface ImprovementFeatureProperties extends FeatureProperties {
+  budget_project_id: number;
+}
+
+export type ImprovementFeatureGeoJSON = FeatureCollection<
+  LineString,
+  ImprovementFeatureProperties
 >;
 
 export type ExistingLaneGeoJSON = FeatureCollection<

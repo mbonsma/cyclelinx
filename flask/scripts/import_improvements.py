@@ -8,6 +8,7 @@ import re
 
 from sqlalchemy import select, create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert
 
 from api.models import Arterial, Budget, BudgetProjectMember
 from api.settings import app_settings
@@ -49,15 +50,22 @@ def import_rows(mapping_path: str, csv_path: str, session: Session):
                 int(i) for i in re.sub(r"[\[\]]", "", projects_str).split(",")
             ]
 
+            rows = []
             for proj_id in project_ids:
                 for arterial_idx in art_by_proj[proj_id]:
-                    member = BudgetProjectMember(
-                        arterial_id=art_by_idx[arterial_idx].id,
-                        budget_id=budget.id,
-                        project_id=proj_id,
+                    rows.append(
+                        {
+                            "arterial_id": art_by_idx[arterial_idx].id,
+                            "budget_id": budget.id,
+                            "project_id": proj_id,
+                        }
                     )
-                    session.add(member)
-                    session.commit()
+
+            stmt = insert(BudgetProjectMember).on_conflict_do_nothing()
+
+            session.execute(stmt, rows)
+
+            session.commit()
 
 
 def import_improvements(mapping_path: str, csv_path: str, session: Session):

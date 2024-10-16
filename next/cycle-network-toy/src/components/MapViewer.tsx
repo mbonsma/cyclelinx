@@ -12,8 +12,8 @@ import {
   formatDigit,
 } from "@/app/page";
 import {
-  BaseFeatureGeoJSON,
   ExistingLaneGeoJSON,
+  ImprovementFeatureGeoJSON,
   ScoreResults,
   ScoreSet,
 } from "@/lib/ts/types";
@@ -51,7 +51,7 @@ const Handler: React.FC<{
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
-  visibleArterials: any;
+  improvements: ImprovementFeatureGeoJSON;
   selectedMetric?: string;
   scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
@@ -60,7 +60,7 @@ const Handler: React.FC<{
   existingLanes,
   scoreScale,
   metricTypeScale,
-  visibleArterials,
+  improvements,
   scores,
   scoreSet,
   selectedMetric,
@@ -168,8 +168,8 @@ const Handler: React.FC<{
 
   useEffect(() => {
     /* Add the propsed new lanes */
-    if (visibleArterials) {
-      const layer = new LGeoJSON(visibleArterials as GeoJsonObject, {
+    if (improvements) {
+      const layer = new LGeoJSON(improvements as GeoJsonObject, {
         style: {
           color: theme.palette.projectColor,
         },
@@ -182,7 +182,7 @@ const Handler: React.FC<{
       });
       map.addLayer(layer);
     }
-  }, [visibleArterials, map, theme]);
+  }, [improvements, map, theme]);
 
   return null;
 };
@@ -193,7 +193,7 @@ const c2 = new LatLng(43.61, -79.45);
 
 const MapViewer: React.FC<{
   existingLanes?: ExistingLaneGeoJSON;
-  arterials: BaseFeatureGeoJSON;
+  improvements: ImprovementFeatureGeoJSON;
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
@@ -205,7 +205,7 @@ const MapViewer: React.FC<{
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   existingLanes,
-  arterials,
+  improvements,
   scoreScale,
   metricTypeScale,
   scores,
@@ -225,7 +225,7 @@ const MapViewer: React.FC<{
       existingLanes={existingLanes}
       scoreScale={scoreScale}
       metricTypeScale={metricTypeScale}
-      visibleArterials={arterials}
+      improvements={improvements}
       scores={scores}
       scoreSet={scoreSet}
       selectedMetric={selectedMetric}
