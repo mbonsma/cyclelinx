@@ -9,7 +9,7 @@ if [[ -z $DATA_DIR ]]; then
     exit 1
 fi
 
-#./import_data.sh ~/cycle-network-toy/flask/data
+# ./import_data.sh ~/cycle-network/flask/data
 
 docker compose run --rm \
     -v ${DATA_DIR}/das.tar.xz:/tmp/upload.tar.xz \
@@ -23,8 +23,8 @@ docker compose run --rm \
     flask
 
 docker compose run --rm \
-    -v ${DATA_DIR}/best.tar.xz:/tmp/upload.tar.xz \
-    --entrypoint="python /code/scripts/import_improvements.py --archive_path /tmp/upload.tar.xz" \
+    -v ${DATA_DIR}/optimal_project_lists.csv:/tmp/optimal_project_lists.csv \
+    --entrypoint="python /code/scripts/import_improvements.py --csv_path /tmp/optimal_project_lists.csv" \
     flask
 
 docker compose run --rm \

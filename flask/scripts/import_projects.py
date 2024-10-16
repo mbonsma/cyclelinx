@@ -1,5 +1,3 @@
-""" This assumes that improvements have already been imported """
-
 #! /usr/bin/env python
 
 from os import walk, path
@@ -17,15 +15,32 @@ from api.settings import app_settings
 from api.utils import extract_files
 
 
-def import_arterials(dir_path: str, session: Session):
+def _import_arterials(mapping_path: str, dir_path: str, session: Session):
+
+    # {[project_id]: len(project_arterials)}
+    proj_size = {}
+    # {[art_import_index]: longest_project_id}
+    proj_by_art = {}
+
+    with open(mapping_path, "rb") as f:
+        project_mapping: list[list[int]] = pickle.load(f)
+
+    for proj_id, arterials in enumerate(project_mapping):
+        proj_size[proj_id] = len(arterials)
+
+    for proj_id, import_indices in enumerate(project_mapping):
+        for arterial_index in import_indices:
+            if proj_size[proj_id] > proj_by_art.get(arterial_index, 0):
+                proj_by_art[arterial_index] = proj_id
+
     i = 0
     geod = Geod(ellps="WGS84")
     for root, dirs, filenames in walk(dir_path):
         for filename in filenames:
             if filename.endswith(".shp"):
                 print(f"processing {path.join(root, filename)}")
-                features = geopandas.read_file(path.join(root, filename))
-                rows = [entry[1].to_dict() for entry in features.iterrows()]
+                arterials = geopandas.read_file(path.join(root, filename))
+                rows = [entry[1].to_dict() for entry in arterials.iterrows()]
                 for row in rows:
                     existing_feature = session.execute(
                         select(Arterial).filter(Arterial.GEO_ID == row["GEO_ID"])
@@ -36,9 +51,13 @@ def import_arterials(dir_path: str, session: Session):
                         row["geometry"] = WKTElement(geom)
                         row["total_length"] = geod.geometry_length(loads(geom))
                         row["import_idx"] = i
-                        feature = Arterial(**row)
-
-                        session.add(feature)
+                        arterial = Arterial(**row)
+                        if proj_by_art.get(i):
+                            default_project = session.execute(
+                                select(Project).filter(Project.id == proj_by_art.get(i))
+                            ).scalar()
+                            arterial.default_project = default_project
+                        session.add(arterial)
                         session.commit()
                     i += 1
 
@@ -50,20 +69,13 @@ def _import_projects(mapping_path: str, session: Session):
 
     i = 0
     for ids in project_mapping:
-        existing = session.execute(
-            select(Project).filter(Project.orig_id == i)
-        ).scalar()
+        existing = session.execute(select(Project).filter(Project.id == i)).scalar()
 
         if existing is None:
-            project = Project(orig_id=i)
-
-            arterials = session.execute(
-                select(Arterial).filter(Arterial.import_idx.in_(ids))
-            ).scalars()
-
-            project.arterials = list(arterials)
+            project = Project(id=i)
             session.add(project)
             session.commit()
+
         i += 1
 
 
@@ -71,9 +83,9 @@ def import_projects(archive_path: str, mapping_path: str, session: Session):
 
     ext_dir = extract_files(archive_path)
 
-    import_arterials(ext_dir, session)
-
     _import_projects(mapping_path, session)
+
+    _import_arterials(mapping_path, ext_dir, session)
 
 
 if __name__ == "__main__":

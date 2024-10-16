@@ -1,75 +1,67 @@
 #! /usr/bin/env python
+
 # Script assumes that Arterials have already been imported
 
-from os import walk, path
+from csv import DictReader
+import pickle
 import re
 
-import geopandas
-from pyproj import Geod
 from sqlalchemy import select, create_engine
-from sqlalchemy.orm import Session, subqueryload
+from sqlalchemy.orm import Session
 
-from api.models import Budget, Arterial
+from api.models import Arterial, Budget, BudgetProjectMember
 from api.settings import app_settings
-from api.utils import extract_files
 
 
-def get_budget(filename: str, session: Session):
-    match = re.search(r"budget(\d+)", filename)
-    if not match:
-        raise ValueError(
-            (
-                "Import filename does not include the",
-                "word budget followed by budget amount",
-                "(e.g., `efficiency-n2000_id33_summary_args_job-budget480.shp`)!",
-            )
-        )
-    budget_name = match.groups()[0]
+def import_rows(mapping_path: str, csv_path: str, session: Session):
 
-    budget = session.execute(
-        select(Budget).filter(Budget.name == str(budget_name))
-    ).scalar()
+    with open(mapping_path, "rb") as f:
+        project_mapping: list[list[int]] = pickle.load(f)
 
-    if not budget:
-        budget = Budget(name=budget_name)
-        session.add(budget)
-        session.commit()
+    art_by_proj = {}
 
-    return budget
+    for proj_id, arterials in enumerate(project_mapping):
+        art_by_proj[int(proj_id)] = arterials
 
+    arterials = session.execute(select(Arterial)).scalars().all()
 
-def import_rows(dir_path: str, session: Session):
-    geod = Geod(ellps="WGS84")
+    art_by_idx = {}
 
-    art_dict = {
-        a.GEO_ID: a.projects
-        for a in (
-            session.execute(select(Arterial).options(subqueryload(Arterial.projects)))
-            .scalars()
-            .all()
-        )
-    }
+    for arterial in arterials:
+        art_by_idx[arterial.import_idx] = arterial
 
-    for root, dirs, filenames in walk(dir_path):
-        for filename in filenames:
-            if filename.endswith(".shp"):
-                print(f"processing {path.join(root, filename)}")
-                budget = get_budget(filename, session)
-                features = geopandas.read_file(path.join(root, filename))
-                rows = [entry[1].to_dict() for entry in features.iterrows()]
-                for row in rows:
-                    projects = art_dict[row["GEO_ID"]]
-                    if projects is None:
-                        raise ValueError(f"No record found for GEO_ID {row['GEO_ID']}!")
-                    budget.projects = projects
+    with open(csv_path, "r") as f:
+        reader = DictReader(f)
+        for row in reader:
+            budget_name: str = row["budget"]
+            projects_str: str = row["projects"]
+
+            budget = session.execute(
+                select(Budget).filter(Budget.name == budget_name)
+            ).scalar()
+
+            if not budget:
+                budget = Budget(name=budget_name)
+                session.add(budget)
+                session.commit()
+
+            project_ids = [
+                int(i) for i in re.sub(r"[\[\]]", "", projects_str).split(",")
+            ]
+
+            for proj_id in project_ids:
+                for arterial_idx in art_by_proj[proj_id]:
+                    member = BudgetProjectMember(
+                        arterial_id=art_by_idx[arterial_idx].id,
+                        budget_id=budget.id,
+                        project_id=proj_id,
+                    )
+                    session.add(member)
                     session.commit()
 
 
-def import_improvements(archive_path: str, session: Session):
-    """We assume the .shp file has a suffix like budget \\d+.shp"""
-    ext_dir = extract_files(archive_path)
-
-    import_rows(ext_dir, session)
+def import_improvements(mapping_path: str, csv_path: str, session: Session):
+    import_rows(mapping_path, csv_path, session)
 
 
 if __name__ == "__main__":
@@ -77,14 +69,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         prog="Import Improvements",
-        description="Add features related to a budget from a compressed archive.",
+        description="Add projects related to a budget from a csv mapping.",
     )
 
-    parser.add_argument("--archive_path")
+    parser.add_argument("--csv_path")
+    parser.add_argument("--mapping_path")
 
     args = parser.parse_args()
 
     engine = create_engine(app_settings.POSTGRES_CONNECTION_STRING)
 
     with Session(engine) as session:
-        import_improvements(args.archive_path, session)
+        import_improvements(args.mapping_path, args.csv_path, session)

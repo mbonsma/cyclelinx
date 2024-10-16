@@ -99,7 +99,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
   metrics,
 }) => {
   const [budgetId, setBudgetId] = useState<number>();
-  const [features, setFeatures] = useState<BaseFeatureGeoJSON>();
+  const [arterials, setArterials] = useState<BaseFeatureGeoJSON>();
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState(false);
   const [scaleTypeVisible, setScaleTypeVisible] = useState(false);
@@ -132,7 +132,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
       setLoading(true);
 
       const promises = [
-        axios.get(`http://localhost:9033/budgets/${budgetId}/features`), // 0
+        axios.get(`http://localhost:9033/budgets/${budgetId}/arterials`), // 0
         axios.get<ScoreResults>(
           `http://localhost:9033/budgets/${budgetId}/scores` // 1
         ),
@@ -144,7 +144,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
             switch (i) {
               case 0:
                 if (result.status === "fulfilled") {
-                  setFeatures(result.value.data);
+                  setArterials(result.value.data);
                 }
               case 1:
                 if (result.status === "fulfilled") {
@@ -413,7 +413,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
           <MapViewer
             scoreScale={scoreScale}
             existingLanes={existingLanes}
-            features={features}
+            arterials={arterials}
             scores={scores}
             scoreSet={scoreSetType}
             selectedMetric={selectedMetric}

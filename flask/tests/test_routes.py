@@ -1,4 +1,4 @@
-from api.models import Metric, BudgetScore
+from api.models import Metric, BudgetScore, BudgetProjectMember
 
 from tests.factories import (
     arterial_model_factory,
@@ -31,14 +31,15 @@ def test_get_das(client, fresh_db):
 
 def test_get_budget_arterials(client, fresh_db):
     budget = budget_model_factory(fresh_db.session).create()
-    improvements = arterial_model_factory(fresh_db.session).create_batch(10)
+    arterials = arterial_model_factory(fresh_db.session).create_batch(10)
     project = project_model_factory(fresh_db.session).create()
-    budget.improvement_features = improvements
 
-    project.arterials = improvements
-    project.budgets = [budget]
-
-    fresh_db.session.commit()
+    for arterial in arterials:
+        m = BudgetProjectMember(
+            project_id=project.id, arterial_id=arterial.id, budget_id=budget.id
+        )
+        fresh_db.session.add(m)
+        fresh_db.session.commit()
     response = client.get(f"/budgets/{budget.id}/arterials")
     assert response.status_code == 200
     assert len(response.json["features"]) == 10

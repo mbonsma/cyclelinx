@@ -51,7 +51,7 @@ const Handler: React.FC<{
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
-  selected: any;
+  visibleArterials: any;
   selectedMetric?: string;
   scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
@@ -60,7 +60,7 @@ const Handler: React.FC<{
   existingLanes,
   scoreScale,
   metricTypeScale,
-  selected,
+  visibleArterials,
   scores,
   scoreSet,
   selectedMetric,
@@ -168,8 +168,8 @@ const Handler: React.FC<{
 
   useEffect(() => {
     /* Add the propsed new lanes */
-    if (selected) {
-      const layer = new LGeoJSON(selected as GeoJsonObject, {
+    if (visibleArterials) {
+      const layer = new LGeoJSON(visibleArterials as GeoJsonObject, {
         style: {
           color: theme.palette.projectColor,
         },
@@ -182,7 +182,9 @@ const Handler: React.FC<{
       });
       map.addLayer(layer);
     }
-  }, [selected, map, theme]);
+  }, [visibleArterials, map, theme]);
+
+  return null;
 };
 
 //GTA, more or less
@@ -191,7 +193,7 @@ const c2 = new LatLng(43.61, -79.45);
 
 const MapViewer: React.FC<{
   existingLanes?: ExistingLaneGeoJSON;
-  features: BaseFeatureGeoJSON;
+  arterials: BaseFeatureGeoJSON;
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
@@ -203,7 +205,7 @@ const MapViewer: React.FC<{
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   existingLanes,
-  features,
+  arterials,
   scoreScale,
   metricTypeScale,
   scores,
@@ -223,7 +225,7 @@ const MapViewer: React.FC<{
       existingLanes={existingLanes}
       scoreScale={scoreScale}
       metricTypeScale={metricTypeScale}
-      selected={features}
+      visibleArterials={arterials}
       scores={scores}
       scoreSet={scoreSet}
       selectedMetric={selectedMetric}

@@ -9,43 +9,36 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    Table,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped
 
 db = SQLAlchemy()
 
-budgets_projects = Table(
-    "budets_projects",
-    db.Model.metadata,
-    Column("budget_id", ForeignKey("budgets.id"), primary_key=True),
-    Column(
-        "project_id",
-        ForeignKey("projects.id"),
-        primary_key=True,
-    ),
-)
 
-arterials_projects = Table(
-    "arterials_projects",
-    db.Model.metadata,
-    Column("arterial_id", ForeignKey("arterials.id"), primary_key=True),
-    Column(
-        "project_id",
-        ForeignKey("projects.id"),
-        primary_key=True,
-    ),
-)
+# each budget is a set of projects, but since an arterial can belong to
+# several projects, we need to record which is associated with which budget
+# so project_id is really just a piece of metadata here
+# right now it's a simple lookup but if we need to get fancier we should use
+# an association proxy: https://docs.sqlalchemy.org/en/20/orm/extensions/associationproxy.html#simplifying-association-objects
+class BudgetProjectMember(db.Model):
+    __tablename__ = "budget_project_members"
+    arterial_id = Column(Integer, ForeignKey("arterials.id"), primary_key=True)
+    budget_id = Column(Integer, ForeignKey("budgets.id"), primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), primary_key=True)
+
+    budget = db.relationship("Budget")
+    project = db.relationship("Project")
+    arterial = db.relationship("Arterial")
 
 
 class Budget(db.Model):
     __tablename__ = "budgets"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
-    projects: Mapped[List["Project"]] = db.relationship(
-        secondary=budgets_projects,
-        back_populates="budgets",
+    improvement_relationships: Mapped[List["BudgetProjectMember"]] = db.relationship(
+        "BudgetProjectMember",
+        back_populates="budget",
     )
     scores = db.relationship("BudgetScore", back_populates="budget")
 
@@ -81,23 +74,26 @@ class Arterial(db.Model):
     TNODE = Column(Integer, nullable=True)
     U500_20 = Column(String, nullable=True)
     total_length = Column(Float, nullable=False)
-    projects: Mapped[List["Project"]] = db.relationship(
-        secondary=arterials_projects,
-        back_populates="arterials",
+    # an arterial can be associated with more than one project only via budgets
+    default_project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    default_project = db.relationship("Project", back_populates="default_arterials")
+    improvement_relationships: Mapped[List["BudgetProjectMember"]] = db.relationship(
+        "BudgetProjectMember",
+        back_populates="arterial",
     )
 
 
 class Project(db.Model):
     __tablename__ = "projects"
-    id = Column(Integer, primary_key=True, index=True)
-    orig_id = Column(Integer, unique=True)
-    arterials: Mapped[List["Arterial"]] = db.relationship(
-        secondary=arterials_projects,
-        back_populates="projects",
+    # we take this id from the import indices
+    id = Column(Integer, primary_key=True, index=True, autoincrement=False)
+    default_arterials = db.relationship(
+        "Arterial",
+        back_populates="default_project",
     )
-    budgets: Mapped[List["Budget"]] = db.relationship(
-        secondary=budgets_projects,
-        back_populates="projects",
+    improvement_relationships: Mapped[List["BudgetProjectMember"]] = db.relationship(
+        "BudgetProjectMember",
+        back_populates="project",
     )
 
 

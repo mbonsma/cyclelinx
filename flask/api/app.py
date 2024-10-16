@@ -10,18 +10,17 @@ from flask_cors import CORS
 import logging
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import HTTPException, NotFound
 from werkzeug.wrappers.response import Response
 
 from api.models import (
     db,
-    Arterial,
     Budget,
+    BudgetProjectMember,
     BudgetScore,
     DisseminationArea,
     ExistingLane,
     Metric,
-    Project,
 )
 from api.settings import app_settings
 from api.utils import db_data_to_geojson_features, model_to_dict
@@ -91,21 +90,25 @@ def get_budgets():
 @cycling_api.route("/budgets/<int:id>/arterials")
 def get_budget_arterials(id):
 
-    arterials = (
+    budget = db.session.execute(select(Budget).filter(Budget.id == id)).scalar()
+
+    if budget is None:
+        raise NotFound()
+
+    members = (
         db.session.execute(
-            select(Arterial)
-            .options(joinedload(Arterial.projects).joinedload(Project.budgets))
-            .filter(Budget.id == id)
+            select(BudgetProjectMember)
+            .options(joinedload(BudgetProjectMember.arterial))
+            .filter(BudgetProjectMember.budget_id == id)
         )
         .scalars()
-        .unique()
         .all()
     )
 
-    projects = [{"project_id_orig": p.orig_id} for a in arterials for p in a.projects]
-    # is every arterial in only one project?
-
-    return db_data_to_geojson_features(arterials, projects)
+    return db_data_to_geojson_features(
+        [m.arterial for m in members],
+        [{"budget_project_id": m.project_id} for m in members],
+    )
 
 
 # d-dicts must have module-level constructors to be pickled by cache
@@ -207,6 +210,7 @@ def handle_http_exception(e: HTTPException):
     """Return JSON instead of HTML for HTTP errors."""
     # create a werkzeug response
     response = Response()
+    logger.error(e)
     response.data = json.dumps(
         {
             "code": e.code,
