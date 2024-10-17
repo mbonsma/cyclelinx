@@ -1,16 +1,19 @@
+from collections import defaultdict
 import json
 import logging
-from collections import defaultdict
+import traceback
 
+from cycle_calc.calculate_accessibility import main as calculate_accessibility
 import geojson
-from flask import Blueprint, Flask, Response, jsonify
+from flask import Blueprint, Flask, Response, jsonify, request
 from flask_caching import Cache
 from flask_compress import Compress
 from flask_cors import CORS
 import logging
+import numpy as np
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-from werkzeug.exceptions import HTTPException, NotFound
+from werkzeug.exceptions import HTTPException, NotFound, UnprocessableEntity
 from werkzeug.wrappers.response import Response
 
 from api.models import (
@@ -231,13 +234,90 @@ def get_das():
     return res
 
 
+@cycling_api.route("/accessibility")
+def get_accessibility():
+    project_ids = request.args.get("project_ids")
+    if project_ids is None:
+        raise UnprocessableEntity("project_ids are required!")
+    try:
+        project_ids_list = [int(id) for id in project_ids.split(",")]
+    except Exception as e:
+        logger.error(e)
+        raise UnprocessableEntity(
+            "Project ids should be a comma-separate list of integers!"
+        )
+
+    da_map = {
+        da.origin_id: da.id
+        for da in db.session.execute(select(DisseminationArea)).scalars().all()
+    }
+
+    defaults = (
+        db.session.execute(
+            select(BudgetScore)
+            .options(joinedload(BudgetScore.metric))
+            .options(joinedload(BudgetScore.dissemination_area))
+            .filter(BudgetScore.budget_id == None)
+        )
+        .scalars()
+        .all()
+    )
+
+    default_map = {}
+
+    for default in defaults:
+        if not default_map.get(default.dissemination_area.origin_id):
+            default_map[default.dissemination_area.origin_id] = {}
+        default_map[default.dissemination_area.origin_id][
+            default.metric.name
+        ] = default.score
+
+    results = calculate_accessibility(project_ids_list, ["job", "populations"])
+
+    score_dict = defaultdict(dd_constructor)
+
+    for origin_id in da_map.keys():
+        origin_id = np.int64(origin_id)
+        if results["populations"].get(origin_id) and results["job"].get(origin_id):
+            da_id = str(da_map[origin_id])
+            score_dict[da_id]["da"] = int(da_id)
+            score_dict[da_id]["scores"]["bin"] = {
+                "job": (
+                    1
+                    if results["job"][origin_id] > default_map[origin_id]["job"]
+                    else 0
+                ),
+                "populations": (
+                    1
+                    if results["populations"][origin_id]
+                    > default_map[origin_id]["populations"]
+                    else 0
+                ),
+            }
+            score_dict[da_id]["scores"]["budget"] = {
+                "job": int(results["job"][origin_id]) + default_map[origin_id]["job"],
+                "populations": int(results["populations"][origin_id])
+                + default_map[origin_id]["populations"],
+            }
+            score_dict[da_id]["scores"]["diff"] = {
+                "job": int(results["job"][origin_id]),
+                "populations": int(results["populations"][origin_id]),
+            }
+            score_dict[da_id]["scores"]["original"] = {
+                "job": default_map[origin_id]["job"],
+                "populations": default_map[origin_id]["populations"],
+            }
+
+    return jsonify(score_dict)
+
+
 # https://flask.palletsprojects.com/en/2.2.x/errorhandling/#generic-exception-handlers
 @cycling_api.errorhandler(HTTPException)
 def handle_http_exception(e: HTTPException):
     """Return JSON instead of HTML for HTTP errors."""
     # create a werkzeug response
     response = Response()
-    logger.error(e)
+    logger.error(traceback.print_exception(e))
     response.data = json.dumps(
         {
             "code": e.code,
@@ -252,7 +332,7 @@ def handle_http_exception(e: HTTPException):
 @cycling_api.errorhandler(Exception)
 def handle_exception(e: Exception):
     # pass through HTTP errors
-    logger.error(e)
+    logger.error(traceback.print_exception(e))
     if isinstance(e, HTTPException):
         return e
     return {

@@ -58,6 +58,7 @@ def upgrade() -> None:
         sa.Column("DAUID_int", sa.Integer(), nullable=True),
         sa.Column("Shape_Leng", sa.Float(), nullable=True),
         sa.Column("Shape_Area", sa.Float(), nullable=True),
+        sa.Column("origin_id", sa.Integer(), nullable=True),
         sa.Column(
             "geometry",
             geoalchemy2.types.Geometry(

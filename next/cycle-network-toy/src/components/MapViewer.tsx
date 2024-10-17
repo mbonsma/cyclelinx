@@ -69,6 +69,7 @@ const Handler: React.FC<{
   const { das, existingLanes } = useContext(StaticDataContext);
   const theme = useTheme();
 
+  //todo: adapt once ready
   useEffect(() => {
     map.on("click", (e) => {
       //console.log(e);
@@ -185,9 +186,17 @@ const Handler: React.FC<{
         },
         onEachFeature: (f, l) => {
           l.addEventListener("click", (e) => {
-            console.log(
-              "removing " + e.sourceTarget.feature.properties.default_project_id
+            const projectId =
+              e.sourceTarget.feature.properties.default_project_id;
+            console.log("removing " + projectId);
+
+            const remainingProjectIds = improvements.features.filter(
+              (f) => f.properties.budget_project_id !== projectId
             );
+
+            // Now pass these to a function that takes them and returns something like { geojson: FeatureCollection, scores: scores }
+            // of course, we'll need to pass through the setImprovements and setScores to do this
+            // or else just the recalculate function that makes the api calls and sets the scores
           });
         },
       });
@@ -211,7 +220,6 @@ const c1 = new LatLng(43.72, -79.21);
 const c2 = new LatLng(43.61, -79.45);
 
 const MapViewer: React.FC<{
-  existingLanes?: ExistingLaneGeoJSON;
   improvements?: ImprovementFeatureGeoJSON;
   scoreScale?:
     | ScaleLinear<number, number>
@@ -223,7 +231,6 @@ const MapViewer: React.FC<{
   selectedMetric?: string;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
-  existingLanes,
   improvements,
   scoreScale,
   metricTypeScale,

@@ -161,6 +161,9 @@ class DisseminationArea(db.Model):
     DAUID_int = Column(Integer, nullable=True)
     Shape_Leng = Column(Float, nullable=True)
     Shape_Area = Column(Float, nullable=True)
+    origin_id = Column(
+        Integer, nullable=True
+    )  # this comes from study and we need it to look up scores
     geometry = Column(Geometry("MULTIPOLYGON"), nullable=False)
     scores = db.relationship("BudgetScore", back_populates="dissemination_area")
 

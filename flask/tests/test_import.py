@@ -18,8 +18,6 @@ from scripts.import_projects import _import_arterials, _import_projects
 from scripts.import_existing_lanes import import_geojson
 from tests.factories import (
     arterial_model_factory,
-    budget_model_factory,
-    project_model_factory,
 )
 
 

@@ -27,10 +27,9 @@ def extract_scores(
     row: Dict[str, Any],
     metrics: Dict[str, int],
     budgets: Dict[str, int],
-    das: Dict[int, int],
+    da_id: int,
 ):
     ret = []
-    da_id = das[int(row["origin_DA_id"])]
     for metric, metric_id in metrics.items():
         baseline_score = float(row[f"{metric}_original"] or 0)
         ret.append(
@@ -77,7 +76,7 @@ def _import_scores(rows: List[Dict[str, Any]], session: Session):
     budgets = session.query(Budget).all()
     budget_names = [m.name for m in session.query(Budget).all()]
 
-    da_map = {d.DAUID: d.id for d in session.query(DisseminationArea).all()}
+    da_map = {d.DAUID: d for d in session.query(DisseminationArea).all()}
 
     csv_budgets = list(
         set(
@@ -95,8 +94,10 @@ def _import_scores(rows: List[Dict[str, Any]], session: Session):
     budgets_map = {b.name: b.id for b in budgets}
 
     for row in rows:
-
-        scores = extract_scores(row, metrics_map, budgets_map, da_map)
+        da = da_map[int(row["origin_DA_id"])]
+        da.origin_id = int(row["origin"])
+        session.add(da)
+        scores = extract_scores(row, metrics_map, budgets_map, da.id)
         stmt = insert(BudgetScore).on_conflict_do_nothing()
         session.execute(stmt, scores)
         session.commit()
