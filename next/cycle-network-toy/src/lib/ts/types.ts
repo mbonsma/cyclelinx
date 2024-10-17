@@ -9,34 +9,9 @@ export type ScaleType = "linear" | "quantile" | "log" | "bin";
 
 interface ExistingLaneProperties {
   id: number;
-  OBJECTID: number;
-  SEGMENT_ID: number;
-  INSTALLED: number;
-  UPGRADED: number;
-  PRE_AMALGAMATION: string;
-  STREET_NAME: string;
-  FROM_STREET: string;
-  TO_STREET: string;
-  ROADCLASS: string;
-  CNPCLASS: string;
-  SURFACE: string;
-  OWNER: string;
-  DIR_LOWORDER: string;
-  INFRA_LOWORDER: string;
-  SEPA_LOWORDER: string;
-  SEPB_LOWORDER: string;
-  ORIG_LOWORDER_INFRA: string;
-  DIR_HIGHORDER: string;
-  INFRA_HIGHORDER: string;
-  SEPA_HIGHORDER: string;
-  SEPB_HIGHORDER: string;
-  ORIG_HIGHORDER: string;
-  BYLAWED: string;
-  EDITOR: string;
-  LAST_EDIT_DATE: string;
-  UPGRADE_DESCRIPTION: string;
-  CONVERTED: string;
   total_length: number;
+  feature_type: "existing_lane";
+  INFRA_HIGHORDER: string;
 }
 
 interface DAProperties {

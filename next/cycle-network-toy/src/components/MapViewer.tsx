@@ -135,7 +135,7 @@ const Handler: React.FC<{
         //remove removed or filter out those that already exist from add list
         if (
           layerProps &&
-          layerProps.hasOwnProperty("UPGRADED") &&
+          layerProps.feature_type === "existing_lane" &&
           !visibleExistingLanes.includes(
             EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
           )

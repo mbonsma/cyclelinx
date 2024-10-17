@@ -204,7 +204,13 @@ def get_metrics():
 @default_cache.cached(key_prefix="/existing-lanes")
 def get_existing_lanes():
     lanes = [
-        model_to_dict(e)
+        {
+            "id": e.id,
+            "total_length": e.total_length,
+            "geometry": e.geometry,
+            "feature_type": "existing_lane",
+            "INFRA_HIGHORDER": e.INFRA_HIGHORDER,
+        }
         for e in db.session.execute(select(ExistingLane)).scalars().all()
     ]
     data = properties_to_geojson_features(lanes)
