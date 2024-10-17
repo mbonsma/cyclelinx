@@ -51,7 +51,7 @@ const Handler: React.FC<{
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
-  improvements: ImprovementFeatureGeoJSON;
+  improvements?: ImprovementFeatureGeoJSON;
   selectedMetric?: string;
   scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
@@ -70,6 +70,18 @@ const Handler: React.FC<{
   const map = useMap();
   const das = useContext(DAContext);
   const theme = useTheme();
+
+  useEffect(() => {
+    map.on("click", (e) => {
+      console.log(e);
+      const coord = e.latlng;
+      const lat = coord.lat;
+      const lng = coord.lng;
+      console.log(
+        "You clicked the map at latitude: " + lat + " and longitude: " + lng
+      );
+    });
+  }, [map]);
 
   useEffect(() => {
     if (!dasSet && !!map && !!scores) {
@@ -176,6 +188,10 @@ const Handler: React.FC<{
       });
 
       map.eachLayer((l) => {
+        //todo: add click handler to remove
+        //todo: we can no longer count on feature_type
+        //  improvement features have to be labeled on the server ad-hoc, since it can be any arterial
+        //  so maybe reinstate this property conditionally for this featurecollection
         if (l?.feature?.properties.feature_type == "improvement_feature") {
           map.removeLayer(l);
         }
@@ -193,7 +209,7 @@ const c2 = new LatLng(43.61, -79.45);
 
 const MapViewer: React.FC<{
   existingLanes?: ExistingLaneGeoJSON;
-  improvements: ImprovementFeatureGeoJSON;
+  improvements?: ImprovementFeatureGeoJSON;
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>

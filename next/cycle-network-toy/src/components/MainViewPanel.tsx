@@ -10,7 +10,6 @@ import {
   ScaleType,
   ScoreResults,
   ExistingLaneGeoJSON,
-  BaseFeatureGeoJSON,
   ImprovementFeatureGeoJSON,
 } from "@/lib/ts/types";
 import {
@@ -101,6 +100,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
 }) => {
   const [budgetId, setBudgetId] = useState<number>();
   const [improvements, setImprovements] = useState<ImprovementFeatureGeoJSON>();
+  const [totalKm, setTotalKm] = useState<number>();
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState(false);
   const [scaleTypeVisible, setScaleTypeVisible] = useState(false);
@@ -147,8 +147,14 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
             switch (i) {
               case 0:
                 if (result.status === "fulfilled") {
-                  setImprovements(
-                    result.value.data as ImprovementFeatureGeoJSON
+                  const improvements = result.value
+                    .data as ImprovementFeatureGeoJSON;
+                  setImprovements(improvements);
+                  setTotalKm(
+                    improvements.features.reduce(
+                      (acc, curr) => (acc += curr.properties.total_length),
+                      0
+                    )
                   );
                 }
               case 1:
@@ -237,6 +243,13 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
             <Grid item>
               <Typography variant="caption">Proposed New Bike Lane</Typography>
             </Grid>
+          </Grid>
+        )}
+        {!!totalKm && (
+          <Grid item>
+            <Typography variant="caption">
+              Total New Bike Lanes: {formatDigit(totalKm / 1000)} (in KM)
+            </Typography>
           </Grid>
         )}
         <Grid item>

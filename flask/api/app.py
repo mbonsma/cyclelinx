@@ -15,6 +15,7 @@ from werkzeug.wrappers.response import Response
 
 from api.models import (
     db,
+    Arterial,
     Budget,
     BudgetProjectMember,
     BudgetScore,
@@ -23,7 +24,7 @@ from api.models import (
     Metric,
 )
 from api.settings import app_settings
-from api.utils import db_data_to_geojson_features, model_to_dict
+from api.utils import properties_to_geojson_features, model_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +41,6 @@ default_cache = Cache(
 )
 
 compress = Compress()
-
-
-# def get_cache_key(request):
-#     return request.path
 
 
 def create_app(
@@ -67,14 +64,6 @@ def create_app(
     if cache:
         cache.init_app(app)
 
-    # if compress and cache:
-    #     compress.cache = cache
-    #     compress.cache_key = get_cache_key
-    # we could remove the cache decorator(s) and let compression deal with it
-    # as it will take care of caching the compressed content, which is nice (keeps cache smaller)
-    # but the best performance is with regular cache and compression, for some reason.
-    # note also that we don't need the compressed decorator
-
     return app
 
 
@@ -87,28 +76,54 @@ def get_budgets():
     return [model_to_dict(result) for result in results]
 
 
+@cycling_api.route("/arterials", methods=["GET"])
+def get_arterials():
+    arterials = [
+        {
+            "default_project_id": a.default_project_id,
+            "total_length": a.total_length,
+            "id": a.id,
+            "feature_type": "arterial",
+            "geometry": a.geometry,
+        }
+        for a in db.session.execute(select(Arterial)).scalars().all()
+    ]
+
+    data = properties_to_geojson_features(arterials)
+
+    return Response(geojson.dumps(data), content_type="application/json")
+
+
 @cycling_api.route("/budgets/<int:id>/arterials")
 def get_budget_arterials(id):
 
     budget = db.session.execute(select(Budget).filter(Budget.id == id)).scalar()
 
     if budget is None:
-        raise NotFound()
+        raise NotFound("Budget not found!")
 
-    members = (
-        db.session.execute(
-            select(BudgetProjectMember)
-            .options(joinedload(BudgetProjectMember.arterial))
-            .filter(BudgetProjectMember.budget_id == id)
+    members = [
+        {
+            "geometry": b.arterial.geometry,
+            "budget_project_id": b.project_id,
+            "default_project_id": b.arterial.default_project_id,
+            "feature_type": "improvement_feature",
+            "total_length": b.arterial.total_length,
+        }
+        for b in (
+            db.session.execute(
+                select(BudgetProjectMember)
+                .options(joinedload(BudgetProjectMember.arterial))
+                .filter(BudgetProjectMember.budget_id == id)
+            )
+            .scalars()
+            .all()
         )
-        .scalars()
-        .all()
-    )
+    ]
 
-    return db_data_to_geojson_features(
-        [m.arterial for m in members],
-        [{"budget_project_id": m.project_id} for m in members],
-    )
+    data = properties_to_geojson_features(members)
+
+    return Response(geojson.dumps(data), content_type="application/json")
 
 
 # d-dicts must have module-level constructors to be pickled by cache
@@ -188,8 +203,11 @@ def get_metrics():
 @cycling_api.route("/existing-lanes")
 @default_cache.cached(key_prefix="/existing-lanes")
 def get_existing_lanes():
-    lanes = db.session.execute(select(ExistingLane)).scalars().all()
-    data = db_data_to_geojson_features(lanes)
+    lanes = [
+        model_to_dict(e)
+        for e in db.session.execute(select(ExistingLane)).scalars().all()
+    ]
+    data = properties_to_geojson_features(lanes)
     # dumping is much faster than jsonify
     res = Response(geojson.dumps(data), content_type="application/json")
     return res
@@ -198,8 +216,11 @@ def get_existing_lanes():
 @cycling_api.route("/das")
 @default_cache.cached(key_prefix="/das")
 def get_das():
-    das = db.session.execute(select(DisseminationArea)).scalars().all()
-    data = db_data_to_geojson_features(das)
+    das = [
+        {"id": d.id, "DAUID": d.DAUID, "geometry": d.geometry}
+        for d in db.session.execute(select(DisseminationArea)).scalars().all()
+    ]
+    data = properties_to_geojson_features(das)
     res = Response(geojson.dumps(data), content_type="application/json")
     return res
 
@@ -225,6 +246,7 @@ def handle_http_exception(e: HTTPException):
 @cycling_api.errorhandler(Exception)
 def handle_exception(e: Exception):
     # pass through HTTP errors
+    logger.error(e)
     if isinstance(e, HTTPException):
         return e
     return {

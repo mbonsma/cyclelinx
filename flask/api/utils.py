@@ -38,16 +38,15 @@ def model_to_dict(Model: DeclarativeMeta):
     return dict
 
 
-def db_data_to_geojson_features(
-    data: List[Any], extra_properties: Optional[List[dict[str, Any]]] = None
+def properties_to_geojson_features(
+    properties: List[Dict[str, Any]]
 ) -> geojson.FeatureCollection:
     """
     Convert a list of models with a ``geometry`` property to a geojson FeatureCollection
 
         Parameters
         ----------
-        data : Model, the SQLAlchemy model, with 'geometry' property
-        extra_properties : any properties not on the model that should be added to the geojson ``properties``
+        properties : List of dictionaries, must have a geometry property
 
         Returns
         -------
@@ -55,19 +54,16 @@ def db_data_to_geojson_features(
 
 
     """
-    if extra_properties is not None and len(extra_properties) != len(data):
-        raise ValueError("Extra properties must be the same length as data!")
 
     features = []
 
-    for i, feature in enumerate(data):
-        properties = model_to_dict(feature)
-        properties.pop("geometry")
-        if extra_properties is not None:
-            properties = {**properties, **extra_properties[i]}
-        geom = wkb.loads(str(feature.geometry))
+    for property in properties:
+
+        geometry = property.pop("geometry")
+
+        geom = wkb.loads(str(geometry))
         f = geojson.loads(to_geojson(geom))
-        features.append(geojson.Feature(geometry=f, properties=properties))
+        features.append(geojson.Feature(geometry=f, properties=property))
 
     fc = geojson.FeatureCollection(
         features,

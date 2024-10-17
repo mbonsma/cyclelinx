@@ -1,12 +1,9 @@
-import json
-
 import geopandas
-from io import StringIO
 from sqlalchemy import select
 
 
 from api.models import Arterial
-from api.utils import db_data_to_geojson_features
+from api.utils import model_to_dict, properties_to_geojson_features
 from tests.factories import (
     arterial_model_factory,
 )
@@ -17,16 +14,14 @@ def test_can_make_geojson(app_ctx, fresh_db):
     arterial_model_factory(fresh_db.session).create_batch(10)
 
     # sanity check on our database reset
-    results = fresh_db.session.execute(select(Arterial)).scalars().all()
-    assert len(results) == 10
+    arterials = fresh_db.session.execute(select(Arterial)).scalars().all()
+    assert len(arterials) == 10
 
-    geojson = db_data_to_geojson_features(results)
+    properties = [model_to_dict(a) for a in arterials]
+
+    geojson = properties_to_geojson_features(properties)
 
     # poor man's validation....
     geopandas.GeoDataFrame.from_features(geojson)
-
-    geojson = db_data_to_geojson_features(results, [{"a": 1} for i in range(10)])
-
-    geopandas.read_file(StringIO(json.dumps(geojson)))
 
     assert True

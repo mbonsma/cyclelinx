@@ -40,63 +40,13 @@ interface ExistingLaneProperties {
 }
 
 interface DAProperties {
-  ADAUID: number;
-  CCSNAME: string;
-  CCSUID: number;
-  CDNAME: string;
-  CDTYPE: string;
-  CDUID: number;
-  CMANAME: string;
-  CMAPUID: number;
-  CMATYPE: string;
-  CMAUID: number;
-  CSDNAME: string;
-  CSDTYPE: string;
-  CSDUID: number;
-  CTNAME: number;
-  CTUID: number;
   DAUID: number;
-  DAUID_int: number;
-  ERNAME: string;
-  ERUID: number;
-  PRNAME: string;
-  PRUID: number;
-  SACCODE: number;
-  SACTYPE: string;
-  Shape_Area: number;
-  Shape_Leng: number;
   id: number;
 }
 
 interface FeatureProperties {
-  ADDRESS_L: string;
-  ADDRESS_R: string;
-  CP_TYPE: string;
   default_project_id: number;
-  DIR_CODE_D: string;
-  FCODE: number;
-  FCODE_DESC: string;
-  feature_type: string;
-  FNODE: number;
-  GEO_ID: number;
-  geometry: string;
-  HINUML: number;
-  HINUMR: number;
-  JURIS_CODE: string;
-  length_in_: number;
-  LFN_ID: number;
-  LF_NAME: string;
-  LONUMR: number;
-  LONUML: number;
-  NBRLANES_2: number;
-  OBJECTID: number;
-  OE_FLAG_L: string;
-  OE_FLAG_R: string;
-  ONE_WAY_DI: number;
-  Shape_Leng: number;
-  SPEED: number;
-  TNODE: number;
-  U500_20: string;
+  id: number;
   total_length: number;
 }
 
@@ -118,20 +68,25 @@ interface FeatureCollection<
   type: "FeatureCollection";
 }
 
-export type DAGeoJSON = FeatureCollection<MultiPolygon, DAProperties>;
-
-export type BaseFeatureGeoJSON = FeatureCollection<
-  LineString,
-  FeatureProperties
->;
-
 interface ImprovementFeatureProperties extends FeatureProperties {
   budget_project_id: number;
+  feature_type: "improvement_feature";
 }
+
+interface ArterialFeatureProperties extends FeatureProperties {
+  feature_type: "arterial";
+}
+
+export type DAGeoJSON = FeatureCollection<MultiPolygon, DAProperties>;
 
 export type ImprovementFeatureGeoJSON = FeatureCollection<
   LineString,
   ImprovementFeatureProperties
+>;
+
+export type ArterialFeatureGeoJSON = FeatureCollection<
+  LineString,
+  ArterialFeatureProperties
 >;
 
 export type ExistingLaneGeoJSON = FeatureCollection<
