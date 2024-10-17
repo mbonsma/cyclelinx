@@ -23,7 +23,7 @@ import {
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
-import { DAContext } from "@/providers/DAContextProvider";
+import { StaticDataContext } from "@/providers/StaticDataProvider";
 import { format } from "d3-format";
 import { useTheme } from "@mui/material";
 
@@ -45,7 +45,6 @@ const buildValueTooltip = (
 };
 
 const Handler: React.FC<{
-  existingLanes?: ExistingLaneGeoJSON;
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
@@ -57,7 +56,6 @@ const Handler: React.FC<{
   scoreSet: keyof ScoreSet;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
-  existingLanes,
   scoreScale,
   metricTypeScale,
   improvements,
@@ -68,12 +66,12 @@ const Handler: React.FC<{
 }) => {
   const [dasSet, setDasSet] = useState(false);
   const map = useMap();
-  const das = useContext(DAContext);
+  const { das, existingLanes } = useContext(StaticDataContext);
   const theme = useTheme();
 
   useEffect(() => {
     map.on("click", (e) => {
-      console.log(e);
+      //console.log(e);
       const coord = e.latlng;
       const lat = coord.lat;
       const lng = coord.lng;
@@ -185,17 +183,22 @@ const Handler: React.FC<{
         style: {
           color: theme.palette.projectColor,
         },
+        onEachFeature: (f, l) => {
+          l.addEventListener("click", (e) => {
+            console.log(
+              "removing " + e.sourceTarget.feature.properties.default_project_id
+            );
+          });
+        },
       });
 
       map.eachLayer((l) => {
         //todo: add click handler to remove
-        //todo: we can no longer count on feature_type
-        //  improvement features have to be labeled on the server ad-hoc, since it can be any arterial
-        //  so maybe reinstate this property conditionally for this featurecollection
         if (l?.feature?.properties.feature_type == "improvement_feature") {
           map.removeLayer(l);
         }
       });
+
       map.addLayer(layer);
     }
   }, [improvements, map, theme]);
@@ -238,7 +241,6 @@ const MapViewer: React.FC<{
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     />
     <Handler
-      existingLanes={existingLanes}
       scoreScale={scoreScale}
       metricTypeScale={metricTypeScale}
       improvements={improvements}

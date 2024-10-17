@@ -5,7 +5,7 @@ import { format } from "d3-format";
 import { schemeSet2 } from "d3-scale-chromatic";
 
 import { MainViewPanel } from "@/components";
-import DAContextProvider from "@/providers/DAContextProvider";
+import StaticDataProvider from "@/providers/StaticDataProvider";
 
 /**
  * Round number and return
@@ -125,7 +125,7 @@ export default async function Home() {
   const d = await das.json();
 
   return (
-    <DAContextProvider das={d}>
+    <StaticDataProvider value={{ das: d, existingLanes: e }}>
       {/* Outer container */}
       <Grid direction="row" container justifyContent="center">
         {/* Inner column container */}
@@ -140,6 +140,6 @@ export default async function Home() {
           <MainViewPanel budgets={b} existingLanes={e} metrics={m} />
         </Grid>
       </Grid>
-    </DAContextProvider>
+    </StaticDataProvider>
   );
 }

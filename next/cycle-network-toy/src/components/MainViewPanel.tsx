@@ -2,14 +2,13 @@
 
 import dynamic from "next/dynamic";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Budget,
   Metric,
   ScoreSet,
   ScaleType,
   ScoreResults,
-  ExistingLaneGeoJSON,
   ImprovementFeatureGeoJSON,
 } from "@/lib/ts/types";
 import {
@@ -55,6 +54,7 @@ import {
   BinaryLegend,
   LoadingOverlay,
 } from "@/components";
+import { StaticDataContext } from "@/providers/StaticDataProvider";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -63,7 +63,6 @@ const MapViewer = dynamic(() => import("./MapViewer"), {
 
 interface ViewPanelProps {
   budgets: Budget[];
-  existingLanes: ExistingLaneGeoJSON;
   metrics: Metric[];
 }
 
@@ -93,11 +92,7 @@ const getScale = (scaleType: ScaleType, domain: [number, number]) => {
 const maybeLog = (scaleType: ScaleType, value: number) =>
   scaleType === "log" ? Math.log10(value) : value;
 
-const ViewPanel: React.FC<ViewPanelProps> = ({
-  budgets,
-  existingLanes,
-  metrics,
-}) => {
+const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
   const [budgetId, setBudgetId] = useState<number>();
   const [improvements, setImprovements] = useState<ImprovementFeatureGeoJSON>();
   const [totalKm, setTotalKm] = useState<number>();
@@ -112,6 +107,8 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
+
+  const { existingLanes } = useContext(StaticDataContext);
 
   const theme = useTheme();
 
@@ -390,7 +387,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
         )}
         <Divider sx={{ margin: 2 }} />
         <Grid item>
-          {existingLanes && (
+          {!!existingLanes && (
             <FormControl fullWidth>
               <FormLabel id="checkbox-group-legend">Existing Lanes</FormLabel>
               <FormGroup aria-labelledby="checkbox-group-legend">
@@ -430,7 +427,6 @@ const ViewPanel: React.FC<ViewPanelProps> = ({
         {!!metricTypeScale && (
           <MapViewer
             scoreScale={scoreScale}
-            existingLanes={existingLanes}
             improvements={improvements}
             scores={scores}
             scoreSet={scoreSetType}
