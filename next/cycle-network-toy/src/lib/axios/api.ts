@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ImprovementFeatureGeoJSON, ScoreResults } from "../ts/types";
+import { BudgetProjectMember, ScoreResults } from "../ts/types";
 
 export const client = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_ENDPOINT_BROWSER,
@@ -7,7 +7,7 @@ export const client = axios.create({
 });
 
 export const fetchImprovements = (budgetId: number) =>
-  client.get<ImprovementFeatureGeoJSON>(`budgets/${budgetId}/arterials`);
+  client.get<BudgetProjectMember>(`budgets/${budgetId}/arterials`);
 
 export const fetchBudgetScores = (budgetId: number) =>
   client.get<ScoreResults>(`budgets/${budgetId}/scores`);

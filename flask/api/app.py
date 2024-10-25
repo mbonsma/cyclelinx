@@ -109,28 +109,15 @@ def get_budget_arterials(id):
     if budget is None:
         raise NotFound("Budget not found!")
 
-    members = [
-        {
-            "geometry": b.arterial.geometry,
-            "budget_project_id": b.project_id,
-            "default_project_id": b.arterial.default_project_id,
-            "feature_type": "improvement_feature",
-            "total_length": b.arterial.total_length,
-        }
-        for b in (
-            db.session.execute(
-                select(BudgetProjectMember)
-                .options(joinedload(BudgetProjectMember.arterial))
-                .filter(BudgetProjectMember.budget_id == id)
-            )
-            .scalars()
-            .all()
+    results = (
+        db.session.execute(
+            select(BudgetProjectMember).filter(BudgetProjectMember.budget_id == id)
         )
-    ]
+        .scalars()
+        .all()
+    )
 
-    data = properties_to_geojson_features(members)
-
-    return Response(geojson.dumps(data), content_type="application/json")
+    return [model_to_dict(result) for result in results]
 
 
 # d-dicts must have module-level constructors to be pickled by cache

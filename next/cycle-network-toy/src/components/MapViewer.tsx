@@ -11,11 +11,7 @@ import {
   existingScale,
   formatDigit,
 } from "@/app/page";
-import {
-  ImprovementFeatureGeoJSON,
-  ScoreResults,
-  ScoreSet,
-} from "@/lib/ts/types";
+import { ScoreResults, ScoreSet } from "@/lib/ts/types";
 import {
   ScaleLinear,
   ScaleOrdinal,
@@ -50,7 +46,7 @@ const Handler: React.FC<{
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
-  improvements?: ImprovementFeatureGeoJSON;
+  improvements?: number[];
   pendingImprovements: PendingImprovements;
   selectedMetric?: string;
   setPendingImprovements: React.Dispatch<
@@ -93,7 +89,7 @@ const Handler: React.FC<{
     }
   }, [das, dasSet, map, setDasSet, scores]);
 
-  //add Arterials
+  //add Arterials w/ default click behavior and styling
   useEffect(() => {
     if (!!map) {
       //really we should load these once, then use a use effect to update them when arterials change
@@ -102,10 +98,31 @@ const Handler: React.FC<{
         style: (f) => {
           if (f) {
             const projectId = f.properties.default_project_id;
+            const allProjectIds = new Set(
+              f.properties.budget_project_ids.concat(
+                f.properties.default_project_id
+              )
+            );
+            const allImprovments = new Set(improvements);
+            const removeSet = new Set(pendingImprovements.toRemove);
             if (pendingImprovements.toAdd.includes(projectId)) {
               return {
                 stroke: true,
                 color: theme.palette.projectAddColor,
+                fillOpacity: 1,
+                opacity: 1,
+              };
+            } else if (removeSet.intersection(allProjectIds).size) {
+              return {
+                stroke: true,
+                color: theme.palette.projectRemoveColor,
+                fillOpacity: 1,
+                opacity: 1,
+              };
+            } else if (allImprovments.intersection(allProjectIds).size) {
+              return {
+                stroke: true,
+                color: theme.palette.projectColor,
                 fillOpacity: 1,
                 opacity: 1,
               };
@@ -129,19 +146,37 @@ const Handler: React.FC<{
         onEachFeature: (f, l) => {
           l.addEventListener("click", (e) => {
             const projectId =
-              e.sourceTarget.feature.properties.default_project_id;
+              e.sourceTarget.feature.properties.default_project_id ||
+              e.sourceTarget.feature.properties.budget_project_ids[0];
 
             if (projectId) {
+              // if user added already, remove from add list
               if (pendingImprovements.toAdd.includes(projectId)) {
                 setPendingImprovements(({ toAdd, toRemove }) => ({
                   toAdd: toAdd.filter((p) => p !== projectId),
                   toRemove,
                 }));
-              } else {
+                // if user marked for removal, remove from remove list
+              } else if (pendingImprovements.toRemove.includes(projectId)) {
                 setPendingImprovements(({ toAdd, toRemove }) => ({
-                  toAdd: toAdd.concat(projectId),
-                  toRemove,
+                  toRemove: toRemove.filter((p) => p !== projectId),
+                  toAdd,
                 }));
+              } else {
+                // if it's in a budget improvement, then user is marking for removal
+                if (improvements && improvements.includes(projectId)) {
+                  setPendingImprovements(({ toAdd, toRemove }) => ({
+                    toRemove: toRemove.concat(projectId),
+                    toAdd,
+                  }));
+                }
+                // otherwise they're marking it to add
+                else {
+                  setPendingImprovements(({ toAdd, toRemove }) => ({
+                    toAdd: toAdd.concat(projectId),
+                    toRemove,
+                  }));
+                }
               }
             }
           });
@@ -160,9 +195,12 @@ const Handler: React.FC<{
   }, [
     map,
     arterials,
+    improvements,
     pendingImprovements,
     setPendingImprovements,
     theme.palette.projectAddColor,
+    theme.palette.projectRemoveColor,
+    theme.palette.projectColor,
   ]);
 
   // Add scores
@@ -248,50 +286,6 @@ const Handler: React.FC<{
     }
   }, [existingLanes, visibleExistingLanes, map]);
 
-  // manage improvements
-  useEffect(() => {
-    /* Add the propsed new lanes note that this layer has to get dropped and added every time so functions stay up to dae */
-    if (improvements) {
-      const layer = new LGeoJSON(improvements as GeoJsonObject, {
-        style: (feature) => ({
-          color: pendingImprovements.toRemove.includes(
-            feature?.properties.budget_project_id
-          )
-            ? theme.palette.projectRemoveColor
-            : theme.palette.projectColor,
-        }),
-        onEachFeature: (f, l) => {
-          l.addEventListener("click", (e) => {
-            const projectId =
-              e.sourceTarget.feature.properties.budget_project_id;
-
-            if (pendingImprovements.toRemove.includes(projectId)) {
-              setPendingImprovements(({ toAdd, toRemove }) => ({
-                toRemove: toRemove.filter((p) => p !== projectId),
-                toAdd,
-              }));
-            } else {
-              setPendingImprovements(({ toAdd, toRemove }) => ({
-                toRemove: toRemove.concat(projectId),
-                toAdd,
-              }));
-            }
-          });
-        },
-      });
-
-      // remove old improvements and add new ones
-      map.eachLayer((l) => {
-        //todo: add click handler to remove
-        if (l?.feature?.properties.feature_type == "improvement_feature") {
-          map.removeLayer(l);
-        }
-      });
-
-      map.addLayer(layer);
-    }
-  }, [improvements, map, theme, pendingImprovements, setPendingImprovements]);
-
   return null;
 };
 
@@ -300,7 +294,7 @@ const c1 = new LatLng(43.72, -79.21);
 const c2 = new LatLng(43.61, -79.45);
 
 const MapViewer: React.FC<{
-  improvements?: ImprovementFeatureGeoJSON;
+  improvements?: number[];
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>

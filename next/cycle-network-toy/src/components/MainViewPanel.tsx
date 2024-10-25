@@ -9,7 +9,7 @@ import {
   ScoreSet,
   ScaleType,
   ScoreResults,
-  ImprovementFeatureGeoJSON,
+  BudgetProjectMember,
 } from "@/lib/ts/types";
 import {
   EXISTING_LANE_NAME_MAP,
@@ -105,7 +105,7 @@ export interface PendingImprovements {
 
 const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
   const [budgetId, setBudgetId] = useState<number>();
-  const [improvements, setImprovements] = useState<ImprovementFeatureGeoJSON>();
+  const [improvements, setImprovements] = useState<number[]>();
   const [totalKm, setTotalKm] = useState<number>();
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState(false);
@@ -122,6 +122,10 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
+
+  useEffect(() => {
+    console.log(pendingImprovements);
+  }, [pendingImprovements]);
 
   const { existingLanes } = useContext(StaticDataContext);
 
@@ -154,16 +158,19 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
           results.forEach((result, i) => {
             switch (i) {
               case 0:
-                if (result.status === "fulfilled") {
+                if (
+                  result.status === "fulfilled" &&
+                  Array.isArray(result.value.data)
+                ) {
                   const improvements = result.value
-                    .data as ImprovementFeatureGeoJSON;
-                  setImprovements(improvements);
-                  setTotalKm(
-                    improvements.features.reduce(
-                      (acc, curr) => (acc += curr.properties.total_length),
-                      0
-                    )
-                  );
+                    .data as BudgetProjectMember[];
+                  setImprovements(improvements.map((i) => i.project_id));
+                  // setTotalKm(
+                  //   improvements.features.reduce(
+                  //     (acc, curr) => (acc += curr.properties.total_length),
+                  //     0
+                  //   )
+                  // );
                 }
               case 1:
                 if (result.status === "fulfilled") {
@@ -198,40 +205,24 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
   };
 
   const handleCalculation = async () => {
-    let remainingImprovements: number[] = [];
-    if (improvements) {
-      const toRemoveMap = pendingImprovements.toRemove.reduce<
-        Record<number, boolean>
-      >((acc, curr) => ({ ...acc, [curr]: true }), {});
-      remainingImprovements =
-        improvements?.features
-          .map((f) => f.properties.budget_project_id)
-          .filter((id) => !toRemoveMap[id]) || [];
-    }
+    const improvementsSet = new Set(improvements);
+    const toAddSet = new Set(pendingImprovements.toAdd);
+    const toRemoveSet = new Set(pendingImprovements.toRemove);
 
-    const projectIds = remainingImprovements.concat(pendingImprovements.toAdd);
+    const projectIds = [
+      ...improvementsSet.difference(toRemoveSet).union(toAddSet),
+    ];
 
     try {
       setLoading(true);
       const scores = await fetchNewCalculations(projectIds);
       setScores(scores.data);
+      setImprovements(projectIds);
       setPendingImprovements({
         toAdd: [],
         toRemove: [],
       });
-      //here we're assuming that we're only removing!
-      if (improvements) {
-        setImprovements((improvements) => {
-          const newFeatures = improvements?.features.filter(
-            (f) =>
-              !pendingImprovements.toRemove.includes(
-                f.properties.budget_project_id || -1
-              )
-          )!;
-          improvements!.features = newFeatures;
-          return improvements;
-        });
-      }
+      setBudgetId(undefined);
     } finally {
       setLoading(false);
     }
@@ -278,7 +269,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
             </Select>
           </FormControl>
         </Grid>
-        {!!budgetId && (
+        {!!improvements && (
           <Grid item container spacing={3} alignItems="center" direction="row">
             <Grid item flexGrow={1}>
               <Box
@@ -324,7 +315,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
           </Grid>
         )}
         <Grid item>
-          {!!budgetId && !!metrics && (
+          {!!improvements && !!metrics && (
             <FormControl fullWidth>
               <FormLabel id="radio-group-legend">Metric</FormLabel>
               <RadioGroup
@@ -345,7 +336,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
             </FormControl>
           )}
         </Grid>
-        {scoreScale && (
+        {!!scoreScale && (
           <Grid item container>
             {["linear", "log"].includes(scaleType) && (
               <>

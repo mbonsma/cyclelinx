@@ -43,6 +43,12 @@ interface FeatureCollection<
   type: "FeatureCollection";
 }
 
+export interface BudgetProjectMember {
+  arterial_id: number;
+  budget_id: number;
+  project_id: number;
+}
+
 interface ImprovementFeatureProperties extends FeatureProperties {
   budget_project_id: number;
   feature_type: "improvement_feature";

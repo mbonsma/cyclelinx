@@ -78,7 +78,7 @@ def test_get_budget_arterials(client, fresh_db):
         fresh_db.session.commit()
     response = client.get(f"/budgets/{budget.id}/arterials")
     assert response.status_code == 200
-    assert len(response.json["features"]) == 10
+    assert len(response.json) == 10
 
 
 def test_get_budget_scores(client, fresh_db):
