@@ -26,10 +26,10 @@ import {
   scaleSymlog,
 } from "d3-scale";
 import { schemeDark2 } from "d3-scale-chromatic";
-import axios from "axios";
 import { extent } from "d3-array";
 import {
   Box,
+  Button,
   Checkbox,
   checkboxClasses,
   Collapse,
@@ -55,7 +55,11 @@ import {
   LoadingOverlay,
 } from "@/components";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
-import { fetchBudgetScores, fetchImprovements } from "@/lib/axios/api";
+import {
+  fetchBudgetScores,
+  fetchImprovements,
+  fetchNewCalculations,
+} from "@/lib/axios/api";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -93,17 +97,27 @@ const getScale = (scaleType: ScaleType, domain: [number, number]) => {
 const maybeLog = (scaleType: ScaleType, value: number) =>
   scaleType === "log" ? Math.log10(value) : value;
 
+//these are lists of project IDs
+export interface PendingImprovements {
+  toAdd: number[];
+  toRemove: number[];
+}
+
 const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
   const [budgetId, setBudgetId] = useState<number>();
   const [improvements, setImprovements] = useState<ImprovementFeatureGeoJSON>();
   const [totalKm, setTotalKm] = useState<number>();
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState(false);
+  const [pendingImprovements, setPendingImprovements] =
+    useState<PendingImprovements>({
+      toAdd: [],
+      toRemove: [],
+    });
   const [scaleTypeVisible, setScaleTypeVisible] = useState(false);
   const [scores, setScores] = useState<ScoreResults>();
   const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("diff");
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
-
   const [selectedMetric, setSelectedMetric] = useState<string>();
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
@@ -183,6 +197,49 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
     }
   };
 
+  const handleCalculation = async () => {
+    let remainingImprovements: number[] = [];
+    if (improvements) {
+      const toRemoveMap = pendingImprovements.toRemove.reduce<
+        Record<number, boolean>
+      >((acc, curr) => ({ ...acc, [curr]: true }), {});
+      remainingImprovements =
+        improvements?.features
+          .map((f) => f.properties.budget_project_id)
+          .filter((id) => !toRemoveMap[id]) || [];
+    }
+
+    const projectIds = remainingImprovements.concat(pendingImprovements.toAdd);
+
+    //fine, this works, but we either have to alter the improvement goejson to strip the toRemove, or we have to bind
+    //the arterials and highlight them by visible projectIds (means computing the geojson on the fly, I think)
+    //for now we'll do the form, for sake of demo, but we'll need a new branch to do the latter
+    try {
+      setLoading(true);
+      const scores = await fetchNewCalculations(projectIds);
+      setScores(scores.data);
+      setPendingImprovements({
+        toAdd: [],
+        toRemove: [],
+      });
+      //here we're assuming that we're only removing!
+      if (improvements) {
+        setImprovements((improvements) => {
+          const newFeatures = improvements?.features.filter(
+            (f) =>
+              !pendingImprovements.toRemove.includes(
+                f.properties.budget_project_id
+              )
+          )!;
+          improvements!.features = newFeatures;
+          return improvements;
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Grid
       item
@@ -237,6 +294,27 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
             <Grid item>
               <Typography variant="caption">Proposed New Bike Lane</Typography>
             </Grid>
+          </Grid>
+        )}
+        {!!pendingImprovements.toRemove.length && (
+          <Grid item container spacing={3} alignItems="center" direction="row">
+            <Grid item flexGrow={1}>
+              <Box
+                style={{
+                  backgroundColor: theme.palette.projectRemoveColor,
+                  height: "5px",
+                }}
+              />
+            </Grid>
+            <Grid item>
+              <Typography variant="caption">Pending Lane Removal</Typography>
+            </Grid>
+          </Grid>
+        )}
+        {(!!pendingImprovements.toRemove.length ||
+          !!pendingImprovements.toAdd.length) && (
+          <Grid item>
+            <Button onClick={handleCalculation}>Calculate</Button>
           </Grid>
         )}
         {!!totalKm && (
@@ -423,13 +501,15 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
       <Grid item xs={12} md={10} flexGrow={1}>
         {!!metricTypeScale && (
           <MapViewer
-            scoreScale={scoreScale}
             improvements={improvements}
+            pendingImprovements={pendingImprovements}
+            metricTypeScale={metricTypeScale}
+            setPendingImprovements={setPendingImprovements}
             scores={scores}
+            scoreScale={scoreScale}
             scoreSet={scoreSetType}
             selectedMetric={selectedMetric}
             visibleExistingLanes={visibleExistingLanes}
-            metricTypeScale={metricTypeScale}
           />
         )}
       </Grid>

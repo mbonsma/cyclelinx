@@ -13,3 +13,8 @@ export const fetchImprovements = (budgetId: number) =>
 
 export const fetchBudgetScores = (budgetId: number) =>
   axios.get<ScoreResults>(`http://localhost:9033/budgets/${budgetId}/scores`);
+
+export const fetchNewCalculations = (projectIds: number[]) =>
+  axios.get<ScoreResults>(
+    `http://localhost:9033/accessibility?project_ids=${projectIds.join(",")}`
+  );

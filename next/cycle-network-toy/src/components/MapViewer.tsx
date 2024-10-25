@@ -12,7 +12,6 @@ import {
   formatDigit,
 } from "@/app/page";
 import {
-  ExistingLaneGeoJSON,
   ImprovementFeatureGeoJSON,
   ScoreResults,
   ScoreSet,
@@ -26,6 +25,7 @@ import {
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import { format } from "d3-format";
 import { useTheme } from "@mui/material";
+import { PendingImprovements } from "./MainViewPanel";
 
 const formatPct = format(",.1%");
 
@@ -51,7 +51,11 @@ const Handler: React.FC<{
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
   improvements?: ImprovementFeatureGeoJSON;
+  pendingImprovements: PendingImprovements;
   selectedMetric?: string;
+  setPendingImprovements: React.Dispatch<
+    React.SetStateAction<PendingImprovements>
+  >;
   scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
@@ -59,28 +63,17 @@ const Handler: React.FC<{
   scoreScale,
   metricTypeScale,
   improvements,
+  pendingImprovements,
   scores,
   scoreSet,
   selectedMetric,
+  setPendingImprovements,
   visibleExistingLanes,
 }) => {
   const [dasSet, setDasSet] = useState(false);
   const map = useMap();
   const { das, existingLanes } = useContext(StaticDataContext);
   const theme = useTheme();
-
-  //todo: adapt once ready
-  useEffect(() => {
-    map.on("click", (e) => {
-      //console.log(e);
-      const coord = e.latlng;
-      const lat = coord.lat;
-      const lng = coord.lng;
-      console.log(
-        "You clicked the map at latitude: " + lat + " and longitude: " + lng
-      );
-    });
-  }, [map]);
 
   useEffect(() => {
     if (!dasSet && !!map && !!scores) {
@@ -99,31 +92,36 @@ const Handler: React.FC<{
     }
   }, [das, dasSet, map, setDasSet, scores]);
 
+  // Add score DAs
   useEffect(() => {
     if (!!scores && !!selectedMetric && !!scoreScale) {
       map.eachLayer((l) => {
         //it seems we have the full feature layer as well as layers broken out...
         if (l.options.attribution === "DAs" && !!l.feature) {
-          const da_score_set =
-            scores[l.feature.properties.id.toString()].scores;
-          const da_scores = da_score_set[scoreSet];
-          l.setStyle({
-            fillColor: metricTypeScale(selectedMetric),
-            fillOpacity: scoreScale(da_scores[selectedMetric]),
-          });
+          //we won't necessarily have a score for every DA when we calculate on the fly
+          if (scores[l.feature.properties.id.toString()]) {
+            const da_score_set =
+              scores[l.feature.properties.id.toString()].scores;
+            const da_scores = da_score_set[scoreSet];
+            l.setStyle({
+              fillColor: metricTypeScale(selectedMetric),
+              fillOpacity: scoreScale(da_scores[selectedMetric]),
+            });
 
-          l.bindPopup(
-            `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
-              metricTypeScale
-                .domain()
-                .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
-                .join("\n")
-          );
+            l.bindPopup(
+              `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
+                metricTypeScale
+                  .domain()
+                  .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
+                  .join("\n")
+            );
+          }
         }
       });
     }
   }, [das, scores, selectedMetric, scoreScale, scoreSet, metricTypeScale, map]);
 
+  // manage existing lanes
   useEffect(() => {
     if (existingLanes) {
       let removal = false;
@@ -177,30 +175,39 @@ const Handler: React.FC<{
     }
   }, [existingLanes, visibleExistingLanes, map]);
 
+  // manage improvements
   useEffect(() => {
     /* Add the propsed new lanes */
     if (improvements) {
       const layer = new LGeoJSON(improvements as GeoJsonObject, {
-        style: {
-          color: theme.palette.projectColor,
-        },
+        style: (feature) => ({
+          color: pendingImprovements.toRemove.includes(
+            feature?.properties.budget_project_id
+          )
+            ? theme.palette.projectRemoveColor
+            : theme.palette.projectColor,
+        }),
         onEachFeature: (f, l) => {
           l.addEventListener("click", (e) => {
             const projectId =
-              e.sourceTarget.feature.properties.default_project_id;
-            console.log("removing " + projectId);
+              e.sourceTarget.feature.properties.budget_project_id;
 
-            const remainingProjectIds = improvements.features.filter(
-              (f) => f.properties.budget_project_id !== projectId
-            );
-
-            // Now pass these to a function that takes them and returns something like { geojson: FeatureCollection, scores: scores }
-            // of course, we'll need to pass through the setImprovements and setScores to do this
-            // or else just the recalculate function that makes the api calls and sets the scores
+            if (pendingImprovements.toRemove.includes(projectId)) {
+              setPendingImprovements(({ toAdd, toRemove }) => ({
+                toRemove: toRemove.filter((p) => p !== projectId),
+                toAdd,
+              }));
+            } else {
+              setPendingImprovements(({ toAdd, toRemove }) => ({
+                toRemove: toRemove.concat(projectId),
+                toAdd,
+              }));
+            }
           });
         },
       });
 
+      // remove old improvements and add new ones
       map.eachLayer((l) => {
         //todo: add click handler to remove
         if (l?.feature?.properties.feature_type == "improvement_feature") {
@@ -210,7 +217,7 @@ const Handler: React.FC<{
 
       map.addLayer(layer);
     }
-  }, [improvements, map, theme]);
+  }, [improvements, map, theme, pendingImprovements, setPendingImprovements]);
 
   return null;
 };
@@ -226,17 +233,23 @@ const MapViewer: React.FC<{
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
+  pendingImprovements: PendingImprovements;
   scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
   selectedMetric?: string;
+  setPendingImprovements: React.Dispatch<
+    React.SetStateAction<PendingImprovements>
+  >;
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   improvements,
   scoreScale,
   metricTypeScale,
+  pendingImprovements,
   scores,
   scoreSet,
   selectedMetric,
+  setPendingImprovements,
   visibleExistingLanes,
 }) => (
   <StyledLeafletContainer
@@ -251,8 +264,10 @@ const MapViewer: React.FC<{
       scoreScale={scoreScale}
       metricTypeScale={metricTypeScale}
       improvements={improvements}
+      pendingImprovements={pendingImprovements}
       scores={scores}
       scoreSet={scoreSet}
+      setPendingImprovements={setPendingImprovements}
       selectedMetric={selectedMetric}
       visibleExistingLanes={visibleExistingLanes}
     />
