@@ -95,6 +95,8 @@ def _import_scores(rows: List[Dict[str, Any]], session: Session):
 
     for row in rows:
         da = da_map[int(row["origin_DA_id"])]
+        # access_calc maps scores to origin_id, and this is the only place (I know of) where we get these
+        # so we attach them to the DA DB record for later use
         da.origin_id = int(row["origin"])
         session.add(da)
         scores = extract_scores(row, metrics_map, budgets_map, da.id)

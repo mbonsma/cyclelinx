@@ -7,6 +7,7 @@ from sqlalchemy import select
 from api.models import (
     Arterial,
     Budget,
+    BudgetScore,
     DisseminationArea,
     ExistingLane,
     Project,
@@ -16,8 +17,11 @@ from scripts.import_das import import_das
 from scripts.import_improvements import import_improvements
 from scripts.import_projects import _import_arterials, _import_projects
 from scripts.import_existing_lanes import import_geojson
+from scripts.import_scores import _import_scores
 from tests.factories import (
     arterial_model_factory,
+    budget_model_factory,
+    dissemination_area_factory,
 )
 
 
@@ -118,3 +122,34 @@ def test_import_projects(app_ctx, fresh_db, tmp_path):
     projects = fresh_db.session.execute(select(Project)).scalars().all()
 
     assert len(projects) == 3
+
+
+def test_import_scores(app_ctx, fresh_db, tmp_path):
+    # here we need to create a minimal csv w/ one metric, one budget, and a couple of rows
+    # then we need to create DA records for every row (or make them first)
+    # then pass the "csv list" to _import_scores
+
+    das = dissemination_area_factory(fresh_db.session).create_batch(5)
+    budget = budget_model_factory(fresh_db.session).create(name="50")
+    rows = []
+    for i, da in enumerate(das):
+        rows.append(
+            {
+                "origin": i,
+                "foo_original": 4,
+                "origin_DA_id": da.DAUID,
+                f"foo_increase_{budget.name}": 12,
+            }
+        )
+
+    _import_scores(rows, fresh_db.session)
+
+    # assert that origin_id has been added to each DA
+
+    for da in fresh_db.session.execute(select(DisseminationArea)).scalars().all():
+        assert da.origin_id is not None
+
+    scores = fresh_db.session.execute(select(BudgetScore)).scalars().all()
+
+    # 1 for original, 1 for increase = 2 x 5
+    assert len(scores) == 10
