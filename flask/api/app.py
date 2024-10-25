@@ -10,9 +10,8 @@ from flask_caching import Cache
 from flask_compress import Compress
 from flask_cors import CORS
 import logging
-import numpy as np
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from werkzeug.exceptions import HTTPException, NotFound, UnprocessableEntity
 from werkzeug.wrappers.response import Response
 
@@ -86,10 +85,15 @@ def get_arterials():
             "default_project_id": a.default_project_id,
             "total_length": a.total_length,
             "id": a.id,
+            "budget_project_ids": [p.project_id for p in a.improvement_relationships],
             "feature_type": "arterial",
             "geometry": a.geometry,
         }
-        for a in db.session.execute(select(Arterial)).scalars().all()
+        for a in db.session.execute(
+            select(Arterial).options(selectinload(Arterial.improvement_relationships))
+        )
+        .scalars()
+        .all()
     ]
 
     data = properties_to_geojson_features(arterials)

@@ -7,14 +7,10 @@ export const client = axios.create({
 });
 
 export const fetchImprovements = (budgetId: number) =>
-  axios.get<ImprovementFeatureGeoJSON>(
-    `http://localhost:9033/budgets/${budgetId}/arterials`
-  );
+  client.get<ImprovementFeatureGeoJSON>(`budgets/${budgetId}/arterials`);
 
 export const fetchBudgetScores = (budgetId: number) =>
-  axios.get<ScoreResults>(`http://localhost:9033/budgets/${budgetId}/scores`);
+  client.get<ScoreResults>(`budgets/${budgetId}/scores`);
 
 export const fetchNewCalculations = (projectIds: number[]) =>
-  axios.get<ScoreResults>(
-    `http://localhost:9033/accessibility?project_ids=${projectIds.join(",")}`
-  );
+  client.get<ScoreResults>(`accessibility?project_ids=${projectIds.join(",")}`);

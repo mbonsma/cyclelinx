@@ -72,9 +72,10 @@ const Handler: React.FC<{
 }) => {
   const [dasSet, setDasSet] = useState(false);
   const map = useMap();
-  const { das, existingLanes } = useContext(StaticDataContext);
+  const { arterials, das, existingLanes } = useContext(StaticDataContext);
   const theme = useTheme();
 
+  // add DAs
   useEffect(() => {
     if (!dasSet && !!map && !!scores) {
       //this will create a single layer for each feature in the bundle
@@ -92,7 +93,79 @@ const Handler: React.FC<{
     }
   }, [das, dasSet, map, setDasSet, scores]);
 
-  // Add score DAs
+  //add Arterials
+  useEffect(() => {
+    if (!!map) {
+      //really we should load these once, then use a use effect to update them when arterials change
+      //same for the improvements -- not sure we can....
+      const layer = new LGeoJSON(arterials as GeoJsonObject, {
+        style: (f) => {
+          if (f) {
+            const projectId = f.properties.default_project_id;
+            if (pendingImprovements.toAdd.includes(projectId)) {
+              return {
+                stroke: true,
+                color: theme.palette.projectAddColor,
+                fillOpacity: 1,
+                opacity: 1,
+              };
+            } else if (projectId) {
+              return {
+                stroke: true,
+                fillColor: "none",
+                opacity: 0.15,
+                fillOpacity: 0,
+              };
+            }
+          }
+          return {
+            stroke: true,
+            fillColor: "none",
+            opacity: 0,
+            fillOpacity: 0,
+          };
+        },
+        attribution: "arterial", //using this as a handle
+        onEachFeature: (f, l) => {
+          l.addEventListener("click", (e) => {
+            const projectId =
+              e.sourceTarget.feature.properties.default_project_id;
+
+            if (projectId) {
+              if (pendingImprovements.toAdd.includes(projectId)) {
+                setPendingImprovements(({ toAdd, toRemove }) => ({
+                  toAdd: toAdd.filter((p) => p !== projectId),
+                  toRemove,
+                }));
+              } else {
+                setPendingImprovements(({ toAdd, toRemove }) => ({
+                  toAdd: toAdd.concat(projectId),
+                  toRemove,
+                }));
+              }
+            }
+          });
+        },
+      });
+
+      // remove old arterials and add new ones
+      map.eachLayer((l) => {
+        if (l?.options.attribution == "arterial") {
+          map.removeLayer(l);
+        }
+      });
+
+      map.addLayer(layer);
+    }
+  }, [
+    map,
+    arterials,
+    pendingImprovements,
+    setPendingImprovements,
+    theme.palette.projectAddColor,
+  ]);
+
+  // Add scores
   useEffect(() => {
     if (!!scores && !!selectedMetric && !!scoreScale) {
       map.eachLayer((l) => {
@@ -177,7 +250,7 @@ const Handler: React.FC<{
 
   // manage improvements
   useEffect(() => {
-    /* Add the propsed new lanes */
+    /* Add the propsed new lanes note that this layer has to get dropped and added every time so functions stay up to dae */
     if (improvements) {
       const layer = new LGeoJSON(improvements as GeoJsonObject, {
         style: (feature) => ({

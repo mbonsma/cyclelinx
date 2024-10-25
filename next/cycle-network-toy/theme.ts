@@ -4,10 +4,12 @@ import { createTheme } from "@mui/material/styles";
 
 declare module "@mui/material/styles" {
   interface Palette {
+    projectAddColor: string;
     projectColor: string;
     projectRemoveColor: string;
   }
   interface PaletteOptions {
+    projectAddColor: string;
     projectColor: string;
     projectRemoveColor: string;
   }
@@ -31,6 +33,7 @@ export default createTheme({
     secondary: {
       main: "#A69F98",
     },
+    projectAddColor: "#349518",
     projectColor: "blue",
     projectRemoveColor: "red",
   },

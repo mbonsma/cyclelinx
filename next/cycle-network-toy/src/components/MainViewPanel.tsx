@@ -211,9 +211,6 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
 
     const projectIds = remainingImprovements.concat(pendingImprovements.toAdd);
 
-    //fine, this works, but we either have to alter the improvement goejson to strip the toRemove, or we have to bind
-    //the arterials and highlight them by visible projectIds (means computing the geojson on the fly, I think)
-    //for now we'll do the form, for sake of demo, but we'll need a new branch to do the latter
     try {
       setLoading(true);
       const scores = await fetchNewCalculations(projectIds);
@@ -228,7 +225,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
           const newFeatures = improvements?.features.filter(
             (f) =>
               !pendingImprovements.toRemove.includes(
-                f.properties.budget_project_id
+                f.properties.budget_project_id || -1
               )
           )!;
           improvements!.features = newFeatures;
@@ -314,7 +311,9 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
         {(!!pendingImprovements.toRemove.length ||
           !!pendingImprovements.toAdd.length) && (
           <Grid item>
-            <Button onClick={handleCalculation}>Calculate</Button>
+            <Button onClick={handleCalculation} variant="outlined">
+              Calculate New Scores
+            </Button>
           </Grid>
         )}
         {!!totalKm && (

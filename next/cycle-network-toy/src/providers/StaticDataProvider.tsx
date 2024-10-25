@@ -1,14 +1,20 @@
 "use client";
 
-import { DAGeoJSON, ExistingLaneGeoJSON } from "@/lib/ts/types";
+import {
+  ArterialFeatureGeoJSON,
+  DAGeoJSON,
+  ExistingLaneGeoJSON,
+} from "@/lib/ts/types";
 import { createContext } from "react";
 
 interface StaticDataProps {
+  arterials: ArterialFeatureGeoJSON | null;
   das: DAGeoJSON | null;
   existingLanes: ExistingLaneGeoJSON | null;
 }
 
 export const StaticDataContext = createContext<StaticDataProps>({
+  arterials: null,
   das: null,
   existingLanes: null,
 });

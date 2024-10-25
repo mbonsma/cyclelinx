@@ -22,6 +22,42 @@ def test_get_budgets(client, fresh_db):
     assert len(response.json) == 10
 
 
+def test_get_arterials(client, fresh_db):
+    session = fresh_db.session
+    budget = budget_model_factory(session).create()
+    arterials = arterial_model_factory(session).create_batch(10)
+    projects = project_model_factory(session).create_batch(2)
+
+    for arterial in arterials:
+        arterial.default_project_id = projects[0].id
+        session.add(arterial)
+        session.commit()
+
+    for i in range(0, 2):
+        bpm = BudgetProjectMember(
+            arterial_id=arterials[i].id, budget_id=budget.id, project_id=projects[1].id
+        )
+        session.add(bpm)
+        session.commit()
+
+    # all the arterials will be in one project, and first 2 will be in a budget project too
+    # will be members of another as well, through a budget
+    response = client.get("/arterials")
+    assert response.status_code == 200
+    response_json = response.json
+    assert len(response_json["features"]) == 10
+    # assert that we have the right project_id
+    assert (
+        response_json["features"][0]["properties"]["default_project_id"]
+        == projects[0].id
+    )
+    # assert that we have the correct budget_project_ids (where they exist)
+    for feature in response_json["features"]:
+        if feature["properties"]["budget_project_ids"]:
+            assert len(feature["properties"]["budget_project_ids"]) == 1
+            assert feature["properties"]["budget_project_ids"][0] == projects[1].id
+
+
 def test_get_das(client, fresh_db):
     dissemination_area_factory(fresh_db.session).create_batch(10)
     response = client.get("/das")

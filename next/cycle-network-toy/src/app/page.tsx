@@ -103,16 +103,17 @@ export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
 };
 
 export default async function Home() {
-  console.log(process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL);
-  const metrics = await fetch(
+  const metricsResult = await fetch(
     `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/metrics`
   );
-  const m = await metrics.json();
-  const budgets = await fetch(
+  const metrics = await metricsResult.json();
+
+  const budgetsResult = await fetch(
     `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/budgets`
   );
-  const b = await budgets.json();
-  const existingLanes = await fetch(
+  const budgets = await budgetsResult.json();
+
+  const existingLanesResult = await fetch(
     `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/existing-lanes`,
     {
       headers: {
@@ -122,8 +123,9 @@ export default async function Home() {
       cache: "no-store",
     }
   );
-  const e = await existingLanes.json();
-  const das = await fetch(
+  const existingLanes = await existingLanesResult.json();
+
+  const dasResult = await fetch(
     `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/das`,
     {
       headers: {
@@ -133,10 +135,15 @@ export default async function Home() {
       cache: "no-store",
     }
   );
-  const d = await das.json();
+  const das = await dasResult.json();
+
+  const arterialsResult = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/arterials`
+  );
+  const arterials = await arterialsResult.json();
 
   return (
-    <StaticDataProvider value={{ das: d, existingLanes: e }}>
+    <StaticDataProvider value={{ arterials, das, existingLanes }}>
       {/* Outer container */}
       <Grid direction="row" container justifyContent="center">
         {/* Inner column container */}
@@ -148,7 +155,7 @@ export default async function Home() {
           item
           direction="column"
         >
-          <MainViewPanel budgets={b} metrics={m} />
+          <MainViewPanel budgets={budgets} metrics={metrics} />
         </Grid>
       </Grid>
     </StaticDataProvider>

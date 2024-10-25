@@ -20,7 +20,7 @@ interface DAProperties {
 }
 
 interface FeatureProperties {
-  default_project_id: number;
+  default_project_id?: number;
   id: number;
   total_length: number;
 }
@@ -50,6 +50,7 @@ interface ImprovementFeatureProperties extends FeatureProperties {
 
 interface ArterialFeatureProperties extends FeatureProperties {
   feature_type: "arterial";
+  budget_project_ids: number[];
 }
 
 export type DAGeoJSON = FeatureCollection<MultiPolygon, DAProperties>;
