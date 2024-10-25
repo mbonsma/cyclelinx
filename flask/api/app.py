@@ -27,7 +27,7 @@ from api.models import (
     Metric,
 )
 from api.settings import app_settings
-from api.utils import properties_to_geojson_features, model_to_dict
+from api.utils import properties_to_geojson_features, model_to_dict, DaScoreResult
 
 logger = logging.getLogger(__name__)
 
@@ -167,34 +167,19 @@ def get_project_scores(budget_id):
     for d in defaults:
         default_dict[d.dissemination_area_id][d.metric.name] = d.score
 
-    score_dict = defaultdict(dd_constructor)
+    scores = DaScoreResult()
 
     for score in budget.scores:
-        score_dict[score.dissemination_area_id]["da"] = (
-            score.dissemination_area.id
-            if not score_dict[score.dissemination_area_id]["da"]
-            else score_dict[score.dissemination_area_id]["da"]
-        )
-
         baseline_score = default_dict[score.dissemination_area_id][score.metric.name]
 
-        score_dict[score.dissemination_area_id]["scores"]["original"][
-            score.metric.name
-        ] = baseline_score
-
-        score_dict[score.dissemination_area_id]["scores"]["budget"][
-            score.metric.name
-        ] = (score.score + baseline_score)
-
-        score_dict[score.dissemination_area_id]["scores"]["diff"][
-            score.metric.name
-        ] = score.score
-
-        score_dict[score.dissemination_area_id]["scores"]["bin"][score.metric.name] = (
-            0 if score.score == 0 else 1
+        scores.add_da_metric(
+            da_id=score.dissemination_area_id,
+            metric=score.metric.name,
+            base_score=baseline_score,
+            score=score.score,
         )
 
-    return jsonify(score_dict)
+    return jsonify(scores.to_dict())
 
 
 @cycling_api.route("/metrics")
@@ -266,49 +251,26 @@ def get_accessibility():
     default_map = {}
 
     for default in defaults:
-        if not default_map.get(default.dissemination_area.origin_id):
-            default_map[default.dissemination_area.origin_id] = {}
-        default_map[default.dissemination_area.origin_id][
-            default.metric.name
-        ] = default.score
+        if not default_map.get(default.dissemination_area.id):
+            default_map[default.dissemination_area.id] = {}
+        default_map[default.dissemination_area.id][default.metric.name] = default.score
 
     results = calculate_accessibility(project_ids_list, ["job", "populations"])
 
-    score_dict = defaultdict(dd_constructor)
+    score_dict = DaScoreResult()
 
-    for origin_id in da_map.keys():
-        origin_id = np.int64(origin_id)
-        if results["populations"].get(origin_id) and results["job"].get(origin_id):
-            da_id = str(da_map[origin_id])
-            score_dict[da_id]["da"] = int(da_id)
-            score_dict[da_id]["scores"]["bin"] = {
-                "job": (
-                    1
-                    if results["job"][origin_id] > default_map[origin_id]["job"]
-                    else 0
-                ),
-                "populations": (
-                    1
-                    if results["populations"][origin_id]
-                    > default_map[origin_id]["populations"]
-                    else 0
-                ),
-            }
-            score_dict[da_id]["scores"]["budget"] = {
-                "job": int(results["job"][origin_id]) + default_map[origin_id]["job"],
-                "populations": int(results["populations"][origin_id])
-                + default_map[origin_id]["populations"],
-            }
-            score_dict[da_id]["scores"]["diff"] = {
-                "job": int(results["job"][origin_id]),
-                "populations": int(results["populations"][origin_id]),
-            }
-            score_dict[da_id]["scores"]["original"] = {
-                "job": default_map[origin_id]["job"],
-                "populations": default_map[origin_id]["populations"],
-            }
+    for metric, scores in results.items():
+        for origin_id, score in scores.items():
+            if da_map.get(origin_id):
+                da_id = da_map[origin_id]
+                score_dict.add_da_metric(
+                    da_id=da_id,
+                    metric=metric,
+                    score=float(score),
+                    base_score=default_map[da_id][metric],
+                )
 
-    return jsonify(score_dict)
+    return jsonify(score_dict.to_dict())
 
 
 # https://flask.palletsprojects.com/en/2.2.x/errorhandling/#generic-exception-handlers

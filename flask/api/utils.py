@@ -1,8 +1,9 @@
+from collections import defaultdict
 from logging import getLogger
 from pathlib import Path
 import tarfile
 import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import geojson
 from shapely import to_geojson, wkb
@@ -14,7 +15,6 @@ logger = getLogger(__name__)
 
 
 def input_to_dictionary(input: Any):
-    """Convert Graphene inputs into dictionary."""
     dictionary = {}
     for key in input:
         dictionary[key] = input[key]
@@ -44,15 +44,11 @@ def properties_to_geojson_features(
     """
     Convert a list of models with a ``geometry`` property to a geojson FeatureCollection
 
-        Parameters
-        ----------
-        properties : List of dictionaries, must have a geometry property
+        Args
+           properties (`List[Dict[str, Any]]`): List of dictionaries, must have a geometry property
 
         Returns
-        -------
-        FeatureCollection
-
-
+            FeatureCollection
     """
 
     features = []
@@ -80,14 +76,11 @@ def extract_files(path: str):
     """
     Extract files from a tarball into a temporary directory
 
-        Parameters
-        ----------
-        path : str, the path to the archive
+        Args
+            path (`str`): the path to the archive
 
         Returns
-        -------
-        str, the path to the extracted archive
-
+            `str`, the path to the extracted archive
     """
 
     if not Path(path).exists():
@@ -99,3 +92,52 @@ def extract_files(path: str):
         f.extractall(tempdir)
 
     return tempdir
+
+
+# d-dicts must have module-level constructors to be pickled by cache
+def score_dd_constructor():
+    return {
+        "da": None,
+        "scores": {"budget": {}, "original": {}, "diff": {}, "bin": {}},
+    }
+
+
+class DaScoreResult:
+    def __init__(self):
+        self.scores = defaultdict(score_dd_constructor)
+
+    def add_da_metric(self, da_id: int, metric: str, score: float, base_score: float):
+        self.scores[str(da_id)]["da"] = da_id
+        self._add_score(
+            score_type="bin",
+            da=da_id,
+            metric=metric,
+            score=(1 if score > base_score else 0),
+        )
+
+        self._add_score(
+            score_type="budget",
+            da=da_id,
+            metric=metric,
+            score=(score + base_score),
+        )
+
+        self._add_score(
+            score_type="diff",
+            da=da_id,
+            metric=metric,
+            score=int(score),
+        )
+
+        self._add_score(
+            score_type="original",
+            da=da_id,
+            metric=metric,
+            score=(base_score),
+        )
+
+    def _add_score(self, score_type: str, da: int, score: float, metric: str):
+        self.scores[str(da)]["scores"][score_type][metric] = score
+
+    def to_dict(self):
+        return dict(self.scores)
