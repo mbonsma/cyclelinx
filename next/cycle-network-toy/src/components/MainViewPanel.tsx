@@ -55,6 +55,7 @@ import {
   LoadingOverlay,
 } from "@/components";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
+import { fetchBudgetScores, fetchImprovements } from "@/lib/axios/api";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -130,12 +131,8 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
       setLoading(true);
 
       const promises = [
-        axios.get<ImprovementFeatureGeoJSON>(
-          `http://localhost:9033/budgets/${budgetId}/arterials`
-        ), // 0
-        axios.get<ScoreResults>(
-          `http://localhost:9033/budgets/${budgetId}/scores` // 1
-        ),
+        fetchImprovements(budgetId), // 0
+        fetchBudgetScores(budgetId), // 1
       ];
 
       Promise.allSettled(promises)

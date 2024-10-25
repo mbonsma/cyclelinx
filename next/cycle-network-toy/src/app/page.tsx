@@ -103,25 +103,36 @@ export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
 };
 
 export default async function Home() {
-  const metrics = await fetch(`http://flask:5000/metrics`);
+  console.log(process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL);
+  const metrics = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/metrics`
+  );
   const m = await metrics.json();
-  const budgets = await fetch(`http://flask:5000/budgets`);
+  const budgets = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/budgets`
+  );
   const b = await budgets.json();
-  const existingLanes = await fetch(`http://flask:5000/existing-lanes`, {
-    headers: {
-      "Accept-Encoding": "gzip",
-      Accept: "application/json",
-    },
-    cache: "no-store",
-  });
+  const existingLanes = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/existing-lanes`,
+    {
+      headers: {
+        "Accept-Encoding": "gzip",
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    }
+  );
   const e = await existingLanes.json();
-  const das = await fetch(`http://flask:5000/das`, {
-    headers: {
-      "Accept-Encoding": "gzip",
-      Accept: "application/json",
-    },
-    cache: "no-store",
-  });
+  const das = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/das`,
+    {
+      headers: {
+        "Accept-Encoding": "gzip",
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    }
+  );
   const d = await das.json();
 
   return (
@@ -137,7 +148,7 @@ export default async function Home() {
           item
           direction="column"
         >
-          <MainViewPanel budgets={b} existingLanes={e} metrics={m} />
+          <MainViewPanel budgets={b} metrics={m} />
         </Grid>
       </Grid>
     </StaticDataProvider>
