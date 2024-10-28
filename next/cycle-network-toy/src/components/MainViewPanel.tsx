@@ -123,10 +123,6 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
     EXISTING_LANE_TYPE[]
   >([]);
 
-  useEffect(() => {
-    console.log(pendingImprovements);
-  }, [pendingImprovements]);
-
   const { existingLanes } = useContext(StaticDataContext);
 
   const theme = useTheme();
@@ -280,7 +276,26 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
               />
             </Grid>
             <Grid item>
-              <Typography variant="caption">Proposed New Bike Lane</Typography>
+              <Typography variant="caption">
+                Proposed New Bike Lane (from budget)
+              </Typography>
+            </Grid>
+          </Grid>
+        )}
+        {!!pendingImprovements.toAdd.length && (
+          <Grid item container spacing={3} alignItems="center" direction="row">
+            <Grid item flexGrow={1}>
+              <Box
+                style={{
+                  backgroundColor: theme.palette.projectAddColor,
+                  height: "5px",
+                }}
+              />
+            </Grid>
+            <Grid item>
+              <Typography variant="caption">
+                Proposed New Bike Lane (from user)
+              </Typography>
             </Grid>
           </Grid>
         )}

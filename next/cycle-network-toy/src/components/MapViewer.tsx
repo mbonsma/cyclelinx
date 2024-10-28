@@ -40,6 +40,21 @@ const buildValueTooltip = (
   }:</strong>&nbsp;${formatDigit(scores[score_type][metric])}${pctChange}`;
 };
 
+const getAllProjectIds = ({
+  default_project_id,
+  budget_project_ids,
+}: {
+  default_project_id: number | null;
+  budget_project_ids: number[];
+}) => {
+  const retSet = new Set<number>();
+  budget_project_ids.forEach((b) => retSet.add(b));
+  if (default_project_id) {
+    retSet.add(default_project_id);
+  }
+  return retSet;
+};
+
 const Handler: React.FC<{
   scoreScale?:
     | ScaleLinear<number, number>
@@ -66,6 +81,7 @@ const Handler: React.FC<{
   setPendingImprovements,
   visibleExistingLanes,
 }) => {
+  const [arterialsSet, setArterialsSet] = useState(false);
   const [dasSet, setDasSet] = useState(false);
   const map = useMap();
   const { arterials, das, existingLanes } = useContext(StaticDataContext);
@@ -89,112 +105,129 @@ const Handler: React.FC<{
     }
   }, [das, dasSet, map, setDasSet, scores]);
 
-  //add Arterials w/ default click behavior and styling
+  //add Arterials w/ click behavior and styling
+  //we use the update event to keep the callbacks up to date with react's data
   useEffect(() => {
     if (!!map) {
-      //really we should load these once, then use a use effect to update them when arterials change
-      //same for the improvements -- not sure we can....
-      const layer = new LGeoJSON(arterials as GeoJsonObject, {
-        style: (f) => {
-          if (f) {
-            const projectId = f.properties.default_project_id;
-            const allProjectIds = new Set(
-              f.properties.budget_project_ids.concat(
-                f.properties.default_project_id
-              )
-            );
-            const allImprovments = new Set(improvements);
-            const removeSet = new Set(pendingImprovements.toRemove);
-            if (pendingImprovements.toAdd.includes(projectId)) {
-              return {
-                stroke: true,
-                color: theme.palette.projectAddColor,
-                fillOpacity: 1,
-                opacity: 1,
-              };
-            } else if (removeSet.intersection(allProjectIds).size) {
-              return {
-                stroke: true,
-                color: theme.palette.projectRemoveColor,
-                fillOpacity: 1,
-                opacity: 1,
-              };
-            } else if (allImprovments.intersection(allProjectIds).size) {
-              return {
-                stroke: true,
-                color: theme.palette.projectColor,
-                fillOpacity: 1,
-                opacity: 1,
-              };
-            } else if (projectId) {
-              return {
-                stroke: true,
-                fillColor: "none",
-                opacity: 0.15,
-                fillOpacity: 0,
-              };
-            }
-          }
-          return {
-            stroke: true,
-            fillColor: "none",
-            opacity: 0,
-            fillOpacity: 0,
-          };
-        },
-        attribution: "arterial", //using this as a handle
-        onEachFeature: (f, l) => {
-          l.addEventListener("click", (e) => {
-            const projectId =
-              e.sourceTarget.feature.properties.default_project_id ||
-              e.sourceTarget.feature.properties.budget_project_ids[0];
-
-            if (projectId) {
-              // if user added already, remove from add list
-              if (pendingImprovements.toAdd.includes(projectId)) {
-                setPendingImprovements(({ toAdd, toRemove }) => ({
-                  toAdd: toAdd.filter((p) => p !== projectId),
-                  toRemove,
-                }));
-                // if user marked for removal, remove from remove list
-              } else if (pendingImprovements.toRemove.includes(projectId)) {
-                setPendingImprovements(({ toAdd, toRemove }) => ({
-                  toRemove: toRemove.filter((p) => p !== projectId),
-                  toAdd,
-                }));
-              } else {
-                // if it's in a budget improvement, then user is marking for removal
-                if (improvements && improvements.includes(projectId)) {
-                  setPendingImprovements(({ toAdd, toRemove }) => ({
-                    toRemove: toRemove.concat(projectId),
-                    toAdd,
-                  }));
-                }
-                // otherwise they're marking it to add
-                else {
-                  setPendingImprovements(({ toAdd, toRemove }) => ({
-                    toAdd: toAdd.concat(projectId),
-                    toRemove,
-                  }));
-                }
+      if (!arterialsSet) {
+        const layer = new LGeoJSON(arterials as GeoJsonObject, {
+          style: (f) => {
+            if (f) {
+              const projectId = f.properties.default_project_id;
+              if (projectId) {
+                return {
+                  stroke: true,
+                  fillColor: "none",
+                  opacity: 0.15,
+                  fillOpacity: 0,
+                };
               }
             }
-          });
-        },
-      });
+            return {
+              stroke: true,
+              fillColor: "none",
+              opacity: 0,
+              fillOpacity: 0,
+            };
+          },
+          attribution: "arterial", //using this as a handle
+          onEachFeature: (f, l) => {
+            l.on("update", (e) => {
+              //@ts-ignore
+              const improvements = e.improvements as number[];
+              const pendingImprovements =
+                //@ts-ignore
+                e.pendingImprovements as PendingImprovements;
 
-      // remove old arterials and add new ones
-      map.eachLayer((l) => {
-        if (l?.options.attribution == "arterial") {
-          map.removeLayer(l);
-        }
-      });
+              const allProjectIds = getAllProjectIds(f.properties);
+              const improvmentsSet = new Set(improvements);
+              const removeSet = new Set(pendingImprovements.toRemove);
+              const addSet = new Set(pendingImprovements.toAdd);
+              if (allProjectIds.size) {
+                //if it's not in any set, base styling
+                if (
+                  !addSet.intersection(allProjectIds).size &&
+                  !improvmentsSet.intersection(allProjectIds).size
+                ) {
+                  l.setStyle({
+                    stroke: true,
+                    fillColor: "none",
+                    opacity: 0.15,
+                    fillOpacity: 0,
+                  });
+                } else if (removeSet.intersection(allProjectIds).size) {
+                  l.setStyle({
+                    stroke: true,
+                    color: theme.palette.projectRemoveColor,
+                    fillOpacity: 1,
+                    opacity: 1,
+                  });
+                } else if (!!addSet.intersection(allProjectIds).size) {
+                  {
+                    l.setStyle({
+                      stroke: true,
+                      color: theme.palette.projectAddColor,
+                      fillOpacity: 1,
+                      opacity: 1,
+                    });
+                  }
+                  // if it's an existing improvement, give it the improvement color
+                } else if (!!improvmentsSet.intersection(allProjectIds).size) {
+                  l.setStyle({
+                    stroke: true,
+                    color: theme.palette.projectColor,
+                    fillOpacity: 1,
+                    opacity: 1,
+                  });
+                }
+              }
+              l.removeEventListener("click");
+              l.addEventListener("click", (e) => {
+                const allProjectIds = getAllProjectIds(
+                  e.sourceTarget.feature.properties
+                );
 
-      map.addLayer(layer);
-    }
+                if (!!allProjectIds.size) {
+                  // if user added already, remove from add list
+                  if (!!addSet.intersection(allProjectIds).size) {
+                    setPendingImprovements(({ toRemove }) => ({
+                      toAdd: [...addSet.difference(allProjectIds)],
+                      toRemove,
+                    }));
+
+                    // if user has marked for removal, remove from remove list
+                  } else if (!!removeSet.intersection(allProjectIds).size) {
+                    setPendingImprovements(({ toAdd }) => ({
+                      toRemove: [...removeSet.difference(allProjectIds)],
+                      toAdd,
+                    }));
+                  } //if it's in the improvements list, they're removing
+                  else if (!!improvmentsSet.intersection(allProjectIds).size) {
+                    setPendingImprovements(({ toAdd }) => ({
+                      toRemove: [...removeSet.union(allProjectIds)],
+                      toAdd,
+                    }));
+                  }
+                  // otherwise they're marking it to add
+                  else {
+                    setPendingImprovements(({ toRemove }) => ({
+                      toAdd: [...addSet.union(allProjectIds)],
+                      toRemove,
+                    }));
+                  }
+                }
+              });
+            });
+          }, //end each feature
+        }); //end layer
+        map.addLayer(layer);
+        setArterialsSet(true);
+      } // end arterial set conditional
+    } //end map conditional
   }, [
-    map,
     arterials,
+    arterialsSet,
+    map,
     improvements,
     pendingImprovements,
     setPendingImprovements,
@@ -202,6 +235,12 @@ const Handler: React.FC<{
     theme.palette.projectRemoveColor,
     theme.palette.projectColor,
   ]);
+
+  useEffect(() => {
+    map.eachLayer((l) =>
+      l.fire("update", { improvements, pendingImprovements })
+    );
+  }, [improvements, map, pendingImprovements]);
 
   // Add scores
   useEffect(() => {
