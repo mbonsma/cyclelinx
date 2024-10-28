@@ -30,6 +30,7 @@ import { extent } from "d3-array";
 import {
   Box,
   Button,
+  capitalize,
   Checkbox,
   checkboxClasses,
   Collapse,
@@ -338,12 +339,18 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
                 defaultValue={metrics[0]}
                 name="radio-buttons-group"
               >
+                <FormControlLabel
+                  control={<Radio />}
+                  onChange={() => setMetric("")}
+                  label={"None"}
+                  value={""}
+                />
                 {metrics.map((m) => (
                   <FormControlLabel
                     key={m.id}
                     control={<Radio />}
                     onChange={() => setMetric(m.name)}
-                    label={m.name}
+                    label={capitalize(m.name)}
                     value={m.name}
                   />
                 ))}

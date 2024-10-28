@@ -244,27 +244,35 @@ const Handler: React.FC<{
 
   // Add scores
   useEffect(() => {
-    if (!!scores && !!selectedMetric && !!scoreScale) {
+    if (!!scores) {
       map.eachLayer((l) => {
         //it seems we have the full feature layer as well as layers broken out...
         if (l.options.attribution === "DAs" && !!l.feature) {
           //we won't necessarily have a score for every DA when we calculate on the fly
-          if (scores[l.feature.properties.id.toString()]) {
-            const da_score_set =
-              scores[l.feature.properties.id.toString()].scores;
-            const da_scores = da_score_set[scoreSet];
-            l.setStyle({
-              fillColor: metricTypeScale(selectedMetric),
-              fillOpacity: scoreScale(da_scores[selectedMetric]),
-            });
+          if (!!selectedMetric && !!scoreScale) {
+            if (scores[l.feature.properties.id.toString()]) {
+              const da_score_set =
+                scores[l.feature.properties.id.toString()].scores;
+              const da_scores = da_score_set[scoreSet];
+              l.setStyle({
+                fillColor: metricTypeScale(selectedMetric),
+                fillOpacity: scoreScale(da_scores[selectedMetric]),
+              });
 
-            l.bindPopup(
-              `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
-                metricTypeScale
-                  .domain()
-                  .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
-                  .join("\n")
-            );
+              l.bindPopup(
+                `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
+                  metricTypeScale
+                    .domain()
+                    .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
+                    .join("\n")
+              );
+            }
+          } else {
+            l.setStyle({
+              fillColor: "none",
+              fillOpacity: 0,
+            });
+            l.unbindPopup();
           }
         }
       });
