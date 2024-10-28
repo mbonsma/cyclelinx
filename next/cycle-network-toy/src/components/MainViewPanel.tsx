@@ -54,6 +54,7 @@ import {
   QuartileLegend,
   BinaryLegend,
   LoadingOverlay,
+  LaneChangeLegend,
 } from "@/components";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import {
@@ -98,7 +99,6 @@ const getScale = (scaleType: ScaleType, domain: [number, number]) => {
 const maybeLog = (scaleType: ScaleType, value: number) =>
   scaleType === "log" ? Math.log10(value) : value;
 
-//these are lists of project IDs
 export interface PendingImprovements {
   toAdd: number[];
   toRemove: number[];
@@ -267,53 +267,22 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
           </FormControl>
         </Grid>
         {!!improvements && (
-          <Grid item container spacing={3} alignItems="center" direction="row">
-            <Grid item flexGrow={1}>
-              <Box
-                style={{
-                  backgroundColor: theme.palette.projectColor,
-                  height: "5px",
-                }}
-              />
-            </Grid>
-            <Grid item>
-              <Typography variant="caption">
-                Proposed New Bike Lane (from budget)
-              </Typography>
-            </Grid>
-          </Grid>
+          <LaneChangeLegend
+            color={theme.palette.projectColor}
+            label="Proposed New Bike Lane (from budget)"
+          />
         )}
         {!!pendingImprovements.toAdd.length && (
-          <Grid item container spacing={3} alignItems="center" direction="row">
-            <Grid item flexGrow={1}>
-              <Box
-                style={{
-                  backgroundColor: theme.palette.projectAddColor,
-                  height: "5px",
-                }}
-              />
-            </Grid>
-            <Grid item>
-              <Typography variant="caption">
-                Proposed New Bike Lane (from user)
-              </Typography>
-            </Grid>
-          </Grid>
+          <LaneChangeLegend
+            color={theme.palette.projectAddColor}
+            label="Proposed New Bike Lane (from user)"
+          />
         )}
         {!!pendingImprovements.toRemove.length && (
-          <Grid item container spacing={3} alignItems="center" direction="row">
-            <Grid item flexGrow={1}>
-              <Box
-                style={{
-                  backgroundColor: theme.palette.projectRemoveColor,
-                  height: "5px",
-                }}
-              />
-            </Grid>
-            <Grid item>
-              <Typography variant="caption">Pending Lane Removal</Typography>
-            </Grid>
-          </Grid>
+          <LaneChangeLegend
+            color={theme.palette.projectRemoveColor}
+            label="Pending Lane Removal"
+          />
         )}
         {(!!pendingImprovements.toRemove.length ||
           !!pendingImprovements.toAdd.length) && (
