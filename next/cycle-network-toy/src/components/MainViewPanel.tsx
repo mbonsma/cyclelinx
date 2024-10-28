@@ -476,7 +476,35 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
         <Grid item>
           {!!existingLanes && (
             <FormControl fullWidth>
-              <FormLabel id="checkbox-group-legend">Existing Lanes</FormLabel>
+              <FormLabel id="checkbox-group-legend">
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12}>
+                    Existing Lanes
+                  </Grid>
+                  <Grid item>
+                    <Button
+                      onClick={() =>
+                        setVisibleExistingLanes(
+                          Object.values(EXISTING_LANE_NAME_MAP)
+                        )
+                      }
+                      size="small"
+                      variant="text"
+                    >
+                      Show all
+                    </Button>
+                  </Grid>
+                  <Grid item>
+                    <Button
+                      onClick={() => setVisibleExistingLanes([])}
+                      size="small"
+                      variant="text"
+                    >
+                      Hide all
+                    </Button>
+                  </Grid>
+                </Grid>
+              </FormLabel>
               <FormGroup aria-labelledby="checkbox-group-legend">
                 {Array.from(new Set(Object.values(EXISTING_LANE_NAME_MAP))).map(
                   (m: EXISTING_LANE_TYPE) => (
@@ -502,6 +530,7 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
                       }
                       label={m}
                       value={m}
+                      checked={visibleExistingLanes.includes(m)}
                     />
                   )
                 )}
