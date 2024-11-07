@@ -1,6 +1,11 @@
 export { default as BinaryLegend } from "./BinaryLegend";
+export { default as ExistingLaneControls } from "./ExistingLaneControls";
+export { default as ImprovementLegend } from "./ImprovementLegend";
 export { default as LegendGradient } from "./LegendGradient";
 export { default as LaneChangeLegend } from "./LaneChangeLegend";
 export { default as LoadingOverlay } from "./LoadingOverlay";
 export { default as MainViewPanel } from "./MainViewPanel";
+export { default as MetricSelector } from "./MetricSelector";
 export { default as QuartileLegend } from "./QuartileLegend";
+export { default as ScoreScalePanel } from "./ScoreScalePanel";
+export { default as ScoreScaleSelector } from "./ScoreScaleSelector";

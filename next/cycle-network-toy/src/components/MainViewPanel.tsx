@@ -11,12 +11,7 @@ import {
   ScoreResults,
   BudgetProjectMember,
 } from "@/lib/ts/types";
-import {
-  EXISTING_LANE_NAME_MAP,
-  EXISTING_LANE_TYPE,
-  existingScale,
-  formatDigit,
-} from "@/app/page";
+import { EXISTING_LANE_TYPE } from "@/app/page";
 import {
   scaleLinear,
   scaleOrdinal,
@@ -28,23 +23,11 @@ import {
 import { schemeDark2 } from "d3-scale-chromatic";
 import { extent } from "d3-array";
 import {
-  Box,
-  Button,
-  capitalize,
-  Checkbox,
-  checkboxClasses,
-  Collapse,
   Divider,
   FormControl,
-  FormControlLabel,
-  FormGroup,
-  FormLabel,
   Grid,
   InputLabel,
-  Link,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
   Typography,
   useTheme,
@@ -54,7 +37,11 @@ import {
   QuartileLegend,
   BinaryLegend,
   LoadingOverlay,
-  LaneChangeLegend,
+  ImprovementLegend,
+  MetricSelector,
+  ScoreScalePanel,
+  ExistingLaneControls,
+  ScoreScaleSelector,
 } from "@/components";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import {
@@ -62,6 +49,7 @@ import {
   fetchImprovements,
   fetchNewCalculations,
 } from "@/lib/axios/api";
+import { formatDigit } from "@/lib/ts/util";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -123,10 +111,6 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
-
-  const { existingLanes } = useContext(StaticDataContext);
-
-  const theme = useTheme();
 
   const metricTypeScale: ScaleOrdinal<string, string, never> | undefined =
     useMemo(() => {
@@ -266,65 +250,15 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
             </Select>
           </FormControl>
         </Grid>
-        {!!improvements && (
-          <LaneChangeLegend
-            color={theme.palette.projectColor}
-            label="Proposed New Bike Lane (from budget)"
-          />
-        )}
-        {!!pendingImprovements.toAdd.length && (
-          <LaneChangeLegend
-            color={theme.palette.projectAddColor}
-            label="Proposed New Bike Lane (from user)"
-          />
-        )}
-        {!!pendingImprovements.toRemove.length && (
-          <LaneChangeLegend
-            color={theme.palette.projectRemoveColor}
-            label="Pending Lane Removal"
-          />
-        )}
-        {(!!pendingImprovements.toRemove.length ||
-          !!pendingImprovements.toAdd.length) && (
-          <Grid item>
-            <Button onClick={handleCalculation} variant="outlined">
-              Calculate New Scores
-            </Button>
-          </Grid>
-        )}
-        {!!totalKm && (
-          <Grid item>
-            <Typography variant="caption">
-              Total New Bike Lanes: {formatDigit(totalKm / 1000)} (in KM)
-            </Typography>
-          </Grid>
-        )}
+        <ImprovementLegend
+          handleCalculation={handleCalculation}
+          improvements={improvements}
+          pendingImprovements={pendingImprovements}
+          totalKm={totalKm}
+        />
         <Grid item>
-          {!!improvements && !!metrics && (
-            <FormControl fullWidth>
-              <FormLabel id="radio-group-legend">Metric</FormLabel>
-              <RadioGroup
-                aria-labelledby="radio-group-legend"
-                defaultValue={metrics[0]}
-                name="radio-buttons-group"
-              >
-                <FormControlLabel
-                  control={<Radio />}
-                  onChange={() => setMetric("")}
-                  label={"None"}
-                  value={""}
-                />
-                {metrics.map((m) => (
-                  <FormControlLabel
-                    key={m.id}
-                    control={<Radio />}
-                    onChange={() => setMetric(m.name)}
-                    label={capitalize(m.name)}
-                    value={m.name}
-                  />
-                ))}
-              </RadioGroup>
-            </FormControl>
+          {!!improvements && (
+            <MetricSelector metrics={metrics} setMetric={setMetric} />
           )}
         </Grid>
         {!!scoreScale && (
@@ -377,135 +311,32 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
 
         {!!scoreScale && selectedMetric !== "greenspace" && (
           <Grid item>
-            <Link
-              href="#"
-              onClick={() => setScaleTypeVisible(!scaleTypeVisible)}
-            >
-              <Typography variant="caption">
-                {`${scaleTypeVisible ? "Hide" : "Show"}`} scale types
-              </Typography>
-            </Link>
-            <Collapse in={scaleTypeVisible}>
-              <FormControl fullWidth>
-                <RadioGroup>
-                  {(["linear", "log", "quantile"] as ScaleType[]).map((t) => {
-                    return (
-                      <FormControlLabel
-                        key={t}
-                        control={<Radio />}
-                        label={t}
-                        onChange={() => setScaleType(t)}
-                        checked={scaleType == t}
-                      />
-                    );
-                  })}
-                </RadioGroup>
-              </FormControl>
-            </Collapse>
+            <ScoreScaleSelector
+              scaleType={scaleType}
+              scaleTypeVisible={scaleTypeVisible}
+              setScaleType={setScaleType}
+              setScaleTypeVisible={setScaleTypeVisible}
+            />
           </Grid>
         )}
         {!!scoreScale && (
           <Grid item>
-            <Link href="#" onClick={() => setMeasuresVisible(!measuresVisible)}>
-              <Typography variant="caption">
-                {`${measuresVisible ? "Hide" : "Show"}`} measures
-              </Typography>
-            </Link>
-            <Collapse in={measuresVisible}>
-              <FormControl fullWidth>
-                <RadioGroup>
-                  <FormControlLabel
-                    control={<Radio />}
-                    label="Change over Present"
-                    onChange={() => setScoreSetType("diff")}
-                    checked={scoreSetType === "diff"}
-                  />
-                  {selectedMetric !== "greenspace" && (
-                    <FormControlLabel
-                      control={<Radio />}
-                      label="Projected Total"
-                      onChange={() => setScoreSetType("budget")}
-                      checked={scoreSetType === "budget"}
-                    />
-                  )}
-                  {selectedMetric == "greenspace" && (
-                    <FormControlLabel
-                      control={<Radio />}
-                      label="Projected Total"
-                      onChange={() => setScoreSetType("bin")}
-                      checked={scoreSetType === "bin"}
-                    />
-                  )}
-                </RadioGroup>
-              </FormControl>
-            </Collapse>
+            <ScoreScalePanel
+              measuresVisible={measuresVisible}
+              scoreScale={scoreScale}
+              scoreSetType={scoreSetType}
+              selectedMetric={selectedMetric}
+              setMeasuresVisible={setMeasuresVisible}
+              setScoreSetType={setScoreSetType}
+            />
           </Grid>
         )}
         <Divider sx={{ margin: 2 }} />
         <Grid item>
-          {!!existingLanes && (
-            <FormControl fullWidth>
-              <FormLabel id="checkbox-group-legend">
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12}>
-                    Existing Lanes
-                  </Grid>
-                  <Grid item>
-                    <Button
-                      onClick={() =>
-                        setVisibleExistingLanes(
-                          Object.values(EXISTING_LANE_NAME_MAP)
-                        )
-                      }
-                      size="small"
-                      variant="text"
-                    >
-                      Show all
-                    </Button>
-                  </Grid>
-                  <Grid item>
-                    <Button
-                      onClick={() => setVisibleExistingLanes([])}
-                      size="small"
-                      variant="text"
-                    >
-                      Hide all
-                    </Button>
-                  </Grid>
-                </Grid>
-              </FormLabel>
-              <FormGroup aria-labelledby="checkbox-group-legend">
-                {Array.from(new Set(Object.values(EXISTING_LANE_NAME_MAP))).map(
-                  (m: EXISTING_LANE_TYPE) => (
-                    <FormControlLabel
-                      key={m}
-                      control={
-                        <Checkbox
-                          sx={{
-                            [`&, &.${checkboxClasses.checked}`]: {
-                              color: existingScale(m),
-                            },
-                          }}
-                        />
-                      }
-                      onChange={() =>
-                        visibleExistingLanes.includes(m)
-                          ? setVisibleExistingLanes(
-                              visibleExistingLanes.filter((l) => l !== m)
-                            )
-                          : setVisibleExistingLanes(
-                              visibleExistingLanes.concat(m)
-                            )
-                      }
-                      label={m}
-                      value={m}
-                      checked={visibleExistingLanes.includes(m)}
-                    />
-                  )
-                )}
-              </FormGroup>
-            </FormControl>
-          )}
+          <ExistingLaneControls
+            setVisibleExistingLanes={setVisibleExistingLanes}
+            visibleExistingLanes={visibleExistingLanes}
+          />
         </Grid>
       </Grid>
       <Grid item xs={12} md={10} flexGrow={1}>

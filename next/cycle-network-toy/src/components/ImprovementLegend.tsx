@@ -1,0 +1,61 @@
+import React from "react";
+import { PendingImprovements } from "./MainViewPanel";
+import { Button, Grid, Typography, useTheme } from "@mui/material";
+import LaneChangeLegend from "./LaneChangeLegend";
+import { formatDigit } from "@/lib/ts/util";
+
+interface ImprovementLegendProps {
+  handleCalculation: () => void;
+  improvements?: number[];
+  pendingImprovements: PendingImprovements;
+  totalKm?: number;
+}
+
+const ImprovementLegend: React.FC<ImprovementLegendProps> = ({
+  handleCalculation,
+  improvements,
+  pendingImprovements,
+  totalKm,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <>
+      {!!improvements && (
+        <LaneChangeLegend
+          color={theme.palette.projectColor}
+          label="Proposed New Bike Lane"
+        />
+      )}
+      {!!pendingImprovements.toAdd.length && (
+        <LaneChangeLegend
+          color={theme.palette.projectAddColor}
+          label="Pending New Bike Lane"
+        />
+      )}
+      {!!pendingImprovements.toRemove.length && (
+        <LaneChangeLegend
+          color={theme.palette.projectRemoveColor}
+          label="Pending Removal of Proposed Lane"
+        />
+      )}
+      {(!!pendingImprovements.toRemove.length ||
+        !!pendingImprovements.toAdd.length) && (
+        <Grid item>
+          <Button onClick={handleCalculation} variant="outlined">
+            Calculate New Scores
+          </Button>
+        </Grid>
+      )}
+      {!!totalKm && (
+        <Grid item>
+          <Typography variant="caption">
+            Total New Bike Lanes: {formatDigit(totalKm / 1000)} (in KM)
+          </Typography>
+        </Grid>
+      )}
+    </>
+  );
+};
+
+export default ImprovementLegend;

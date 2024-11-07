@@ -9,7 +9,6 @@ import {
   EXISTING_LANE_TYPE,
   EXISTING_LANE_NAME_MAP,
   existingScale,
-  formatDigit,
 } from "@/app/page";
 import { ScoreResults, ScoreSet } from "@/lib/ts/types";
 import {
@@ -22,6 +21,7 @@ import { StaticDataContext } from "@/providers/StaticDataProvider";
 import { format } from "d3-format";
 import { useTheme } from "@mui/material";
 import { PendingImprovements } from "./MainViewPanel";
+import { formatDigit } from "@/lib/ts/util";
 
 const formatPct = format(",.1%");
 

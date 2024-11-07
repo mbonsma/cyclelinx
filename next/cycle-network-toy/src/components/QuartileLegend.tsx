@@ -1,7 +1,7 @@
 import React from "react";
 import { ScaleQuantile } from "d3-scale";
 import { Box, Grid, Typography } from "@mui/material";
-import { formatDigit } from "@/app/page";
+import { formatDigit } from "@/lib/ts/util";
 
 interface QuartileLegendProps {
   color: string;
