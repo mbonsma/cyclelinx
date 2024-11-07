@@ -13,7 +13,8 @@ services:
       - POSTGRES_ROOT_PASSWORD
       - POSTGRES_USER
       - TEST_DB_NAME
-      - FLASK_APP_DEBUG=true
+      - FLASK_APP_DEBUG=false
+    # entrypoint: ["gunicorn", "api.app:create_app()", "-w", "2", "-b", "0.0.0.0:5000"]
   next:
     image: node:21-slim
     working_dir: /app/cycle-network-toy
