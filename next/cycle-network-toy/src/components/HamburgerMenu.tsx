@@ -2,7 +2,13 @@
 
 import React from "react";
 import { Box, IconButton, Menu, MenuItem, SvgIcon } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+const ROUTES = [
+  { name: "About", route: "/about" },
+  { name: "Help", route: "/help" },
+  { name: "Map", route: "/" },
+];
 
 interface HamburgerMenuProps {
   absolute: boolean;
@@ -18,6 +24,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) =>
@@ -61,8 +68,11 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={() => router.push("/help")}>Help</MenuItem>
-        <MenuItem onClick={() => router.push("/about")}>About</MenuItem>
+        {ROUTES.filter((r) => r.route !== pathname).map(({ name, route }) => (
+          <MenuItem key={name} onClick={() => router.push(route)}>
+            {name}
+          </MenuItem>
+        ))}
       </Menu>
     </Box>
   );
