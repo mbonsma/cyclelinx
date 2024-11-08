@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Budget,
   Metric,
@@ -30,7 +30,6 @@ import {
   MenuItem,
   Select,
   Typography,
-  useTheme,
 } from "@mui/material";
 import {
   LegendGradient,
@@ -43,7 +42,6 @@ import {
   ExistingLaneControls,
   ScoreScaleSelector,
 } from "@/components";
-import { StaticDataContext } from "@/providers/StaticDataProvider";
 import {
   fetchBudgetScores,
   fetchImprovements,

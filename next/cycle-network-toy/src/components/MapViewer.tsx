@@ -19,7 +19,15 @@ import {
 } from "d3-scale";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import { format } from "d3-format";
-import { useTheme } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  SvgIcon,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { PendingImprovements } from "./MainViewPanel";
 import { formatDigit } from "@/lib/ts/util";
 
@@ -370,6 +378,7 @@ const MapViewer: React.FC<{
     bounds={new LatLngBounds(c1, c2)}
     scrollWheelZoom={true}
   >
+    <HamburgerMenu />
     <TileLayer
       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -399,5 +408,51 @@ const StyledLeafletContainer = styled(MapContainer)`
   }
 `;
 
-export const getEntries = <T extends Record<any, any>>(obj: T) =>
-  Object.entries(obj) as [keyof T, T[keyof T]][];
+interface HamburgerMenuProps {}
+
+const HamburgerMenu: React.FC<HamburgerMenuProps> = ({}) => {
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) =>
+    setAnchorEl(event.currentTarget);
+
+  const handleClose = () => setAnchorEl(null);
+
+  return (
+    <Box
+      sx={{
+        backgroundColor: "white",
+        borderRadius: "2px",
+        opacity: 0.85,
+        position: "absolute",
+        right: 10,
+        top: 10,
+        zIndex: 1000,
+      }}
+    >
+      <IconButton onClick={handleClick}>
+        <SvgIcon>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+            fill="#black"
+          >
+            <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
+          </svg>
+        </SvgIcon>
+      </IconButton>
+      <Menu
+        sx={{ opacity: 0.85 }}
+        id="basic-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
+        <MenuItem onClick={handleClose}>Help</MenuItem>
+        <MenuItem onClick={handleClose}>About</MenuItem>
+      </Menu>
+    </Box>
+  );
+};
