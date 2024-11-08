@@ -1,8 +1,5 @@
-import {
-  EXISTING_LANE_NAME_MAP,
-  EXISTING_LANE_TYPE,
-  existingScale,
-} from "@/app/page";
+import { EXISTING_LANE_TYPE } from "@/lib/ts/types";
+import { EXISTING_LANE_NAME_MAP, existingScale } from "@/lib/ts/util";
 import {
   Button,
   Checkbox,

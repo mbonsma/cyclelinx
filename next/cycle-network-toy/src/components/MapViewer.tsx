@@ -5,31 +5,35 @@ import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
-import {
-  EXISTING_LANE_TYPE,
-  EXISTING_LANE_NAME_MAP,
-  existingScale,
-} from "@/app/page";
-import { ScoreResults, ScoreSet } from "@/lib/ts/types";
+import { format } from "d3-format";
 import {
   ScaleLinear,
   ScaleOrdinal,
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
-import { StaticDataContext } from "@/providers/StaticDataProvider";
-import { format } from "d3-format";
 import {
   Box,
   IconButton,
   Menu,
   MenuItem,
   SvgIcon,
-  Typography,
   useTheme,
 } from "@mui/material";
-import { PendingImprovements } from "./MainViewPanel";
-import { formatDigit } from "@/lib/ts/util";
+
+import {
+  EXISTING_LANE_TYPE,
+  PendingImprovements,
+  ScoreResults,
+  ScoreSet,
+} from "@/lib/ts/types";
+import { StaticDataContext } from "@/providers/StaticDataProvider";
+import {
+  EXISTING_LANE_NAME_MAP,
+  existingScale,
+  formatDigit,
+} from "@/lib/ts/util";
+import { useRouter } from "next/navigation";
 
 const formatPct = format(",.1%");
 
@@ -397,8 +401,6 @@ const MapViewer: React.FC<{
   </StyledLeafletContainer>
 );
 
-export default MapViewer;
-
 const StyledLeafletContainer = styled(MapContainer)`
   width: 100%;
   height: 100vh;
@@ -412,6 +414,9 @@ interface HamburgerMenuProps {}
 
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const router = useRouter();
+
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) =>
     setAnchorEl(event.currentTarget);
@@ -450,9 +455,11 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({}) => {
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={handleClose}>Help</MenuItem>
-        <MenuItem onClick={handleClose}>About</MenuItem>
+        <MenuItem onClick={() => router.push("/help")}>Help</MenuItem>
+        <MenuItem onClick={() => router.push("/about")}>About</MenuItem>
       </Menu>
     </Box>
   );
 };
+
+export default MapViewer;

@@ -94,3 +94,18 @@ export interface Metric {
   id: number;
   name: string;
 }
+
+export interface PendingImprovements {
+  toAdd: number[];
+  toRemove: number[];
+}
+
+export type EXISTING_LANE_TYPE =
+  | "Sharrows"
+  | "Multi-Use Trail"
+  | "Cycle Track"
+  | "Park Road"
+  | "Bike Lane"
+  | "Signed Route"
+  | "Signed Route (No Pavement Markings)"
+  | "Multi-Use Trail";

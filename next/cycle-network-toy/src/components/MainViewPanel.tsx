@@ -10,8 +10,9 @@ import {
   ScaleType,
   ScoreResults,
   BudgetProjectMember,
+  PendingImprovements,
+  EXISTING_LANE_TYPE,
 } from "@/lib/ts/types";
-import { EXISTING_LANE_TYPE } from "@/app/page";
 import {
   scaleLinear,
   scaleOrdinal,
@@ -54,7 +55,7 @@ const MapViewer = dynamic(() => import("./MapViewer"), {
   ssr: false,
 });
 
-interface ViewPanelProps {
+interface MainViewPanelProps {
   budgets: Budget[];
   metrics: Metric[];
 }
@@ -85,12 +86,7 @@ const getScale = (scaleType: ScaleType, domain: [number, number]) => {
 const maybeLog = (scaleType: ScaleType, value: number) =>
   scaleType === "log" ? Math.log10(value) : value;
 
-export interface PendingImprovements {
-  toAdd: number[];
-  toRemove: number[];
-}
-
-const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
+const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [budgetId, setBudgetId] = useState<number>();
   const [improvements, setImprovements] = useState<number[]>();
   const [totalKm, setTotalKm] = useState<number>();
@@ -357,4 +353,4 @@ const ViewPanel: React.FC<ViewPanelProps> = ({ budgets, metrics }) => {
   );
 };
 
-export default ViewPanel;
+export default MainViewPanel;
