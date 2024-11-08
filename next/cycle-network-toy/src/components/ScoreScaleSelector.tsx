@@ -1,4 +1,4 @@
-import { ScaleType } from "@/lib/ts/types";
+import React from "react";
 import {
   Collapse,
   FormControl,
@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import Link from "next/link";
-import React from "react";
+import { ScaleType } from "@/lib/ts/types";
 
 interface ScoreScaleSelectorProps {
   scaleType: ScaleType;

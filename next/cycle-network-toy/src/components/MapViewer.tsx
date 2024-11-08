@@ -12,14 +12,7 @@ import {
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
-import {
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  SvgIcon,
-  useTheme,
-} from "@mui/material";
+import { useTheme } from "@mui/material";
 
 import {
   EXISTING_LANE_TYPE,
@@ -27,13 +20,13 @@ import {
   ScoreResults,
   ScoreSet,
 } from "@/lib/ts/types";
+import HamburgerMenu from "./HamburgerMenu";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import {
   EXISTING_LANE_NAME_MAP,
   existingScale,
   formatDigit,
 } from "@/lib/ts/util";
-import { useRouter } from "next/navigation";
 
 const formatPct = format(",.1%");
 
@@ -382,7 +375,7 @@ const MapViewer: React.FC<{
     bounds={new LatLngBounds(c1, c2)}
     scrollWheelZoom={true}
   >
-    <HamburgerMenu />
+    <HamburgerMenu absolute />
     <TileLayer
       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -409,57 +402,5 @@ const StyledLeafletContainer = styled(MapContainer)`
     display: none;
   }
 `;
-
-interface HamburgerMenuProps {}
-
-const HamburgerMenu: React.FC<HamburgerMenuProps> = ({}) => {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
-  const router = useRouter();
-
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) =>
-    setAnchorEl(event.currentTarget);
-
-  const handleClose = () => setAnchorEl(null);
-
-  return (
-    <Box
-      sx={{
-        backgroundColor: "white",
-        borderRadius: "2px",
-        opacity: 0.85,
-        position: "absolute",
-        right: 10,
-        top: 10,
-        zIndex: 1000,
-      }}
-    >
-      <IconButton onClick={handleClick}>
-        <SvgIcon>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24px"
-            viewBox="0 -960 960 960"
-            width="24px"
-            fill="#black"
-          >
-            <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
-          </svg>
-        </SvgIcon>
-      </IconButton>
-      <Menu
-        sx={{ opacity: 0.85 }}
-        id="basic-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-      >
-        <MenuItem onClick={() => router.push("/help")}>Help</MenuItem>
-        <MenuItem onClick={() => router.push("/about")}>About</MenuItem>
-      </Menu>
-    </Box>
-  );
-};
 
 export default MapViewer;

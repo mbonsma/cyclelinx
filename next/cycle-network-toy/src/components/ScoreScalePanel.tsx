@@ -1,4 +1,6 @@
-import { ScoreSet } from "@/lib/ts/types";
+import React from "react";
+import Link from "next/link";
+import { ScaleLinear, ScaleQuantile, ScaleSymLog } from "d3-scale";
 import {
   Collapse,
   FormControl,
@@ -7,9 +9,7 @@ import {
   RadioGroup,
   Typography,
 } from "@mui/material";
-import { ScaleLinear, ScaleQuantile, ScaleSymLog } from "d3-scale";
-import Link from "next/link";
-import React from "react";
+import { ScoreSet } from "@/lib/ts/types";
 
 interface ScoreScalePanelProps {
   measuresVisible: boolean;

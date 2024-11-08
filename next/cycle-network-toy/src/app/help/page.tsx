@@ -1,10 +1,11 @@
-import { Container, Typography } from "@mui/material";
 import React from "react";
+import { Typography } from "@mui/material";
+import { InfoPageLayout } from "@/components";
 
 const HelpPage = () => (
-  <Container maxWidth="lg">
+  <InfoPageLayout>
     <Typography>Help!</Typography>
-  </Container>
+  </InfoPageLayout>
 );
 
 export default HelpPage;

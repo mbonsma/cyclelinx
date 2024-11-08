@@ -1,8 +1,8 @@
 import React from "react";
-import { PendingImprovements } from "./MainViewPanel";
 import { Button, Grid, Typography, useTheme } from "@mui/material";
 import LaneChangeLegend from "./LaneChangeLegend";
 import { formatDigit } from "@/lib/ts/util";
+import { PendingImprovements } from "@/lib/ts/types";
 
 interface ImprovementLegendProps {
   handleCalculation: () => void;

@@ -1,6 +1,8 @@
 export { default as BinaryLegend } from "./BinaryLegend";
 export { default as ExistingLaneControls } from "./ExistingLaneControls";
+export { default as HamburgerMenu } from "./HamburgerMenu";
 export { default as ImprovementLegend } from "./ImprovementLegend";
+export { default as InfoPageLayout } from "./InfoPageLayout";
 export { default as LegendGradient } from "./LegendGradient";
 export { default as LaneChangeLegend } from "./LaneChangeLegend";
 export { default as LoadingOverlay } from "./LoadingOverlay";
