@@ -88,9 +88,61 @@ const Handler: React.FC<{
 }) => {
   const [arterialsSet, setArterialsSet] = useState(false);
   const [dasSet, setDasSet] = useState(false);
+  const [existingLanesSet, setExistingLanesSet] = useState(false);
   const map = useMap();
   const { arterials, das, existingLanes } = useContext(StaticDataContext);
   const theme = useTheme();
+
+  // manage existing lanes
+  useEffect(() => {
+    if (existingLanes) {
+      if (!existingLanesSet) {
+        map.addLayer(
+          new LGeoJSON(existingLanes as GeoJsonObject, {
+            style: {
+              stroke: false,
+              fillColor: "none",
+              fillOpacity: 0,
+            },
+            attribution: "existingLanes",
+          })
+        );
+        setExistingLanesSet(true);
+      }
+
+      map.eachLayer((l: any) => {
+        const layerProps = l?.feature?.properties;
+        if (
+          !!layerProps?.INFRA_HIGHORDER &&
+          l?.options?.attribution === "existingLanes"
+        ) {
+          if (
+            !visibleExistingLanes.includes(
+              EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+            )
+          ) {
+            l.setStyle({
+              stroke: false,
+              fillColor: "none",
+              fillOpacity: 0,
+            });
+          } else {
+            l.setStyle({
+              stroke: true,
+              fillColor: existingScale(
+                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+              ),
+              color: existingScale(
+                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+              ),
+              fillOpacity: 0.75,
+              opacity: 1,
+            });
+          }
+        }
+      });
+    }
+  }, [existingLanes, existingLanesSet, visibleExistingLanes, map]);
 
   // add DAs
   useEffect(() => {
@@ -241,6 +293,7 @@ const Handler: React.FC<{
     theme.palette.projectColor,
   ]);
 
+  //fire update event to sync state with callbacks
   useEffect(() => {
     map.eachLayer((l) =>
       l.fire("update", { improvements, pendingImprovements })
@@ -283,60 +336,6 @@ const Handler: React.FC<{
       });
     }
   }, [das, scores, selectedMetric, scoreScale, scoreSet, metricTypeScale, map]);
-
-  // manage existing lanes
-  useEffect(() => {
-    if (existingLanes) {
-      let removal = false;
-      let toAdd = [...visibleExistingLanes];
-
-      map.eachLayer((l: any) => {
-        const layerProps = l?.feature?.properties;
-        //remove removed or filter out those that already exist from add list
-        if (
-          layerProps &&
-          layerProps.feature_type === "existing_lane" &&
-          !visibleExistingLanes.includes(
-            EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
-          )
-        ) {
-          map.removeLayer(l);
-          removal = true;
-        } else if (
-          layerProps &&
-          toAdd.includes(EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER])
-        ) {
-          toAdd = toAdd.filter(
-            (l: any) => l !== EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
-          );
-        }
-      });
-
-      if (!removal) {
-        existingLanes.features.forEach((l: any) => {
-          const layerProps = l.properties;
-          if (
-            layerProps &&
-            toAdd.includes(EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER])
-          ) {
-            map.addLayer(
-              new LGeoJSON(l as GeoJsonObject, {
-                style: {
-                  fillColor: existingScale(
-                    EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
-                  ),
-                  color: existingScale(
-                    EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
-                  ),
-                  fillOpacity: 0.75,
-                },
-              })
-            );
-          }
-        });
-      }
-    }
-  }, [existingLanes, visibleExistingLanes, map]);
 
   return null;
 };
