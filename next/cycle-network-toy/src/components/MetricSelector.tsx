@@ -12,10 +12,12 @@ import React from "react";
 interface MetricSelectorProps {
   metrics?: Metric[];
   setMetric: (name: string) => void;
+  selectedMetric: Metric | "";
 }
 
 const MetricSelector: React.FC<MetricSelectorProps> = ({
   metrics,
+  selectedMetric,
   setMetric,
 }) =>
   metrics ? (
@@ -31,6 +33,7 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({
           onChange={() => setMetric("")}
           label={"None"}
           value={""}
+          checked={selectedMetric === ""}
         />
         {metrics.map((m) => (
           <FormControlLabel
@@ -39,6 +42,7 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({
             onChange={() => setMetric(m.name)}
             label={capitalize(m.name)}
             value={m.name}
+            checked={selectedMetric === m.name}
           />
         ))}
       </RadioGroup>

@@ -89,7 +89,6 @@ const maybeLog = (scaleType: ScaleType, value: number) =>
 const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [budgetId, setBudgetId] = useState<number>();
   const [improvements, setImprovements] = useState<number[]>();
-  const [totalKm, setTotalKm] = useState<number>();
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState(false);
   const [pendingImprovements, setPendingImprovements] =
@@ -101,7 +100,8 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [scores, setScores] = useState<ScoreResults>();
   const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("diff");
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
-  const [selectedMetric, setSelectedMetric] = useState<string>();
+  const [selectedMetric, setSelectedMetric] = useState("");
+  const [totalKm, setTotalKm] = useState<number>();
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
@@ -252,7 +252,11 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         />
         <Grid item>
           {!!improvements && (
-            <MetricSelector metrics={metrics} setMetric={setMetric} />
+            <MetricSelector
+              metrics={metrics}
+              setMetric={setMetric}
+              selectedMetric={selectedMetric}
+            />
           )}
         </Grid>
         {!!scoreScale && (
