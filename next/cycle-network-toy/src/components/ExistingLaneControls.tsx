@@ -1,5 +1,4 @@
-import { EXISTING_LANE_TYPE } from "@/lib/ts/types";
-import { EXISTING_LANE_NAME_MAP, existingScale } from "@/lib/ts/util";
+import React from "react";
 import {
   Button,
   Checkbox,
@@ -10,7 +9,8 @@ import {
   FormLabel,
   Grid,
 } from "@mui/material";
-import React from "react";
+import { EXISTING_LANE_TYPE } from "@/lib/ts/types";
+import { EXISTING_LANE_NAME_MAP, existingScale } from "@/lib/ts/util";
 
 interface ExistingLaneControlsProps {
   setVisibleExistingLanes: (lanes: EXISTING_LANE_TYPE[]) => void;

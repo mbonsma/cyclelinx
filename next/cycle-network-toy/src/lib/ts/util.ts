@@ -1,7 +1,12 @@
 import { format } from "d3-format";
 import { EXISTING_LANE_TYPE } from "./types";
 import { scaleOrdinal } from "d3-scale";
-import { schemeSet2 } from "d3-scale-chromatic";
+import {
+  schemePuBuGn,
+  schemePurples,
+  schemeSet2,
+  schemeYlOrBr,
+} from "d3-scale-chromatic";
 
 /**
  * Round number and return
@@ -54,36 +59,34 @@ export const formatDigit = (value: number, d?: number) => {
 
 const existingLaneTypes: EXISTING_LANE_TYPE[] = [
   "Multi-Use Trail",
-  "Sharrows",
   "Cycle Track",
   "Park Road",
-  "Signed Route",
-  "Multi-Use Trail",
   "Bike Lane",
+  "Signed Route", // high stress
+  "Sharrows", // high stress
 ];
 
 export const existingScale = scaleOrdinal(
   existingLaneTypes,
-  schemeSet2.slice(0, existingLaneTypes.length)
+  schemePurples[6].slice(2).concat([schemeYlOrBr[8][5], schemeYlOrBr[8][6]])
 );
 
 export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
-  ["Sharrows - Wayfinding"]: "Sharrows",
   ["Multi-Use Trail"]: "Multi-Use Trail",
   ["Multi-Use Trail - Entrance"]: "Multi-Use Trail",
-  ["Cycle Track"]: "Cycle Track",
-  ["Park Road"]: "Park Road",
-  ["Sharrows"]: "Sharrows",
-  ["Bike Lane"]: "Bike Lane",
-  ["Bi-Directional Cycle Track"]: "Cycle Track",
-  ["Signed Route (No Pavement Markings)"]:
-    "Signed Route (No Pavement Markings)",
-  ["Bike Lane - Buffered"]: "Bike Lane",
   ["Multi-Use Trail - Connector"]: "Multi-Use Trail",
   ["Multi-Use Trail - Boulevard"]: "Multi-Use Trail",
   ["Multi-Use Trail - Existing Connector"]: "Multi-Use Trail",
+  ["Cycle Track"]: "Cycle Track",
+  ["Bi-Directional Cycle Track"]: "Cycle Track",
+  ["Cycle Track - Contraflow"]: "Cycle Track",
+  ["Park Road"]: "Park Road",
+  ["Bike Lane"]: "Bike Lane",
+  ["Bike Lane - Buffered"]: "Bike Lane",
   ["Bike Lane - Contraflow"]: "Bike Lane",
+  ["Signed Route (No Pavement Markings)"]: "Signed Route",
+  ["Sharrows"]: "Sharrows",
+  ["Sharrows - Wayfinding"]: "Sharrows",
   ["Sharrows - Arterial"]: "Sharrows",
   ["Sharrows - Arterial - Connector"]: "Sharrows",
-  ["Cycle Track - Contraflow"]: "Cycle Track",
 };

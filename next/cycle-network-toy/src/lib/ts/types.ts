@@ -101,11 +101,9 @@ export interface PendingImprovements {
 }
 
 export type EXISTING_LANE_TYPE =
-  | "Sharrows"
-  | "Multi-Use Trail"
-  | "Cycle Track"
-  | "Park Road"
   | "Bike Lane"
-  | "Signed Route"
-  | "Signed Route (No Pavement Markings)"
-  | "Multi-Use Trail";
+  | "Cycle Track"
+  | "Multi-Use Trail"
+  | "Park Road"
+  | "Sharrows"
+  | "Signed Route";

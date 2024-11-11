@@ -109,7 +109,6 @@ const Handler: React.FC<{
         );
         setExistingLanesSet(true);
       }
-
       map.eachLayer((l: any) => {
         const layerProps = l?.feature?.properties;
         if (
@@ -208,8 +207,8 @@ const Handler: React.FC<{
                 ) {
                   l.setStyle({
                     stroke: true,
-                    fillColor: "none",
-                    opacity: 0.15,
+                    color: theme.palette.projectAddColor,
+                    opacity: 0.05,
                     fillOpacity: 0,
                   });
                 } else if (removeSet.intersection(allProjectIds).size) {
