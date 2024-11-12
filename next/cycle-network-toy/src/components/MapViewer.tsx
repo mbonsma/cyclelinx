@@ -16,6 +16,8 @@ import { useTheme } from "@mui/material";
 
 import {
   EXISTING_LANE_TYPE,
+  isFeatureGroup,
+  isGeoJSONFeature,
   PendingImprovements,
   ScoreResults,
   ScoreSet,
@@ -199,7 +201,7 @@ const Handler: React.FC<{
               const improvmentsSet = new Set(improvements);
               const removeSet = new Set(pendingImprovements.toRemove);
               const addSet = new Set(pendingImprovements.toAdd);
-              if (allProjectIds.size) {
+              if (allProjectIds.size && isFeatureGroup(l)) {
                 //if it's not in any set, base styling
                 if (
                   !addSet.intersection(allProjectIds).size &&
@@ -302,11 +304,17 @@ const Handler: React.FC<{
   // Add scores
   useEffect(() => {
     if (!!scores) {
+      // note that this is definitely not a layer but a FeatureGroup
+      // i think we can use a typeguard then?
       map.eachLayer((l) => {
         //it seems we have the full feature layer as well as layers broken out...
-        if (l.options.attribution === "DAs" && !!l.feature) {
+        if (
+          l.options.attribution === "DAs" &&
+          isFeatureGroup(l) &&
+          !!l.feature
+        ) {
           //we won't necessarily have a score for every DA when we calculate on the fly
-          if (!!selectedMetric && !!scoreScale) {
+          if (!!selectedMetric && !!scoreScale && isGeoJSONFeature(l.feature)) {
             if (scores[l.feature.properties.id.toString()]) {
               const da_score_set =
                 scores[l.feature.properties.id.toString()].scores;

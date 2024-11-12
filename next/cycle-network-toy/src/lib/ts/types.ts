@@ -1,4 +1,13 @@
-import { MultiPolygon, LineString, GeoJsonObject } from "geojson";
+import geojson, {
+  MultiPolygon,
+  LineString,
+  GeoJsonObject,
+  GeometryObject,
+  Feature,
+  MultiPoint,
+  GeometryCollection,
+} from "geojson";
+import { FeatureGroup, Layer } from "leaflet";
 
 export interface Budget {
   name: string;
@@ -107,3 +116,17 @@ export type EXISTING_LANE_TYPE =
   | "Park Road"
   | "Sharrows"
   | "Signed Route";
+
+export const isFeatureGroup = (
+  arg: Layer | FeatureGroup
+): arg is FeatureGroup => !!(arg as FeatureGroup).setStyle;
+
+export const isGeoJSONFeature = <P extends Record<string, any>>(
+  arg:
+    | geojson.FeatureCollection<GeometryObject, P>
+    | Feature<MultiPoint, P>
+    | GeometryCollection
+    | undefined
+): arg is Feature<MultiPoint, P> =>
+  !!(arg as Feature<MultiPoint, P>).type &&
+  !!(arg as Feature<MultiPoint, P>).properties;
