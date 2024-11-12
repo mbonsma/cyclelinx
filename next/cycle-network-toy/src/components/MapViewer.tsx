@@ -29,6 +29,7 @@ import {
   existingScale,
   formatDigit,
 } from "@/lib/ts/util";
+import { Span } from "next/dist/trace";
 
 const formatPct = format(",.1%");
 
@@ -37,14 +38,21 @@ const buildValueTooltip = (
   scores: ScoreSet,
   score_type: keyof ScoreSet
 ) => {
-  const diff = scores.diff[metric] / scores.original[metric];
+  const diff =
+    scores.original[metric] === 0 || scores.diff[metric] === 0
+      ? null
+      : scores.diff[metric] / scores.original[metric];
 
   const pctChange =
     score_type === "diff" ? (diff ? ` (${formatPct(diff)})` : " (N/A)") : "";
 
+  const color = diff ? "green" : "inherit";
+
   return `<div><strong>${
     metric.slice(0, 1).toUpperCase() + metric.slice(1)
-  }:</strong>&nbsp;${formatDigit(scores[score_type][metric])}${pctChange}`;
+  }:</strong>&nbsp;${formatDigit(
+    scores[score_type][metric]
+  )}<span style="color:${color};">${pctChange}</span></div>`;
 };
 
 const getAllProjectIds = ({
