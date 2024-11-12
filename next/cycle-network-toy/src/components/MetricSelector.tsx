@@ -12,7 +12,7 @@ import React from "react";
 interface MetricSelectorProps {
   metrics?: Metric[];
   setMetric: (name: string) => void;
-  selectedMetric: Metric | "";
+  selectedMetric: string;
 }
 
 const MetricSelector: React.FC<MetricSelectorProps> = ({

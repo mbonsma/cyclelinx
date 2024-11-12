@@ -1,6 +1,6 @@
 import React from "react";
-import { Grid } from "@mui/material";
-
+//https://github.com/mui/material-ui/issues/40214
+import Grid from "@mui/material/Grid";
 import { MainViewPanel } from "@/components";
 import StaticDataProvider from "@/providers/StaticDataProvider";
 
@@ -44,17 +44,9 @@ export default async function Home() {
   );
   const arterials = await arterialsResult.json();
 
-  // return (
-  //   <StaticDataProvider value={{ arterials, das, existingLanes }}>
-  //     <div>foo</div>
-  //   </StaticDataProvider>
-  // );
-
   return (
     <StaticDataProvider value={{ arterials, das, existingLanes }}>
-      {/* Outer container */}
       <Grid direction="row" container justifyContent="center">
-        {/* Inner column container */}
         <Grid
           alignItems="center"
           spacing={5}
