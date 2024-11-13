@@ -32,6 +32,8 @@ import {
   Select,
   Typography,
 } from "@mui/material";
+import difference from "set.prototype.difference";
+import union from "set.prototype.union";
 import {
   LegendGradient,
   QuartileLegend,
@@ -185,7 +187,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
     const toRemoveSet = new Set(pendingImprovements.toRemove);
 
     const projectIds = [
-      ...improvementsSet.difference(toRemoveSet).union(toAddSet),
+      ...union(difference(improvementsSet, toRemoveSet), toAddSet),
     ];
 
     try {

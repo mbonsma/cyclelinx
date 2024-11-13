@@ -12,8 +12,10 @@ import {
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
+import union from "set.prototype.union";
+import difference from "set.prototype.difference";
+import intersection from "set.prototype.intersection";
 import { capitalize, useTheme } from "@mui/material";
-
 import {
   EXISTING_LANE_TYPE,
   isFeatureGroup,
@@ -214,8 +216,8 @@ const Handler: React.FC<{
               if (allProjectIds.size && isFeatureGroup(l)) {
                 //if it's not in any set, base styling
                 if (
-                  !addSet.intersection(allProjectIds).size &&
-                  !improvmentsSet.intersection(allProjectIds).size
+                  !intersection(addSet, allProjectIds).size &&
+                  !intersection(improvmentsSet, allProjectIds).size
                 ) {
                   l.setStyle({
                     stroke: true,
@@ -223,14 +225,14 @@ const Handler: React.FC<{
                     opacity: 0.05,
                     fillOpacity: 0,
                   });
-                } else if (removeSet.intersection(allProjectIds).size) {
+                } else if (intersection(removeSet, allProjectIds).size) {
                   l.setStyle({
                     stroke: true,
                     color: theme.palette.projectRemoveColor,
                     fillOpacity: 1,
                     opacity: 1,
                   });
-                } else if (!!addSet.intersection(allProjectIds).size) {
+                } else if (!!intersection(addSet, allProjectIds).size) {
                   {
                     l.setStyle({
                       stroke: true,
@@ -240,7 +242,7 @@ const Handler: React.FC<{
                     });
                   }
                   // if it's an existing improvement, give it the improvement color
-                } else if (!!improvmentsSet.intersection(allProjectIds).size) {
+                } else if (!!intersection(improvmentsSet, allProjectIds).size) {
                   l.setStyle({
                     stroke: true,
                     color: theme.palette.projectColor,
@@ -257,29 +259,29 @@ const Handler: React.FC<{
 
                 if (!!allProjectIds.size) {
                   // if user added already, remove from add list
-                  if (!!addSet.intersection(allProjectIds).size) {
+                  if (!!intersection(addSet, allProjectIds).size) {
                     setPendingImprovements(({ toRemove }) => ({
-                      toAdd: [...addSet.difference(allProjectIds)],
+                      toAdd: [...difference(addSet, allProjectIds)],
                       toRemove,
                     }));
 
                     // if user has marked for removal, remove from remove list
-                  } else if (!!removeSet.intersection(allProjectIds).size) {
+                  } else if (!!intersection(removeSet, allProjectIds).size) {
                     setPendingImprovements(({ toAdd }) => ({
-                      toRemove: [...removeSet.difference(allProjectIds)],
+                      toRemove: [...difference(removeSet, allProjectIds)],
                       toAdd,
                     }));
                   } //if it's in the improvements list, they're removing
-                  else if (!!improvmentsSet.intersection(allProjectIds).size) {
+                  else if (!!intersection(improvmentsSet, allProjectIds).size) {
                     setPendingImprovements(({ toAdd }) => ({
-                      toRemove: [...removeSet.union(allProjectIds)],
+                      toRemove: [...union(removeSet, allProjectIds)],
                       toAdd,
                     }));
                   }
                   // otherwise they're marking it to add
                   else {
                     setPendingImprovements(({ toRemove }) => ({
-                      toAdd: [...addSet.union(allProjectIds)],
+                      toAdd: [...union(addSet, allProjectIds)],
                       toRemove,
                     }));
                   }

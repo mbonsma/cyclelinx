@@ -16,7 +16,7 @@ services:
       - FLASK_APP_DEBUG=false
     # entrypoint: ["gunicorn", "api.app:create_app()", "-w", "2", "-b", "0.0.0.0:5000"]
   next:
-    image: node:21-slim
+    image: node:22-slim
     working_dir: /app/cycle-network-toy
     entrypoint: yarn dev
     environment:
