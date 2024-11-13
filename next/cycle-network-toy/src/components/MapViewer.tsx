@@ -12,7 +12,7 @@ import {
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
-import { useTheme } from "@mui/material";
+import { capitalize, useTheme } from "@mui/material";
 
 import {
   EXISTING_LANE_TYPE,
@@ -29,29 +29,31 @@ import {
   existingScale,
   formatDigit,
 } from "@/lib/ts/util";
-import { Span } from "next/dist/trace";
 
 const formatPct = format(",.1%");
 
 const buildValueTooltip = (
   metric: string,
   scores: ScoreSet,
-  score_type: keyof ScoreSet
+  scoreType: keyof ScoreSet
 ) => {
-  const diff =
-    scores.original[metric] === 0 || scores.diff[metric] === 0
-      ? null
-      : scores.diff[metric] / scores.original[metric];
+  let pctChange = "";
+  let color = "inherit";
 
-  const pctChange =
-    score_type === "diff" ? (diff ? ` (${formatPct(diff)})` : " (N/A)") : "";
+  if (scoreType !== "diff") {
+    pctChange = "";
+  } else if (scores.original[metric] === 0 && scores.diff[metric] === 0) {
+    pctChange = "(N/A)";
+  } else if (scores.original[metric] === 0 && scores.diff[metric] !== 0) {
+    pctChange = "(Inf)";
+    color = "green";
+  } else {
+    pctChange = `(${formatPct(scores.diff[metric] / scores.original[metric])})`;
+    color = "green";
+  }
 
-  const color = diff ? "green" : "inherit";
-
-  return `<div><strong>${
-    metric.slice(0, 1).toUpperCase() + metric.slice(1)
-  }:</strong>&nbsp;${formatDigit(
-    scores[score_type][metric]
+  return `<div><strong>${capitalize(metric)}:</strong>&nbsp;${formatDigit(
+    scores[scoreType][metric]
   )}<span style="color:${color};">${pctChange}</span></div>`;
 };
 
