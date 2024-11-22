@@ -15,6 +15,7 @@ import { HamburgerMenu } from "@/components";
 
 interface InfoPageLayoutProps {
   children: React.ReactNode;
+  title?: string;
 }
 
 const UnstyledNavLink = styled(Link)(({ theme }) => ({
@@ -22,8 +23,8 @@ const UnstyledNavLink = styled(Link)(({ theme }) => ({
   color: theme.palette.getContrastText(theme.palette.primary.main),
 }));
 
-const InfoPageLayout: React.FC<InfoPageLayoutProps> = ({ children }) => (
-  <Container maxWidth="xl">
+const InfoPageLayout: React.FC<InfoPageLayoutProps> = ({ children, title }) => (
+  <Container maxWidth="lg">
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" color="primary" sx={{ marginBottom: 3 }}>
         <Toolbar component={Grid} justifyContent="space-between">
@@ -31,6 +32,9 @@ const InfoPageLayout: React.FC<InfoPageLayoutProps> = ({ children }) => (
             <UnstyledNavLink href="/">
               <Typography>Cycle App</Typography>
             </UnstyledNavLink>
+          </Grid>
+          <Grid item>
+            <Typography variant="h3">{title}</Typography>
           </Grid>
           <Grid item>
             <HamburgerMenu absolute={false} />

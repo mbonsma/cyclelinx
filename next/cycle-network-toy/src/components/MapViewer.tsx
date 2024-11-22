@@ -4,7 +4,12 @@ import React, { useContext, useEffect, useState } from "react";
 import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import { LatLngBounds, LatLng, GeoJSON as LGeoJSON } from "leaflet";
+import {
+  LatLngBounds,
+  LatLng,
+  GeoJSON as LGeoJSON,
+  LeafletEvent,
+} from "leaflet";
 import { format } from "d3-format";
 import {
   ScaleLinear,
@@ -109,10 +114,10 @@ const Handler: React.FC<{
 
   // manage existing lanes
   useEffect(() => {
-    if (existingLanes) {
+    if (!!existingLanes) {
       if (!existingLanesSet) {
         map.addLayer(
-          new LGeoJSON(existingLanes as GeoJsonObject, {
+          new LGeoJSON(existingLanes, {
             style: {
               stroke: false,
               fillColor: "none",
@@ -159,10 +164,10 @@ const Handler: React.FC<{
 
   // add DAs
   useEffect(() => {
-    if (!dasSet && !!map && !!scores) {
+    if (!dasSet && !!map && !!scores && !!das) {
       //this will create a single layer for each feature in the bundle
       map.addLayer(
-        new LGeoJSON(das as GeoJsonObject, {
+        new LGeoJSON(das, {
           style: {
             stroke: false,
             fillColor: "none",
@@ -179,8 +184,8 @@ const Handler: React.FC<{
   //we use the update event to keep the callbacks up to date with react's data
   useEffect(() => {
     if (!!map) {
-      if (!arterialsSet) {
-        const layer = new LGeoJSON(arterials as GeoJsonObject, {
+      if (!arterialsSet && !!arterials) {
+        const layer = new LGeoJSON(arterials, {
           style: (f) => {
             if (f) {
               const projectId = f.properties.default_project_id;
@@ -202,7 +207,7 @@ const Handler: React.FC<{
           },
           attribution: "arterial", //using this as a handle
           onEachFeature: (f, l) => {
-            l.on("update", (e) => {
+            l.on("update", (e: LeafletEvent) => {
               //@ts-ignore
               const improvements = e.improvements as number[];
               const pendingImprovements =
