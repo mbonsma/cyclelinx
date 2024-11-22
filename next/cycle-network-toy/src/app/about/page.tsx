@@ -1,9 +1,11 @@
+"use client";
+
 import React from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import { List, ListItemText, styled } from "@mui/material";
 import { InfoPageLayout } from "@/components";
-import { List, ListItemText } from "@mui/material";
 
 const AboutPage = () => (
   <InfoPageLayout title="About the Application">
@@ -94,9 +96,79 @@ const AboutPage = () => (
         </Grid>
         <Grid item>
           <BulletLabel label="Dissemination area (DA)" />a Canadian census small
-          unit of area that contains about 400-700 resi- dents. It is larger
-          than a dissemination block and smaller than a census tract [5].
+          unit of area that contains about 400-700 residents. It is larger than
+          a dissemination block and smaller than a census tract [5].
         </Grid>
+      </Section>
+      <Section title="Read more">
+        <BulletSubsection>
+          Madeleine Bonsma-Fisher, Bo Lin, Timothy C. Y. Chan, and Shoshanna
+          Saxe. Exploring the geographical equity-efficiency tradeoff in cycling
+          infrastructure planning.{" "}
+          <Italic>Journal of Transport Geography</Italic>, 121:104010, December
+          2024
+        </BulletSubsection>
+        <BulletSubsection>
+          Timothy C. Y. Chan, Bo Lin, and Shoshanna Saxe. A Machine Learning
+          Approach to Solving Large Bilevel and Stochastic Programs: Application
+          to Cycling Network Design, September 2022
+        </BulletSubsection>
+        <BulletSubsection>
+          Bo Lin, Timothy C. Y. Chan, and Shoshanna Saxe. The Impact of COVID-19
+          Cycling Infrastructure on Low-Stress Cycling Accessibility: A Case
+          Study in the City of Toronto. <Italic>Findings</Italic>, February 2021
+        </BulletSubsection>
+        <BulletSubsection>
+          Ahmadreza Faghih Imani, Eric J. Miller, and Shoshanna Saxe. Cycle
+          accessibility and level of traffic stress: A case study of Toronto.
+          <Italic>Journal of Transport Geography</Italic>, 80:102496, October
+          2019
+        </BulletSubsection>
+      </Section>
+      <Section title="References">
+        <Citation number={1}>
+          Ahmadreza Faghih Imani, Eric J. Miller, and Shoshanna Saxe. Cycle
+          accessibility and level of traffic stress: A case study of Toronto.
+          <Italic>Journal of Transport Geography</Italic>, 80:102496, October
+          2019.
+        </Citation>
+        <Citation number={2}>
+          Timothy C. Y. Chan, Bo Lin, and Shoshanna Saxe. A Machine Learning
+          Approach to Solving Large Bilevel and Stochastic Programs: Application
+          to Cycling Network Design, September 2022.
+        </Citation>
+        <Citation number={3}>
+          Peter G. Furth, Maaza C. Mekuria, and Hilary Nixon. Network
+          Connectivity for Low-Stress Bicycling.{" "}
+          <Italic>Transportation Research Record</Italic>, 2587(1):41-49,
+          January 2016.
+        </Citation>
+        <Citation number={4}>
+          Amreen A. Imrit, Jaimy Fischer, Timothy C. Y. Chan, Shoshanna Saxe,
+          and Madeleine Bonsma-Fisher. A Street-Specific Analysis of Level of
+          Traffic Stress Trends in Strava Bicycle Ridership and its Implications
+          for Low-Stress Bicycling Routes in Toronto. <Italic>Findings</Italic>,
+          January 2024.
+        </Citation>
+        <Citation number={5}>
+          Statistics Canada. Dictionary, Census of Population, 2021 -
+          Dissemination area (DA).
+          https://www12.statcan.gc.ca/census-recensement/2021/ref/dict/az/Definition-eng.cfm?ID=geo021,
+          November 2021.
+        </Citation>
+        <Citation number={6}>
+          Madeleine Bonsma-Fisher, Bo Lin, Timothy C. Y. Chan, and Shoshanna
+          Saxe. Exploring the geographical equity-efficiency tradeoff in cycling
+          infrastructure planning.{" "}
+          <Italic>Journal of Transport Geography</Italic>, 121:104010, December
+          2024.
+        </Citation>
+        <Citation number={7}>
+          Bo Lin, Timothy C. Y. Chan, and Shoshanna Saxe. The Impact of COVID-19
+          Cycling Infrastructure on Low-Stress Cycling Accessibility: A Case
+          Study in the City of Toronto. <Italic>Findings</Italic>, February
+          2021.
+        </Citation>
       </Section>
     </Grid>
   </InfoPageLayout>
@@ -115,6 +187,19 @@ const Section: React.FC<SectionProps> = ({ children, title }) => (
       <Typography variant="h4">{title}</Typography>
     </Grid>
     {children}
+  </Grid>
+);
+
+interface BulletSubsectionProps {
+  children: React.ReactNode;
+}
+
+const BulletSubsection: React.FC<BulletSubsectionProps> = ({ children }) => (
+  <Grid item>
+    <Typography>
+      <Bullet />
+      {children}
+    </Typography>
   </Grid>
 );
 
@@ -140,4 +225,27 @@ const Bullet = () => (
   >
     &bull;
   </Box>
+);
+
+const Italic = styled("span")`
+  font-style: italic;
+`;
+
+interface CitationProps {
+  number: number;
+  children: React.ReactNode;
+}
+
+const Citation: React.FC<CitationProps> = ({ children, number }) => (
+  <Grid
+    item
+    container
+    spacing={1}
+    alignItems="flex-start"
+    wrap="nowrap"
+    direction="row"
+  >
+    <Grid item>{`[${number}]`}</Grid>
+    <Grid item>{children}</Grid>
+  </Grid>
 );
