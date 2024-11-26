@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useContext, useEffect, useState } from "react";
-import { GeoJsonObject } from "geojson";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import {
@@ -36,6 +35,7 @@ import {
   existingScale,
   formatDigit,
 } from "@/lib/ts/util";
+import LoadingOverlay from "./LoadingOverlay";
 
 const formatPct = format(",.1%");
 
@@ -393,29 +393,38 @@ const MapViewer: React.FC<{
   selectedMetric,
   setPendingImprovements,
   visibleExistingLanes,
-}) => (
-  <StyledLeafletContainer
-    bounds={new LatLngBounds(c1, c2)}
-    scrollWheelZoom={true}
-  >
-    <HamburgerMenu absolute />
-    <TileLayer
-      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    />
-    <Handler
-      scoreScale={scoreScale}
-      metricTypeScale={metricTypeScale}
-      improvements={improvements}
-      pendingImprovements={pendingImprovements}
-      scores={scores}
-      scoreSet={scoreSet}
-      setPendingImprovements={setPendingImprovements}
-      selectedMetric={selectedMetric}
-      visibleExistingLanes={visibleExistingLanes}
-    />
-  </StyledLeafletContainer>
-);
+}) => {
+  const [handlerVisible, setHandlerVisible] = useState(false);
+  return (
+    <StyledLeafletContainer
+      bounds={new LatLngBounds(c1, c2)}
+      scrollWheelZoom={true}
+      // This prevents the handler and map from rendering at once, which causes lag
+      // Instead, we render one at a time, and this seems like the best way to do it
+      // given the circumstances.
+      whenReady={() => setTimeout(() => setHandlerVisible(true), 500)}
+    >
+      <HamburgerMenu absolute />
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      />
+      {handlerVisible && (
+        <Handler
+          scoreScale={scoreScale}
+          metricTypeScale={metricTypeScale}
+          improvements={improvements}
+          pendingImprovements={pendingImprovements}
+          scores={scores}
+          scoreSet={scoreSet}
+          setPendingImprovements={setPendingImprovements}
+          selectedMetric={selectedMetric}
+          visibleExistingLanes={visibleExistingLanes}
+        />
+      )}
+    </StyledLeafletContainer>
+  );
+};
 
 const StyledLeafletContainer = styled(MapContainer)`
   width: 100%;
