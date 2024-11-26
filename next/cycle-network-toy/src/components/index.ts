@@ -1,4 +1,5 @@
 export { default as BinaryLegend } from "./BinaryLegend";
+export { default as ButtonLink } from "./ButtonLink";
 export { default as ExistingLaneControls } from "./ExistingLaneControls";
 export { default as HamburgerMenu } from "./HamburgerMenu";
 export { default as ImprovementLegend } from "./ImprovementLegend";
@@ -11,3 +12,4 @@ export { default as MetricSelector } from "./MetricSelector";
 export { default as QuartileLegend } from "./QuartileLegend";
 export { default as ScoreScalePanel } from "./ScoreScalePanel";
 export { default as ScoreScaleSelector } from "./ScoreScaleSelector";
+export { default as WelcomeOverlay } from "./WelcomeOverlay";

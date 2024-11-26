@@ -44,6 +44,7 @@ import {
   ScoreScalePanel,
   ExistingLaneControls,
   ScoreScaleSelector,
+  WelcomeOverlay,
 } from "@/components";
 import {
   fetchBudgetScores,
@@ -107,6 +108,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
+  const [welcomeOverlayVisible, setWelcomeOverlayVisible] = useState(true);
 
   const metricTypeScale: ScaleOrdinal<string, string, never> | undefined =
     useMemo(() => {
@@ -354,6 +356,10 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           />
         )}
       </Grid>
+      <WelcomeOverlay
+        open={welcomeOverlayVisible}
+        onClose={() => setWelcomeOverlayVisible(false)}
+      />
       <LoadingOverlay open={loading} />
     </Grid>
   );
