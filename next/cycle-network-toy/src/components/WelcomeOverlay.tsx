@@ -6,7 +6,6 @@ import {
   AlertTitle,
   Backdrop,
   Box,
-  ClickAwayListener,
   Divider,
   Grid,
   IconButton,
@@ -31,85 +30,86 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
   const isMobile = useIsMobile();
 
   return (
-    <ClickAwayListener onClickAway={onClose}>
-      <Backdrop
-        component={Grid}
-        sx={{
-          backgroundColor: "rgba(0, 0, 0, 0)",
-          zIndex: 10000,
-        }}
-        justifyContent="center"
+    <Backdrop
+      component={Grid}
+      sx={{
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        zIndex: 10000,
+      }}
+      justifyContent="center"
+      alignItems="center"
+      open={open}
+      onClick={onClose}
+    >
+      <Grid
         alignItems="center"
-        open={open}
+        container
+        onClick={(e) => e.stopPropagation()}
+        item
+        component={Paper}
+        maxWidth="900px"
+        direction="column"
+        padding={2}
+        flexWrap="nowrap"
+        overflow="auto"
       >
+        <Grid item alignSelf="flex-end">
+          <IconButton onClick={onClose}>
+            <Typography color="primary" variant="h4">
+              x
+            </Typography>
+          </IconButton>
+        </Grid>
         <Grid
-          alignItems="center"
-          container
           item
-          component={Paper}
-          maxWidth="900px"
+          component={Box}
+          borderRadius={5}
+          container
+          justifyContent="flex-start"
+          alignItems="center"
           direction="column"
-          padding={2}
-          flexWrap="nowrap"
-          overflow="auto"
+          spacing={4}
+          padding={4}
         >
-          <Grid item alignSelf="flex-end">
-            <IconButton onClick={onClose}>
-              <Typography color="primary" variant="h4">
-                x
-              </Typography>
-            </IconButton>
+          <Grid item>
+            <Typography variant="h2">Welcome to Right of Way TO</Typography>
           </Grid>
-          <Grid
-            item
-            component={Box}
-            borderRadius={5}
-            container
-            justifyContent="flex-start"
-            alignItems="center"
-            direction="column"
-            spacing={4}
-          >
-            <Grid item>
-              <Typography variant="h2">Welcome to Right of Way TO</Typography>
-            </Grid>
-            <Grid item>
-              {isMobile ? (
-                <Alert color="error">
-                  <AlertTitle>
-                    Please Note that Right of Way TO is best viewed in a desktop
-                    environment.
-                  </AlertTitle>
-                </Alert>
-              ) : (
-                <Divider sx={{ width: "100%" }} />
-              )}
-            </Grid>
-            <Grid item>
-              <Typography variant="h6">
-                Right of Way TO is an interactive map of Toronto&apos;s cycling
-                infrastructure. It also allows you to view optimal plans for new
-                cycling infrastructure as calcuted by specialists at the
-                University of Toronto (<Link href="/about">read more here</Link>
-                ). You can also edit the map to add routes and track
-                accessibility.
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h6">
-                Click <Link href="#">here</Link> to view the full tutorial.
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h6">
-                Or <ButtonLink onClick={onClose}>close</ButtonLink> this message
-                to get started.
-              </Typography>
-            </Grid>
+          <Grid item>
+            {isMobile ? (
+              <Alert color="error">
+                <AlertTitle>
+                  Please Note that Right of Way TO is best viewed in a desktop
+                  environment.
+                </AlertTitle>
+              </Alert>
+            ) : (
+              <Divider sx={{ width: "100%" }} />
+            )}
+          </Grid>
+          <Grid item>
+            <Typography variant="h6">
+              Right of Way TO is an interactive map of Toronto&apos;s cycling
+              infrastructure. It also allows you to view optimal plans for new
+              cycling infrastructure as calcuted by specialists at the
+              University of Toronto (<Link href="/about">read more here</Link>
+              ). You can also edit the map to add routes and track
+              accessibility.
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Typography variant="h6">
+              Click <Link href="#">here</Link> to view the full tutorial.
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Typography variant="h6">
+              Or <ButtonLink onClick={onClose}>close</ButtonLink> this message
+              to get started.
+            </Typography>
           </Grid>
         </Grid>
-      </Backdrop>
-    </ClickAwayListener>
+      </Grid>
+    </Backdrop>
   );
 };
 

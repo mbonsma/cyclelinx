@@ -30,7 +30,7 @@ const InfoPageLayout: React.FC<InfoPageLayoutProps> = ({ children, title }) => (
         <Toolbar component={Grid} justifyContent="space-between">
           <Grid item>
             <UnstyledNavLink href="/">
-              <Typography>Cycle App</Typography>
+              <Typography>Right of Way TO</Typography>
             </UnstyledNavLink>
           </Grid>
           <Grid item>

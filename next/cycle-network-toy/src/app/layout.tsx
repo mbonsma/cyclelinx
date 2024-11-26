@@ -11,7 +11,7 @@ import theme from "../lib/mui/theme";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cycling Network",
+  title: "Right of Way TO",
   description: "Work in Progress",
 };
 
