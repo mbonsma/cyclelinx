@@ -89,9 +89,9 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
           <Grid item>
             <Typography variant="h6">
               Right of Way TO is an interactive map of Toronto&apos;s cycling
-              infrastructure. It also allows you to view optimal plans for new
-              cycling infrastructure as calcuted by specialists at the
-              University of Toronto (<Link href="/about">read more here</Link>
+              routes. It also allows you to view optimal plans for new cycling
+              infrastructure as calcuted by specialists at the University of
+              Toronto (<Link href="/about">read more here</Link>
               ). You can also edit the map to add routes and track
               accessibility.
             </Typography>

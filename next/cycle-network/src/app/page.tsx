@@ -4,6 +4,8 @@ import Grid from "@mui/material/Grid";
 import { MainViewPanel } from "@/components";
 import StaticDataProvider from "@/providers/StaticDataProvider";
 
+export const dynamic = "force-dynamic"; // prevent fetches at buildtime
+
 export default async function Home() {
   const metricsResult = await fetch(
     `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/metrics`

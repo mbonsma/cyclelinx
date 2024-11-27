@@ -25,10 +25,12 @@ export default function useHandleResize(
         _ref.current?.removeEventListener("resize", handleResize);
       }
     };
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref]);
 
   useEffect(() => {
     window.addEventListener("resize", handleResize);
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return width;

@@ -17,7 +17,7 @@ services:
     # entrypoint: ["gunicorn", "api.app:create_app()", "-w", "2", "-b", "0.0.0.0:5000"]
   next:
     image: node:22-slim
-    working_dir: /app/cycle-network-toy
+    working_dir: /app/cycle-network
     entrypoint: yarn dev
     environment:
       - NEXT_PUBLIC_API_ENDPOINT_BROWSER=${API_ENDPOINT_BROWSER}
