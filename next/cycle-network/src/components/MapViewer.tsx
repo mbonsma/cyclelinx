@@ -35,7 +35,6 @@ import {
   existingScale,
   formatDigit,
 } from "@/lib/ts/util";
-import LoadingOverlay from "./LoadingOverlay";
 
 const formatPct = format(",.1%");
 
@@ -321,10 +320,7 @@ const Handler: React.FC<{
   // Add scores
   useEffect(() => {
     if (!!scores) {
-      // note that this is definitely not a layer but a FeatureGroup
-      // i think we can use a typeguard then?
       map.eachLayer((l) => {
-        //it seems we have the full feature layer as well as layers broken out...
         if (
           l.options.attribution === "DAs" &&
           isFeatureGroup(l) &&

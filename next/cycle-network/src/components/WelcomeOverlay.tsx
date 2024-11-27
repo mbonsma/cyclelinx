@@ -40,6 +40,7 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
       alignItems="center"
       open={open}
       onClick={onClose}
+      aria-hidden="false"
     >
       <Grid
         alignItems="center"
