@@ -14,12 +14,13 @@ services:
       - POSTGRES_USER
       - TEST_DB_NAME
       - FLASK_APP_DEBUG=false
-    # entrypoint: ["gunicorn", "api.app:create_app()", "-w", "2", "-b", "0.0.0.0:5000"]
+    entrypoint: ["flask","--app", "api.app", "--debug", "run", "--host=0.0.0.0"]
   next:
     image: node:22-slim
     working_dir: /app/cycle-network
     entrypoint: yarn dev
     environment:
+      - NEXT_TELEMETRY_DISABLED=1
       - NEXT_PUBLIC_API_ENDPOINT_BROWSER=${API_ENDPOINT_BROWSER}
       - NEXT_PUBLIC_API_ENDPOINT_INTERNAL=${API_ENDPOINT_INTERNAL}
     volumes:

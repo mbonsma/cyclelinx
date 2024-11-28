@@ -1,7 +1,6 @@
 import geopandas
 from sqlalchemy import select
 
-
 from api.models import Arterial
 from api.utils import model_to_dict, properties_to_geojson_features, DaScoreResult
 from tests.factories import (

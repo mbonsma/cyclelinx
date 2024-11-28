@@ -1,0 +1,89 @@
+services:
+  flask:
+    build: ./flask
+    environment:
+      - APP_ENV
+      - POSTGRES_DB
+      - POSTGRES_HOST
+      - POSTGRES_PASSWORD
+      - POSTGRES_ROOT_PASSWORD
+      - POSTGRES_USER
+      - FLASK_APP_DEBUG=false
+    networks:
+      - cycle-network
+    entrypoint: ["gunicorn", "api.app:create_app()", "-w", "2", "-b", "0.0.0.0:${FLASK_PORT}"]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flask.rule=Host(`${HOST}`)&&PathPrefix(`${FLASK_ROUTER_PATH}`)"
+      #- "traefik.http.routers.flask.entrypoints=websecure"
+      - "traefik.http.routers.flask.entrypoints=web"
+      #- "traefik.http.routers.flask.tls=true"
+      #- "traefik.http.routers.flask.tls.certResolver=default-resolver"
+      - "traefik.http.middlewares.flask-stripprefix.stripprefix.prefixes=${FLASK_ROUTER_PATH}"
+      - "traefik.http.routers.flask.middlewares=flask-stripprefix@docker"
+      - "traefik.http.services.flask.loadbalancer.server.port=${FLASK_PORT}"
+  next:
+    build:
+      context: ./next
+      args:
+        - NEXT_PUBLIC_API_ENDPOINT_BROWSER=${API_ENDPOINT_BROWSER}
+        - NEXT_PUBLIC_API_ENDPOINT_INTERNAL=${API_ENDPOINT_INTERNAL}
+        - NEXT_PORT
+    networks:
+      - cycle-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.next.rule=Host(`${HOST}`)"
+      #- "traefik.http.routers.next.entrypoints=websecure"
+      - "traefik.http.routers.next.entrypoints=web"
+      # - "traefik.http.routers.next.tls=true"
+      # - "traefik.http.routers.next.tls.certResolver=default-resolver"
+      - "traefik.http.services.next.loadbalancer.server.port=${NEXT_PORT}"
+
+  postgres:
+    image: postgis/postgis:15-3.3
+    volumes:
+      - db-data-prod:/var/lib/postgresql/data
+      - ./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_HOST_AUTH_METHOD=password
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_ROOT_PASSWORD
+    networks:
+      - cycle-network
+  traefik:
+    image: traefik:3.1
+    command:
+      - --accesslog=true
+      - --accesslog.filepath=/logs/access.log
+      - --accesslog.format=json
+      - --entrypoints.web.address=:80
+      - --log.filepath=/logs/main.log
+      - --log.format=json
+      - --log.level=INFO
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # - --entrypoints.websecure.address=:443
+      # - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      # - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      # - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      # - --certificatesresolvers.default-resolver.acme=true
+      # - --certificatesresolvers.default-resolver.acme.email=${LETSENCRYPT_EMAIL}
+      # - --certificatesresolvers.default-resolver.acme.storage=/letsencrypt/acme.json
+      # - --certificatesresolvers.default-resolver.acme.httpchallenge.entrypoint=web
+    ports:
+      - 80:80
+      # - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/letsencrypt:/letsencrypt
+    networks:
+      - cycle-network
+
+volumes:
+  db-data-prod:
+
+networks:
+  cycle-network:
