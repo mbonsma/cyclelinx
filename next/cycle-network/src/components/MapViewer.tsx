@@ -111,6 +111,24 @@ const Handler: React.FC<{
   const { arterials, das, existingLanes } = useContext(StaticDataContext);
   const theme = useTheme();
 
+  // add DAs
+  useEffect(() => {
+    if (!dasSet && !!map && !!das) {
+      //this will create a single layer for each feature in the bundle
+      map.addLayer(
+        new LGeoJSON(das, {
+          style: {
+            stroke: false,
+            fillColor: "none",
+            fillOpacity: 0,
+          },
+          attribution: "DAs", //using this as a handle
+        })
+      );
+      setDasSet(true);
+    }
+  }, [das, dasSet, map, setDasSet, scores]);
+
   // manage existing lanes
   useEffect(() => {
     if (!!existingLanes) {
@@ -160,24 +178,6 @@ const Handler: React.FC<{
       });
     }
   }, [existingLanes, existingLanesSet, visibleExistingLanes, map]);
-
-  // add DAs
-  useEffect(() => {
-    if (!dasSet && !!map && !!scores && !!das) {
-      //this will create a single layer for each feature in the bundle
-      map.addLayer(
-        new LGeoJSON(das, {
-          style: {
-            stroke: false,
-            fillColor: "none",
-            fillOpacity: 0,
-          },
-          attribution: "DAs", //using this as a handle
-        })
-      );
-      setDasSet(true);
-    }
-  }, [das, dasSet, map, setDasSet, scores]);
 
   //add Arterials w/ click behavior and styling
   //we use the update event to keep the callbacks up to date with react's data

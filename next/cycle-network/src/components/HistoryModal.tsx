@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -24,6 +24,16 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
 }) => {
   const [mapName, setMapName] = useState("");
 
+  const keyboardSubmit = useCallback(
+    (e: React.KeyboardEvent<HTMLFormElement>) => {
+      if (e.key === "Enter" && !!mapName.length) {
+        e.preventDefault();
+        saveAndClose();
+      }
+    },
+    []
+  );
+
   const saveAndClose = () => {
     onSave(mapName);
     setMapName("");
@@ -41,7 +51,11 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
         <Divider sx={{ margin: 2 }} />
       </Grid>
       <Grid item>
-        <Box component="form" marginBottom={5}>
+        <Box
+          component="form"
+          marginBottom={5}
+          onSubmit={() => !!mapName && saveAndClose()}
+        >
           <Grid
             alignItems="center"
             spacing={3}

@@ -215,23 +215,20 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   };
 
   return (
-    <Grid
-      item
-      container
-      direction="row"
-      flexWrap="nowrap"
-      spacing={3}
-      flexGrow={1}
-    >
+    <Grid item container direction="row" flexWrap="nowrap" flexGrow={1}>
       <Grid
         item
         spacing={2}
+        paddingRight={2}
         marginLeft={2}
         marginTop={2}
         container
         direction="column"
         xs={12}
         md={2}
+        height="100vh"
+        overflow="auto"
+        wrap="nowrap"
       >
         <Grid item>
           <FormControl fullWidth>
@@ -261,27 +258,27 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           pendingImprovements={pendingImprovements}
           totalKm={totalKm}
         />
+        {!!improvements && (
+          <Grid
+            item
+            container
+            alignItems="center"
+            wrap="nowrap"
+            spacing={2}
+            justifyContent="space-between"
+          >
+            <Grid item xs={8}>
+              <Typography>10% improvement over baseline</Typography>
+            </Grid>
+            <Grid item xs={4}>
+              <Button onClick={() => setHistoryModalOpen(true)}>Save</Button>
+            </Grid>
+          </Grid>
+        )}
         <Grid item container>
           {!!improvements && (
             <CollapsibleSection label="Metrics" defaultOpen={true}>
               <Grid item container spacing={2}>
-                <Grid
-                  item
-                  container
-                  alignItems="center"
-                  wrap="nowrap"
-                  spacing={2}
-                  justifyContent="space-between"
-                >
-                  <Grid item xs={8}>
-                    <Typography>10% improvement over baseline</Typography>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Button onClick={() => setHistoryModalOpen(true)}>
-                      Save
-                    </Button>
-                  </Grid>
-                </Grid>
                 <Grid item>
                   <MetricSelector
                     metrics={metrics}
@@ -388,6 +385,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                 updateView={(item: HistoryItem) => {
                   setImprovements(item.improvements);
                   setScores(item.scores);
+                  setBudgetId(undefined);
                 }}
               />
             </CollapsibleSection>

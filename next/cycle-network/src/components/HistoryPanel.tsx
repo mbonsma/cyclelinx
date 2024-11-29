@@ -17,7 +17,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
   return (
     <Grid marginTop={2} container item spacing={2} direction="column">
       {history.map((h, i) => (
-        <>
+        <React.Fragment key={h.name}>
           <Grid
             item
             alignItems="center"
@@ -39,7 +39,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
               <Divider />
             </Grid>
           )}
-        </>
+        </React.Fragment>
       ))}
     </Grid>
   );
