@@ -22,7 +22,6 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({
 }) =>
   metrics ? (
     <FormControl fullWidth>
-      <FormLabel id="radio-group-legend">Metric</FormLabel>
       <RadioGroup
         aria-labelledby="radio-group-legend"
         defaultValue={metrics[0]}

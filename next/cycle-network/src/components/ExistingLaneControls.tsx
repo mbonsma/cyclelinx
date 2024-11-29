@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import {
+  Box,
   Button,
   Checkbox,
   checkboxClasses,
@@ -20,64 +21,61 @@ interface ExistingLaneControlsProps {
 const ExistingLaneControls: React.FC<ExistingLaneControlsProps> = ({
   setVisibleExistingLanes,
   visibleExistingLanes,
-}) => (
-  <FormControl fullWidth>
-    <FormLabel id="checkbox-group-legend">
-      <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12}>
-          Existing Lanes
-        </Grid>
-        <Grid item>
-          <Button
-            onClick={() =>
-              setVisibleExistingLanes(Object.values(EXISTING_LANE_NAME_MAP))
-            }
-            size="small"
-            variant="text"
-          >
-            Show all
+}) => {
+  const atLeastOneBoxTicked = useMemo(() => {
+    return visibleExistingLanes.length > 0;
+  }, [visibleExistingLanes]);
+
+  const toggleText = useMemo(() => {
+    return atLeastOneBoxTicked ? "Hide All" : "Show All";
+  }, [atLeastOneBoxTicked]);
+
+  const toggleTicked = useCallback(() => {
+    return atLeastOneBoxTicked
+      ? setVisibleExistingLanes([])
+      : setVisibleExistingLanes(Object.values(EXISTING_LANE_NAME_MAP));
+  }, [setVisibleExistingLanes, atLeastOneBoxTicked]);
+
+  return (
+    <FormControl fullWidth>
+      <FormGroup>
+        <Box display="flex" justifyContent="flex-start">
+          <Button onClick={toggleTicked} size="small" variant="text">
+            {toggleText}
           </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            onClick={() => setVisibleExistingLanes([])}
-            size="small"
-            variant="text"
-          >
-            Hide all
-          </Button>
-        </Grid>
-      </Grid>
-    </FormLabel>
-    <FormGroup aria-labelledby="checkbox-group-legend">
-      {Array.from(new Set(Object.values(EXISTING_LANE_NAME_MAP))).map(
-        (m: EXISTING_LANE_TYPE) => (
-          <FormControlLabel
-            key={m}
-            control={
-              <Checkbox
-                sx={{
-                  [`&, &.${checkboxClasses.checked}`]: {
-                    color: existingScale(m),
-                  },
-                }}
-              />
-            }
-            onChange={() =>
-              visibleExistingLanes.includes(m)
-                ? setVisibleExistingLanes(
-                    visibleExistingLanes.filter((l) => l !== m)
-                  )
-                : setVisibleExistingLanes(visibleExistingLanes.concat(m))
-            }
-            label={m}
-            value={m}
-            checked={visibleExistingLanes.includes(m)}
-          />
-        )
-      )}
-    </FormGroup>
-  </FormControl>
-);
+        </Box>
+      </FormGroup>
+
+      <FormGroup aria-labelledby="checkbox-group-legend">
+        {Array.from(new Set(Object.values(EXISTING_LANE_NAME_MAP))).map(
+          (m: EXISTING_LANE_TYPE) => (
+            <FormControlLabel
+              key={m}
+              control={
+                <Checkbox
+                  sx={{
+                    [`&, &.${checkboxClasses.checked}`]: {
+                      color: existingScale(m),
+                    },
+                  }}
+                />
+              }
+              onChange={() =>
+                visibleExistingLanes.includes(m)
+                  ? setVisibleExistingLanes(
+                      visibleExistingLanes.filter((l) => l !== m)
+                    )
+                  : setVisibleExistingLanes(visibleExistingLanes.concat(m))
+              }
+              label={m}
+              value={m}
+              checked={visibleExistingLanes.includes(m)}
+            />
+          )
+        )}
+      </FormGroup>
+    </FormControl>
+  );
+};
 
 export default ExistingLaneControls;

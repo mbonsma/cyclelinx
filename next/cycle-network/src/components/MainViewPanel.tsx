@@ -24,6 +24,7 @@ import {
 import { schemeDark2 } from "d3-scale-chromatic";
 import { extent } from "d3-array";
 import {
+  Button,
   Divider,
   FormControl,
   Grid,
@@ -45,6 +46,7 @@ import {
   ExistingLaneControls,
   ScoreScaleSelector,
   WelcomeOverlay,
+  CollapsibleSection,
 } from "@/components";
 import {
   fetchBudgetScores,
@@ -254,91 +256,127 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           pendingImprovements={pendingImprovements}
           totalKm={totalKm}
         />
-        <Grid item>
+        <Grid item container>
           {!!improvements && (
-            <MetricSelector
-              metrics={metrics}
-              setMetric={setMetric}
-              selectedMetric={selectedMetric}
-            />
-          )}
-        </Grid>
-        {!!scoreScale && (
-          <Grid item container>
-            {["linear", "log"].includes(scaleType) && (
-              <>
-                <Grid item container justifyContent="space-between">
-                  <span>
-                    <Typography variant="caption">
-                      {formatDigit(maybeLog(scaleType, scoreScale.domain()[0]))}
-                    </Typography>
-                  </span>
-                  <span>
-                    <Typography variant="caption">
-                      {formatDigit(maybeLog(scaleType, scoreScale.domain()[1]))}
-                    </Typography>
-                  </span>
+            <CollapsibleSection label="Metrics" defaultOpen={true}>
+              <Grid item container spacing={2}>
+                <Grid item>
+                  <MetricSelector
+                    metrics={metrics}
+                    setMetric={setMetric}
+                    selectedMetric={selectedMetric}
+                  />
                 </Grid>
-                {!!selectedMetric && !!metricTypeScale && (
-                  <Grid item width="100%">
-                    <LegendGradient
-                      color={metricTypeScale(selectedMetric)}
-                      height={7}
-                      range={scoreScale.range() as [number, number]}
+                {!!scoreScale && (
+                  <Grid item container>
+                    {["linear", "log"].includes(scaleType) && (
+                      <>
+                        <Grid item container justifyContent="space-between">
+                          <span>
+                            <Typography variant="caption">
+                              {formatDigit(
+                                maybeLog(scaleType, scoreScale.domain()[0])
+                              )}
+                            </Typography>
+                          </span>
+                          <span>
+                            <Typography variant="caption">
+                              {formatDigit(
+                                maybeLog(scaleType, scoreScale.domain()[1])
+                              )}
+                            </Typography>
+                          </span>
+                        </Grid>
+                        {!!selectedMetric && !!metricTypeScale && (
+                          <Grid item width="100%">
+                            <LegendGradient
+                              color={metricTypeScale(selectedMetric)}
+                              height={7}
+                              range={scoreScale.range() as [number, number]}
+                            />
+                          </Grid>
+                        )}
+                      </>
+                    )}
+
+                    {!!selectedMetric &&
+                      scaleType == "quantile" &&
+                      !!metricTypeScale && (
+                        <QuartileLegend
+                          color={metricTypeScale(selectedMetric)}
+                          height={7}
+                          scale={scoreScale as ScaleQuantile<number, number>}
+                        />
+                      )}
+
+                    {!!selectedMetric &&
+                      scaleType == "bin" &&
+                      !!metricTypeScale && (
+                        <BinaryLegend
+                          label="Greenspace Access"
+                          color={metricTypeScale(selectedMetric)}
+                          height={7}
+                        />
+                      )}
+                  </Grid>
+                )}
+                {!!selectedMetric && (
+                  <Grid
+                    item
+                    container
+                    alignItems="center"
+                    wrap="nowrap"
+                    spacing={2}
+                    justifyContent="space-between"
+                  >
+                    <Grid item xs={8}>
+                      <Typography>10% improvement over baseline</Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Button>Save</Button>
+                    </Grid>
+                  </Grid>
+                )}
+                {!!scoreScale && selectedMetric !== "greenspace" && (
+                  <Grid item>
+                    <ScoreScaleSelector
+                      scaleType={scaleType}
+                      scaleTypeVisible={scaleTypeVisible}
+                      setScaleType={setScaleType}
+                      setScaleTypeVisible={setScaleTypeVisible}
                     />
                   </Grid>
                 )}
-              </>
-            )}
-
-            {!!selectedMetric &&
-              scaleType == "quantile" &&
-              !!metricTypeScale && (
-                <QuartileLegend
-                  color={metricTypeScale(selectedMetric)}
-                  height={7}
-                  scale={scoreScale as ScaleQuantile<number, number>}
-                />
-              )}
-
-            {!!selectedMetric && scaleType == "bin" && !!metricTypeScale && (
-              <BinaryLegend
-                label="Greenspace Access"
-                color={metricTypeScale(selectedMetric)}
-                height={7}
-              />
-            )}
-          </Grid>
-        )}
-
-        {!!scoreScale && selectedMetric !== "greenspace" && (
-          <Grid item>
-            <ScoreScaleSelector
-              scaleType={scaleType}
-              scaleTypeVisible={scaleTypeVisible}
-              setScaleType={setScaleType}
-              setScaleTypeVisible={setScaleTypeVisible}
-            />
-          </Grid>
-        )}
-        {!!scoreScale && (
-          <Grid item>
-            <ScoreScalePanel
-              measuresVisible={measuresVisible}
-              scoreScale={scoreScale}
-              scoreSetType={scoreSetType}
-              selectedMetric={selectedMetric}
-              setMeasuresVisible={setMeasuresVisible}
-              setScoreSetType={setScoreSetType}
-            />
-          </Grid>
-        )}
+                {!!scoreScale && (
+                  <Grid item>
+                    <ScoreScalePanel
+                      measuresVisible={measuresVisible}
+                      scoreScale={scoreScale}
+                      scoreSetType={scoreSetType}
+                      selectedMetric={selectedMetric}
+                      setMeasuresVisible={setMeasuresVisible}
+                      setScoreSetType={setScoreSetType}
+                    />
+                  </Grid>
+                )}
+              </Grid>
+            </CollapsibleSection>
+          )}
+        </Grid>
         <Divider sx={{ margin: 2 }} />
         <Grid item>
-          <ExistingLaneControls
-            setVisibleExistingLanes={setVisibleExistingLanes}
-            visibleExistingLanes={visibleExistingLanes}
-          />
+          <CollapsibleSection defaultOpen label="Existing Lanes">
+            <ExistingLaneControls
+              setVisibleExistingLanes={setVisibleExistingLanes}
+              visibleExistingLanes={visibleExistingLanes}
+            />
+          </CollapsibleSection>
+        </Grid>
+        <Divider sx={{ margin: 2 }} />
+        <Grid item>
+          <CollapsibleSection label="History" defaultOpen={true}>
+            history
+          </CollapsibleSection>
         </Grid>
       </Grid>
       <Grid item xs={12} md={10} flexGrow={1}>

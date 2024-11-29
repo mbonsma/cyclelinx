@@ -1,5 +1,6 @@
 export { default as BinaryLegend } from "./BinaryLegend";
 export { default as ButtonLink } from "./ButtonLink";
+export { default as CollapsibleSection } from "./CollapsibleSection";
 export { default as ExistingLaneControls } from "./ExistingLaneControls";
 export { default as HamburgerMenu } from "./HamburgerMenu";
 export { default as ImprovementLegend } from "./ImprovementLegend";
