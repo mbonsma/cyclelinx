@@ -130,3 +130,9 @@ export const isGeoJSONFeature = <P extends Record<string, any>>(
 ): arg is Feature<MultiPoint, P> =>
   !!(arg as Feature<MultiPoint, P>).type &&
   !!(arg as Feature<MultiPoint, P>).properties;
+
+export interface HistoryItem {
+  improvements: number[];
+  name: string;
+  scores: ScoreResults;
+}

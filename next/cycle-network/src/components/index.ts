@@ -4,6 +4,7 @@ export { default as CollapsibleSection } from "./CollapsibleSection";
 export { default as ExistingLaneControls } from "./ExistingLaneControls";
 export { default as HamburgerMenu } from "./HamburgerMenu";
 export { default as HistoryModal } from "./HistoryModal";
+export { default as HistoryPanel } from "./HistoryPanel";
 export { default as ImprovementLegend } from "./ImprovementLegend";
 export { default as InfoPageLayout } from "./InfoPageLayout";
 export { default as LegendGradient } from "./LegendGradient";

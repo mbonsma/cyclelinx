@@ -12,6 +12,7 @@ import {
   BudgetProjectMember,
   PendingImprovements,
   EXISTING_LANE_TYPE,
+  HistoryItem,
 } from "@/lib/ts/types";
 import {
   scaleLinear,
@@ -48,6 +49,7 @@ import {
   WelcomeOverlay,
   CollapsibleSection,
   HistoryModal,
+  HistoryPanel,
 } from "@/components";
 import {
   fetchBudgetScores,
@@ -91,11 +93,6 @@ const getScale = (scaleType: ScaleType, domain: [number, number]) => {
 
 const maybeLog = (scaleType: ScaleType, value: number) =>
   scaleType === "log" ? Math.log10(value) : value;
-
-interface HistoryItem {
-  name: string;
-  scores: ScoreResults;
-}
 
 const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [budgetId, setBudgetId] = useState<number>();
@@ -268,6 +265,23 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           {!!improvements && (
             <CollapsibleSection label="Metrics" defaultOpen={true}>
               <Grid item container spacing={2}>
+                <Grid
+                  item
+                  container
+                  alignItems="center"
+                  wrap="nowrap"
+                  spacing={2}
+                  justifyContent="space-between"
+                >
+                  <Grid item xs={8}>
+                    <Typography>10% improvement over baseline</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Button onClick={() => setHistoryModalOpen(true)}>
+                      Save
+                    </Button>
+                  </Grid>
+                </Grid>
                 <Grid item>
                   <MetricSelector
                     metrics={metrics}
@@ -328,25 +342,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                       )}
                   </Grid>
                 )}
-                {!!selectedMetric && (
-                  <Grid
-                    item
-                    container
-                    alignItems="center"
-                    wrap="nowrap"
-                    spacing={2}
-                    justifyContent="space-between"
-                  >
-                    <Grid item xs={8}>
-                      <Typography>10% improvement over baseline</Typography>
-                    </Grid>
-                    <Grid item xs={4}>
-                      <Button onClick={() => setHistoryModalOpen(true)}>
-                        Save
-                      </Button>
-                    </Grid>
-                  </Grid>
-                )}
                 {!!scoreScale && selectedMetric !== "greenspace" && (
                   <Grid item>
                     <ScoreScaleSelector
@@ -384,9 +379,19 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         </Grid>
         <Divider sx={{ margin: 2 }} />
         <Grid item>
-          <CollapsibleSection label="History" defaultOpen={true}>
-            history
-          </CollapsibleSection>
+          {!!history.length && (
+            <CollapsibleSection label="History" defaultOpen={true}>
+              <HistoryPanel
+                history={history}
+                setBaseline={(scores: ScoreResults) => scores}
+                //TODO: use useCallback
+                updateView={(item: HistoryItem) => {
+                  setImprovements(item.improvements);
+                  setScores(item.scores);
+                }}
+              />
+            </CollapsibleSection>
+          )}
         </Grid>
       </Grid>
       <Grid item xs={12} md={10} flexGrow={1}>
@@ -413,9 +418,12 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         open={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}
         onSave={(name: string) =>
+          //TODO: once this is finalized, use useCallback
           !!scores &&
+          !!improvements &&
           setHistory((history) =>
             history.concat({
+              improvements,
               name,
               scores,
             })
