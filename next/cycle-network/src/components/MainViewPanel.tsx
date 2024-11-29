@@ -47,6 +47,7 @@ import {
   ScoreScaleSelector,
   WelcomeOverlay,
   CollapsibleSection,
+  HistoryModal,
 } from "@/components";
 import {
   fetchBudgetScores,
@@ -91,8 +92,15 @@ const getScale = (scaleType: ScaleType, domain: [number, number]) => {
 const maybeLog = (scaleType: ScaleType, value: number) =>
   scaleType === "log" ? Math.log10(value) : value;
 
+interface HistoryItem {
+  name: string;
+  scores: ScoreResults;
+}
+
 const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [budgetId, setBudgetId] = useState<number>();
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [improvements, setImprovements] = useState<number[]>();
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState(false);
@@ -333,7 +341,9 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                       <Typography>10% improvement over baseline</Typography>
                     </Grid>
                     <Grid item xs={4}>
-                      <Button>Save</Button>
+                      <Button onClick={() => setHistoryModalOpen(true)}>
+                        Save
+                      </Button>
                     </Grid>
                   </Grid>
                 )}
@@ -399,6 +409,19 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         onClose={() => setWelcomeOverlayVisible(false)}
       />
       <LoadingOverlay open={loading} />
+      <HistoryModal
+        open={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        onSave={(name: string) =>
+          !!scores &&
+          setHistory((history) =>
+            history.concat({
+              name,
+              scores,
+            })
+          )
+        }
+      />
     </Grid>
   );
 };

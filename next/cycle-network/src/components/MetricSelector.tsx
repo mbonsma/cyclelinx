@@ -3,7 +3,6 @@ import {
   capitalize,
   FormControl,
   FormControlLabel,
-  FormLabel,
   Radio,
   RadioGroup,
 } from "@mui/material";

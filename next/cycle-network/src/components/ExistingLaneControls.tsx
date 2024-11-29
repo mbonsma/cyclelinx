@@ -7,8 +7,6 @@ import {
   FormControl,
   FormControlLabel,
   FormGroup,
-  FormLabel,
-  Grid,
 } from "@mui/material";
 import { EXISTING_LANE_TYPE } from "@/lib/ts/types";
 import { EXISTING_LANE_NAME_MAP, existingScale } from "@/lib/ts/util";
