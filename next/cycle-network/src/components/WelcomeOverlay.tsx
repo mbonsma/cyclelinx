@@ -34,8 +34,8 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
       component={Grid}
       sx={{
         backgroundColor: "rgba(0, 0, 0, 0)",
-        zIndex: 10000,
       }}
+      zIndex={10000}
       justifyContent="center"
       alignItems="center"
       open={open}
@@ -47,6 +47,7 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
         container
         onClick={(e) => e.stopPropagation()}
         item
+        sx={{ border: (theme) => `thin solid ${theme.palette.grey[300]}` }}
         component={Paper}
         maxWidth="900px"
         direction="column"
@@ -75,18 +76,20 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
           <Grid item>
             <Typography variant="h2">Welcome to Right of Way TO</Typography>
           </Grid>
-          <Grid item>
-            {isMobile ? (
+          {isMobile ? (
+            <Grid item>
               <Alert color="error">
                 <AlertTitle>
                   Please Note that Right of Way TO is best viewed in a desktop
                   environment.
                 </AlertTitle>
               </Alert>
-            ) : (
-              <Divider sx={{ width: "100%" }} />
-            )}
-          </Grid>
+            </Grid>
+          ) : (
+            <Grid item width="100%">
+              <Divider />
+            </Grid>
+          )}
           <Grid item>
             <Typography variant="h6">
               Right of Way TO is an interactive map of Toronto&apos;s cycling

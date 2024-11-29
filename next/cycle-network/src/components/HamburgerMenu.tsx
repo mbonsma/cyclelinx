@@ -68,8 +68,15 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         open={open}
         onClose={handleClose}
       >
-        {ROUTES.filter((r) => r.route !== pathname).map(({ name, route }) => (
-          <MenuItem key={name} onClick={() => router.push(route)}>
+        {ROUTES.map(({ name, route }) => (
+          <MenuItem
+            sx={{
+              textDecoration:
+                route === location.pathname ? "underline" : "none",
+            }}
+            key={name}
+            onClick={() => router.push(route)}
+          >
             {name}
           </MenuItem>
         ))}

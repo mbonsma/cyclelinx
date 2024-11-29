@@ -4,11 +4,13 @@ import { createTheme } from "@mui/material/styles";
 
 declare module "@mui/material/styles" {
   interface Palette {
+    addableRoadColor: string;
     projectAddColor: string;
     projectColor: string;
     projectRemoveColor: string;
   }
   interface PaletteOptions {
+    addableRoadColor: string;
     projectAddColor: string;
     projectColor: string;
     projectRemoveColor: string;
@@ -36,5 +38,6 @@ export default createTheme({
     projectAddColor: "#349518",
     projectColor: "blue",
     projectRemoveColor: "red",
+    addableRoadColor: "#80a4d0",
   },
 });

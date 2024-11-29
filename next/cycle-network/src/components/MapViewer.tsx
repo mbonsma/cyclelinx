@@ -225,8 +225,8 @@ const Handler: React.FC<{
                 ) {
                   l.setStyle({
                     stroke: true,
-                    color: theme.palette.projectAddColor,
-                    opacity: 0.05,
+                    color: theme.palette.addableRoadColor,
+                    opacity: 0.075,
                     fillOpacity: 0,
                   });
                 } else if (intersection(removeSet, allProjectIds).size) {
@@ -402,8 +402,8 @@ const MapViewer: React.FC<{
     >
       <HamburgerMenu absolute />
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>"
       />
       {handlerVisible && (
         <Handler

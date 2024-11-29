@@ -64,7 +64,7 @@ interface MainViewPanelProps {
 }
 
 const getScale = (scaleType: ScaleType, domain: [number, number]) => {
-  const opacityRange = [0.1, 0.75];
+  const opacityRange = [0, 0.75];
 
   switch (scaleType) {
     /*
