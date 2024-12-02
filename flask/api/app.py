@@ -120,12 +120,28 @@ def get_budget_arterials(id):
     return [model_to_dict(result) for result in results]
 
 
-# d-dicts must have module-level constructors to be pickled by cache
-def dd_constructor():
-    return {
-        "da": None,
-        "scores": {"budget": {}, "original": {}, "diff": {}, "bin": {}},
-    }
+@cycling_api.route("/default-scores")
+@default_cache.cached()
+def get_default_scores():
+
+    defaults: list[BudgetScore] = (
+        db.session.execute(
+            select(BudgetScore)
+            .options(joinedload(BudgetScore.dissemination_area))
+            .options(joinedload(BudgetScore.metric))
+            .filter(BudgetScore.budget == None)
+        )
+        .scalars()
+        .all()
+    )
+
+    default_dict = defaultdict(dict)
+
+    for d in defaults:
+        default_dict[d.dissemination_area_id][d.metric.name] = d.score
+        default_dict[d.dissemination_area_id]["da"] = d.dissemination_area_id
+
+    return default_dict
 
 
 @cycling_api.route("/budgets/<int:budget_id>/scores")
