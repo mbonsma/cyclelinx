@@ -239,7 +239,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         setImprovements(item.improvements);
         setScores(item.scores);
         setBudgetId(undefined);
-        setSummaryStats(calculateSummaryStats(item.scores, daCount, baseline));
         setActiveHistory(item.name);
       }
     },
@@ -254,6 +253,12 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
     ]
   );
 
+  useEffect(() => {
+    if (baseline && daCount && scores) {
+      setSummaryStats(calculateSummaryStats(scores, daCount, baseline));
+    }
+  }, [scores, daCount, baseline]);
+
   const metricTypeScale: ScaleOrdinal<string, string, never> | undefined =
     useMemo(() => {
       if (metrics) {
@@ -267,6 +272,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
       }
     }, [metrics]);
 
+  // User selects a budget
   useEffect(() => {
     if (budgetId) {
       setLoading(true);
@@ -297,14 +303,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
             } else {
               if (result.status === "fulfilled") {
                 setScores(result.value.data as ScoreResults);
-                setSummaryStats(
-                  calculateSummaryStats(
-                    result.value.data as ScoreResults,
-                    //we should always have DA count, but we'll fallback here in case
-                    daCount || Object.values(result.value.data).length,
-                    baseline
-                  )
-                );
                 if (!selectedMetric) {
                   setSelectedMetric(metrics[0].name);
                 }
@@ -358,13 +356,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         toRemove: [],
       });
       setBudgetId(undefined);
-      setSummaryStats(
-        calculateSummaryStats(
-          scores.data,
-          daCount || Object.values(scores.data).length,
-          baseline
-        )
-      );
     } finally {
       setLoading(false);
     }
@@ -560,6 +551,13 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
               <HistoryPanel
                 active={activeHistory}
                 history={history}
+                resetBaseline={() => {
+                  if (defaultScores) {
+                    const baseline =
+                      calculateDefaultBaselineSummaryStats(defaultScores);
+                    setBaseline(baseline);
+                  }
+                }}
                 //TODO: useCallback
                 setBaseline={(scores: ScoreResults) => {
                   const baseline = calculateSummaryStats(
@@ -567,13 +565,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                     daCount || Object.values(scores).length
                   );
                   setBaseline(baseline);
-                  setSummaryStats(
-                    calculateSummaryStats(
-                      scores,
-                      daCount || Object.values(scores).length,
-                      baseline
-                    )
-                  );
                 }}
                 updateView={restoreHistory}
               />

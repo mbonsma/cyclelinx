@@ -3,12 +3,17 @@ import React from "react";
 
 interface ButtonLinkProps {
   children: string;
+  color?: string;
   onClick: () => void;
 }
 
-const ButtonLink: React.FC<ButtonLinkProps> = ({ onClick, children }) => (
+const ButtonLink: React.FC<ButtonLinkProps> = ({
+  children,
+  color,
+  onClick,
+}) => (
   <Box component="span" sx={{ cursor: "pointer" }} onClick={onClick}>
-    <Link>{children}</Link>
+    <Link color={color || "inherit"}>{children}</Link>
   </Box>
 );
 

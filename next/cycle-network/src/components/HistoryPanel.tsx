@@ -6,13 +6,16 @@ import {
   IconButton,
   lighten,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { HistoryItem, ScoreResults } from "@/lib/ts/types";
-import { Circle, Download } from "@mui/icons-material";
+import { Download } from "@mui/icons-material";
+import ButtonLink from "./ButtonLink";
 
 interface HistoryPanelProps {
   active?: string;
   history: HistoryItem[];
+  resetBaseline: () => void;
   setBaseline: (scores: ScoreResults) => void;
   updateView: (history: HistoryItem) => void;
 }
@@ -20,9 +23,12 @@ interface HistoryPanelProps {
 const HistoryPanel: React.FC<HistoryPanelProps> = ({
   active,
   history,
+  resetBaseline,
   setBaseline,
   updateView,
 }) => {
+  const theme = useTheme();
+
   return (
     <Grid marginTop={2} container item spacing={2} direction="column">
       {history.map((h, i) => (
@@ -57,6 +63,16 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
           )}
         </React.Fragment>
       ))}
+      <Grid container item justifyContent="flex-start">
+        <Button
+          color="primary"
+          variant="outlined"
+          sx={{ marginTop: 4 }}
+          onClick={resetBaseline}
+        >
+          reset baseline
+        </Button>
+      </Grid>
     </Grid>
   );
 };
