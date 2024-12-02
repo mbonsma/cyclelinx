@@ -136,3 +136,10 @@ export interface HistoryItem {
   name: string;
   scores: ScoreResults;
 }
+
+export interface DefaultScore {
+  da: number;
+  [metric: string]: number;
+}
+
+export type DefaultScores = Record<string, DefaultScore>;

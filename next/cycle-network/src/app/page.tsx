@@ -46,8 +46,15 @@ export default async function Home() {
   );
   const arterials = await arterialsResult.json();
 
+  const defaultScoresResult = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/default-scores`
+  );
+  const defaultScores = await defaultScoresResult.json();
+
   return (
-    <StaticDataProvider value={{ arterials, das, existingLanes }}>
+    <StaticDataProvider
+      value={{ arterials, das, defaultScores, existingLanes }}
+    >
       <Grid direction="row" container justifyContent="center">
         <Grid
           alignItems="center"

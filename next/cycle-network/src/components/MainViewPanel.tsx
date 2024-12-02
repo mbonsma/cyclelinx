@@ -2,7 +2,13 @@
 
 import dynamic from "next/dynamic";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Budget,
   Metric,
@@ -13,6 +19,8 @@ import {
   PendingImprovements,
   EXISTING_LANE_TYPE,
   HistoryItem,
+  DefaultScore,
+  DefaultScores,
 } from "@/lib/ts/types";
 import {
   scaleLinear,
@@ -25,6 +33,7 @@ import {
 import { schemeDark2 } from "d3-scale-chromatic";
 import { extent } from "d3-array";
 import {
+  Box,
   Button,
   Divider,
   FormControl,
@@ -57,6 +66,7 @@ import {
   fetchNewCalculations,
 } from "@/lib/axios/api";
 import { formatDigit } from "@/lib/ts/util";
+import { StaticDataContext } from "@/providers/StaticDataProvider";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -94,7 +104,98 @@ const getScale = (scaleType: ScaleType, domain: [number, number]) => {
 const maybeLog = (scaleType: ScaleType, value: number) =>
   scaleType === "log" ? Math.log10(value) : value;
 
+interface SummaryStat {
+  baselineAvg: number;
+  avg: number;
+}
+
+interface SummaryStats {
+  [metric: string]: SummaryStat;
+}
+
+interface Total {
+  [metric: string]: { baseline: number; current: number };
+}
+
+class SummaryStatBuilder {
+  private daCount: number;
+  private stats: SummaryStats;
+  private totals: Total;
+  private metrics: Set<string>;
+
+  constructor(daCount: number) {
+    this.daCount = daCount;
+    this.metrics = new Set();
+    this.stats = {};
+    this.totals = {};
+  }
+
+  add = (metric: string, type: "current" | "baseline", val: number) => {
+    this.metrics.add(metric);
+    if (this.totals[metric]) {
+      this.totals[metric][type] += val;
+    } else {
+      this.totals[metric] = { baseline: 0, current: 0 };
+      this.add(metric, type, val);
+    }
+  };
+
+  calculate = (baseline?: SummaryStats) => {
+    [...this.metrics].forEach((m) => {
+      this.stats[m] = {
+        avg: 0,
+        baselineAvg: 0,
+      };
+      this.stats[m].avg = this.totals[m].current / this.daCount;
+      this.stats[m].baselineAvg = baseline
+        ? baseline[m].avg
+        : this.totals[m].baseline / this.daCount;
+    });
+
+    return this.stats;
+  };
+}
+
+const calculateDefaultBaselineSummaryStats = (scores: DefaultScores) => {
+  const Builder = new SummaryStatBuilder(Object.values(scores).length);
+  Object.values(scores).forEach((scores) => {
+    for (const metric in scores) {
+      if (metric !== "da") {
+        //we're not interested in the baseline's baseline, so it's identical
+        Builder.add(metric, "current", scores[metric]);
+        Builder.add(metric, "baseline", scores[metric]);
+      }
+    }
+  });
+  return Builder.calculate();
+};
+
+const calculateSummaryStats = (
+  scores: ScoreResults,
+  daCount: number,
+  baseline?: SummaryStats
+) => {
+  const Builder = new SummaryStatBuilder(daCount);
+
+  Object.values(scores).forEach(({ scores }) => {
+    for (const metric in scores.budget) {
+      Builder.add(metric, "current", scores.budget[metric]);
+    }
+  });
+
+  if (!baseline) {
+    Object.values(scores).forEach(({ scores }) => {
+      for (const metric in scores.original) {
+        Builder.add(metric, "baseline", scores.original[metric]);
+      }
+    });
+  }
+
+  return Builder.calculate(baseline);
+};
+
 const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
+  const [baseline, setBaseline] = useState<SummaryStats>();
   const [budgetId, setBudgetId] = useState<number>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -111,11 +212,46 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [scoreSetType, setScoreSetType] = useState<keyof ScoreSet>("diff");
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
   const [selectedMetric, setSelectedMetric] = useState("");
+  const [summaryStats, setSummaryStats] = useState<SummaryStats>();
   const [totalKm, setTotalKm] = useState<number>();
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
   const [welcomeOverlayVisible, setWelcomeOverlayVisible] = useState(true);
+
+  const { defaultScores } = useContext(StaticDataContext);
+
+  useEffect(() => {
+    if (defaultScores) {
+      setBaseline(calculateDefaultBaselineSummaryStats(defaultScores));
+    }
+  }, [defaultScores]);
+
+  const daCount = useMemo(() => {
+    if (defaultScores) {
+      return Object.values(defaultScores).length;
+    }
+  }, [defaultScores]);
+
+  const restoreHistory = useCallback(
+    (item: HistoryItem) => {
+      if (daCount) {
+        setImprovements(item.improvements);
+        setScores(item.scores);
+        setBudgetId(undefined);
+        setSummaryStats(calculateSummaryStats(item.scores, daCount, baseline));
+      }
+    },
+    [
+      daCount,
+      baseline,
+      setBudgetId,
+      setSummaryStats,
+      setBudgetId,
+      setScaleType,
+      setImprovements,
+    ]
+  );
 
   const metricTypeScale: ScaleOrdinal<string, string, never> | undefined =
     useMemo(() => {
@@ -142,32 +278,44 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
       Promise.allSettled(promises)
         .then((results) =>
           results.forEach((result, i) => {
-            switch (i) {
-              case 0:
-                if (
-                  result.status === "fulfilled" &&
-                  Array.isArray(result.value.data)
-                ) {
-                  const improvements = result.value
-                    .data as BudgetProjectMember[];
-                  setImprovements(improvements.map((i) => i.project_id));
-                  // setTotalKm(
-                  //   improvements.features.reduce(
-                  //     (acc, curr) => (acc += curr.properties.total_length),
-                  //     0
-                  //   )
-                  // );
+            if (i == 0) {
+              if (
+                result.status === "fulfilled" &&
+                Array.isArray(result.value.data)
+              ) {
+                const improvements = result.value.data as BudgetProjectMember[];
+                setImprovements(improvements.map((i) => i.project_id));
+
+                // setTotalKm(
+                //   improvements.features.reduce(
+                //     (acc, curr) => (acc += curr.properties.total_length),
+                //     0
+                //   )
+                // );
+              }
+            } else {
+              if (result.status === "fulfilled") {
+                setScores(result.value.data as ScoreResults);
+                setSummaryStats(
+                  calculateSummaryStats(
+                    result.value.data as ScoreResults,
+                    //we should always have DA count, but we'll fallback here in case
+                    daCount || Object.values(result.value.data).length,
+                    baseline
+                  )
+                );
+                if (!selectedMetric) {
+                  setSelectedMetric(metrics[0].name);
                 }
-              case 1:
-                if (result.status === "fulfilled") {
-                  setScores(result.value.data as ScoreResults);
-                }
+              }
             }
           })
         )
         .finally(() => setLoading(false));
     }
   }, [budgetId]);
+
+  //TODO: baseline is ALWAYS null unless manually set, at which case it's always that.
 
   const scoreScale = useMemo(() => {
     if (scores && selectedMetric) {
@@ -209,6 +357,13 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         toRemove: [],
       });
       setBudgetId(undefined);
+      setSummaryStats(
+        calculateSummaryStats(
+          scores.data,
+          daCount || Object.values(scores.data).length,
+          baseline
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -216,12 +371,14 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
 
   return (
     <Grid item container direction="row" flexWrap="nowrap" flexGrow={1}>
+      {/* Start side panel */}
       <Grid
         item
         spacing={2}
         paddingRight={2}
         marginLeft={2}
         marginTop={2}
+        paddingBottom={4}
         container
         direction="column"
         xs={12}
@@ -258,23 +415,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           pendingImprovements={pendingImprovements}
           totalKm={totalKm}
         />
-        {!!improvements && (
-          <Grid
-            item
-            container
-            alignItems="center"
-            wrap="nowrap"
-            spacing={2}
-            justifyContent="space-between"
-          >
-            <Grid item xs={8}>
-              <Typography>10% improvement over baseline</Typography>
-            </Grid>
-            <Grid item xs={4}>
-              <Button onClick={() => setHistoryModalOpen(true)}>Save</Button>
-            </Grid>
-          </Grid>
-        )}
+
         <Grid item container>
           {!!improvements && (
             <CollapsibleSection label="Metrics" defaultOpen={true}>
@@ -287,7 +428,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                   />
                 </Grid>
                 {!!scoreScale && (
-                  <Grid item container>
+                  <Grid item container spacing={2}>
                     {["linear", "log"].includes(scaleType) && (
                       <>
                         <Grid item container justifyContent="space-between">
@@ -315,9 +456,44 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                             />
                           </Grid>
                         )}
+                        {!!summaryStats && (
+                          <Grid
+                            item
+                            container
+                            alignItems="center"
+                            wrap="nowrap"
+                            spacing={2}
+                            justifyContent="space-between"
+                          >
+                            <Grid item>
+                              <Typography>
+                                Average increase over baseline:{" "}
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    color:
+                                      summaryStats[selectedMetric].avg >=
+                                      summaryStats[selectedMetric].baselineAvg
+                                        ? "green"
+                                        : "red",
+                                  }}
+                                >
+                                  {formatDigit(
+                                    summaryStats[selectedMetric].avg -
+                                      summaryStats[selectedMetric].baselineAvg
+                                  )}
+                                </Box>
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={4}>
+                              <Button onClick={() => setHistoryModalOpen(true)}>
+                                Save
+                              </Button>
+                            </Grid>
+                          </Grid>
+                        )}
                       </>
                     )}
-
                     {!!selectedMetric &&
                       scaleType == "quantile" &&
                       !!metricTypeScale && (
@@ -350,16 +526,18 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                   </Grid>
                 )}
                 {!!scoreScale && (
-                  <Grid item>
-                    <ScoreScalePanel
-                      measuresVisible={measuresVisible}
-                      scoreScale={scoreScale}
-                      scoreSetType={scoreSetType}
-                      selectedMetric={selectedMetric}
-                      setMeasuresVisible={setMeasuresVisible}
-                      setScoreSetType={setScoreSetType}
-                    />
-                  </Grid>
+                  <>
+                    <Grid item>
+                      <ScoreScalePanel
+                        measuresVisible={measuresVisible}
+                        scoreScale={scoreScale}
+                        scoreSetType={scoreSetType}
+                        selectedMetric={selectedMetric}
+                        setMeasuresVisible={setMeasuresVisible}
+                        setScoreSetType={setScoreSetType}
+                      />
+                    </Grid>
+                  </>
                 )}
               </Grid>
             </CollapsibleSection>
@@ -380,13 +558,21 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
             <CollapsibleSection label="History" defaultOpen={true}>
               <HistoryPanel
                 history={history}
-                setBaseline={(scores: ScoreResults) => scores}
-                //TODO: use useCallback
-                updateView={(item: HistoryItem) => {
-                  setImprovements(item.improvements);
-                  setScores(item.scores);
-                  setBudgetId(undefined);
+                setBaseline={(scores: ScoreResults) => {
+                  const baseline = calculateSummaryStats(
+                    scores,
+                    daCount || Object.values(scores).length
+                  );
+                  setBaseline(baseline);
+                  setSummaryStats(
+                    calculateSummaryStats(
+                      scores,
+                      daCount || Object.values(scores).length,
+                      baseline
+                    )
+                  );
                 }}
+                updateView={restoreHistory}
               />
             </CollapsibleSection>
           )}
