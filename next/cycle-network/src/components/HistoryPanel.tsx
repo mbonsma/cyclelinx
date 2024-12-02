@@ -1,15 +1,24 @@
 import React from "react";
-import { Button, Divider, Grid, IconButton, Typography } from "@mui/material";
+import {
+  Button,
+  Divider,
+  Grid,
+  IconButton,
+  lighten,
+  Typography,
+} from "@mui/material";
 import { HistoryItem, ScoreResults } from "@/lib/ts/types";
-import { Download } from "@mui/icons-material";
+import { Circle, Download } from "@mui/icons-material";
 
 interface HistoryPanelProps {
+  active?: string;
   history: HistoryItem[];
   setBaseline: (scores: ScoreResults) => void;
   updateView: (history: HistoryItem) => void;
 }
 
 const HistoryPanel: React.FC<HistoryPanelProps> = ({
+  active,
   history,
   setBaseline,
   updateView,
@@ -20,6 +29,12 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
         <React.Fragment key={h.name}>
           <Grid
             item
+            sx={{
+              backgroundColor: (theme) =>
+                active === h.name
+                  ? lighten(theme.palette.secondary.light, 0.75)
+                  : "inherit",
+            }}
             alignItems="center"
             justifyContent="space-between"
             container
@@ -29,6 +44,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
             width="100%"
           >
             <HistoryPanelItem
+              active={active}
               historyItem={h}
               setBaseline={setBaseline}
               updateView={updateView}
@@ -46,12 +62,14 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
 };
 
 interface HistoryPanelItem {
+  active?: string;
   historyItem: HistoryItem;
   setBaseline: (scores: ScoreResults) => void;
   updateView: (historyItem: HistoryItem) => void;
 }
 
 const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
+  active,
   historyItem,
   setBaseline,
   updateView,
@@ -63,7 +81,7 @@ const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
       </Grid>
       <Grid item xs={3}>
         <Button onClick={() => setBaseline(historyItem.scores)}>
-          baseline
+          set as baseline
         </Button>
       </Grid>
       <Grid item xs={3}>

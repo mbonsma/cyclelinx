@@ -19,7 +19,6 @@ import {
   PendingImprovements,
   EXISTING_LANE_TYPE,
   HistoryItem,
-  DefaultScore,
   DefaultScores,
 } from "@/lib/ts/types";
 import {
@@ -195,6 +194,7 @@ const calculateSummaryStats = (
 };
 
 const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
+  const [activeHistory, setActiveHistory] = useState<string>("");
   const [baseline, setBaseline] = useState<SummaryStats>();
   const [budgetId, setBudgetId] = useState<number>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -240,6 +240,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         setScores(item.scores);
         setBudgetId(undefined);
         setSummaryStats(calculateSummaryStats(item.scores, daCount, baseline));
+        setActiveHistory(item.name);
       }
     },
     [
@@ -553,11 +554,13 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           </CollapsibleSection>
         </Grid>
         <Divider sx={{ margin: 2 }} />
-        <Grid item>
+        <Grid item container>
           {!!history.length && (
             <CollapsibleSection label="History" defaultOpen={true}>
               <HistoryPanel
+                active={activeHistory}
                 history={history}
+                //TODO: useCallback
                 setBaseline={(scores: ScoreResults) => {
                   const baseline = calculateSummaryStats(
                     scores,
