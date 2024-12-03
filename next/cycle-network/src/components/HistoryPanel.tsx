@@ -9,12 +9,12 @@ import {
   useTheme,
 } from "@mui/material";
 import { HistoryItem, ScoreResults } from "@/lib/ts/types";
-import { Download } from "@mui/icons-material";
-import ButtonLink from "./ButtonLink";
+import { Delete, Download } from "@mui/icons-material";
 
 interface HistoryPanelProps {
   active?: string;
   history: HistoryItem[];
+  removeFromHistory: (name: string) => void;
   resetBaseline: () => void;
   setBaseline: (scores: ScoreResults) => void;
   updateView: (history: HistoryItem) => void;
@@ -23,12 +23,11 @@ interface HistoryPanelProps {
 const HistoryPanel: React.FC<HistoryPanelProps> = ({
   active,
   history,
+  removeFromHistory,
   resetBaseline,
   setBaseline,
   updateView,
 }) => {
-  const theme = useTheme();
-
   return (
     <Grid marginTop={2} container item spacing={2} direction="column">
       {history.map((h, i) => (
@@ -50,8 +49,9 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
             width="100%"
           >
             <HistoryPanelItem
-              active={active}
+              active={active === h.name}
               historyItem={h}
+              removeFromHistory={removeFromHistory.bind(null, h.name)}
               setBaseline={setBaseline}
               updateView={updateView}
             />
@@ -78,8 +78,9 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
 };
 
 interface HistoryPanelItem {
-  active?: string;
+  active: boolean;
   historyItem: HistoryItem;
+  removeFromHistory: () => void;
   setBaseline: (scores: ScoreResults) => void;
   updateView: (historyItem: HistoryItem) => void;
 }
@@ -87,6 +88,7 @@ interface HistoryPanelItem {
 const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
   active,
   historyItem,
+  removeFromHistory,
   setBaseline,
   updateView,
 }) => {
@@ -103,10 +105,17 @@ const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
       <Grid item xs={3}>
         <Button onClick={() => updateView(historyItem)}>Show</Button>
       </Grid>
-      <Grid item xs={2}>
-        <IconButton>
-          <Download />
-        </IconButton>
+      <Grid item container direction="column" xs={2}>
+        <Grid item>
+          <IconButton disabled={active}>
+            <Delete onClick={removeFromHistory} />
+          </IconButton>
+        </Grid>
+        <Grid item>
+          <IconButton>
+            <Download />
+          </IconButton>
+        </Grid>
       </Grid>
     </>
   );

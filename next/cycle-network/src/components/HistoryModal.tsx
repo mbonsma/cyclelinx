@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -9,32 +9,36 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { HistoryItem } from "@/lib/ts/types";
 import { GridModal } from ".";
 
 interface HistoryModalProps {
+  error?: string;
+  history: HistoryItem[];
   onClose: () => void;
   onSave: (title: string) => void;
   open: boolean;
 }
 
 const HistoryModal: React.FC<HistoryModalProps> = ({
+  history,
   onClose,
   onSave,
   open,
 }) => {
   const [mapName, setMapName] = useState("");
+  const [error, setError] = useState("");
 
-  const keyboardSubmit = useCallback(
-    (e: React.KeyboardEvent<HTMLFormElement>) => {
-      if (e.key === "Enter" && !!mapName.length) {
-        e.preventDefault();
-        saveAndClose();
-      }
-    },
-    []
-  );
+  useEffect(() => {
+    if (error) {
+      setError("");
+    }
+  }, [mapName]);
 
   const saveAndClose = () => {
+    if (history.map((h) => h.name).includes(mapName)) {
+      return setError("Name already taken!");
+    }
     onSave(mapName);
     setMapName("");
     onClose();
@@ -52,9 +56,14 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
       </Grid>
       <Grid item>
         <Box
-          component="form"
           marginBottom={5}
-          onSubmit={() => !!mapName && saveAndClose()}
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (mapName) {
+              saveAndClose();
+            }
+          }}
         >
           <Grid
             alignItems="center"
@@ -68,6 +77,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
                 value={mapName}
                 onChange={(e) => setMapName(e.currentTarget.value || "")}
                 label="Map Name"
+                error={!!error}
+                helperText={error}
               />
             </Grid>
             <Grid item>

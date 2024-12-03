@@ -346,6 +346,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
       toAdd: [],
       toRemove: [],
     });
+    setHistory([]);
     setBudgetId(undefined);
     setSelectedMetric("");
   };
@@ -571,6 +572,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
               <HistoryPanel
                 active={activeHistory}
                 history={history}
+                //TODO: useCallback
                 resetBaseline={() => {
                   if (defaultScores) {
                     const baseline =
@@ -578,7 +580,9 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                     setBaseline(baseline);
                   }
                 }}
-                //TODO: useCallback
+                removeFromHistory={(name: string) => {
+                  setHistory(history.filter((h) => h.name !== name));
+                }}
                 setBaseline={(scores: ScoreResults) => {
                   const baseline = calculateSummaryStats(
                     scores,
@@ -618,6 +622,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
       />
       <HistoryModal
         open={historyModalOpen}
+        history={history}
         onClose={() => setHistoryModalOpen(false)}
         onSave={(name: string) =>
           //TODO: once this is finalized, use useCallback
