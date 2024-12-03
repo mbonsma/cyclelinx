@@ -11,7 +11,7 @@ import theme from "../lib/mui/theme";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Right of Way TO",
+  title: "Cyclelinx",
   description: "A Toronto cycling infrastructure app",
 };
 

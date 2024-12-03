@@ -389,13 +389,13 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         spacing={2}
         paddingRight={2}
         marginLeft={2}
+        height="100vh"
         marginTop={2}
         paddingBottom={4}
         container
         direction="column"
         xs={12}
         md={2}
-        height="100vh"
         overflow="auto"
         wrap="nowrap"
       >

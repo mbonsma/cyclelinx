@@ -34,13 +34,13 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
         spacing={4}
       >
         <Grid item>
-          <Typography variant="h2">Welcome to Right of Way TO</Typography>
+          <Typography variant="h2">Welcome to Cyclelinx</Typography>
         </Grid>
         {isMobile ? (
           <Grid item>
             <Alert color="error">
               <AlertTitle>
-                Please Note that Right of Way TO is best viewed in a desktop
+                Please Note that Cyclelinx is best viewed in a desktop
                 environment.
               </AlertTitle>
             </Alert>
@@ -52,10 +52,10 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
         )}
         <Grid item>
           <Typography variant="h6">
-            Right of Way TO is an interactive map of Toronto&apos;s cycling
-            routes. It also allows you to view optimal plans for new cycling
-            infrastructure as calcuted by specialists at the University of
-            Toronto (<Link href="/about">read more here</Link>
+            Cyclelinx is an interactive map of Toronto&apos;s cycling routes. It
+            also allows you to view optimal plans for new cycling infrastructure
+            as calcuted by specialists at the University of Toronto (
+            <Link href="/about">read more here</Link>
             ). You can also edit the map to add routes and track accessibility.
           </Typography>
         </Grid>

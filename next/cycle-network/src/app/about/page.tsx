@@ -10,7 +10,7 @@ import { InfoPageLayout } from "@/components";
 const AboutPage = () => (
   <InfoPageLayout>
     <Typography padding={0} textAlign="center" variant="h2">
-      About Right of Way TO
+      About Cyclelinx
     </Typography>
     <Grid container direction="column" spacing={3} padding={5}>
       <Section title="Background">
