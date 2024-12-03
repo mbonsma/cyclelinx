@@ -225,6 +225,8 @@ const Handler: React.FC<{
                     color: theme.palette.addableRoadColor,
                     opacity: 0.075,
                   });
+                  //we can't use events like this everywhere b/c of performance
+                  //(and note that className method doesn't work)
                   l.off("mouseover");
                   l.off("mouseout");
                   l.on("mouseover", () => {
@@ -435,29 +437,6 @@ const StyledLeafletContainer = styled(MapContainer)(() => ({
   //remove logo
   ".leaflet-control-attribution.leaflet-control": {
     display: "none",
-  },
-  path: {
-    "&.addable": {
-      // "&:hover": {
-      pointerEvents: "all",
-      stroke: appTheme.palette.projectAddColor,
-      strokeOpacity: 1,
-      // },
-    },
-    "&.removable": {
-      // "&:hover": {
-      pointerEvents: "all",
-      stroke: appTheme.palette.projectRemoveColor,
-      strokeOpacity: 1,
-      // },
-    },
-    "&.returnable": {
-      // "&:hover": {
-      pointerEvents: "all",
-      stroke: "",
-      strokeOpacity: 0,
-      // },
-    },
   },
 }));
 
