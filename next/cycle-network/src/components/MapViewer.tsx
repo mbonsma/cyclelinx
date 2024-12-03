@@ -224,7 +224,15 @@ const Handler: React.FC<{
                     stroke: true,
                     color: theme.palette.addableRoadColor,
                     opacity: 0.075,
-                    className: "addable",
+                  });
+                  l.off("mouseover");
+                  l.off("mouseout");
+                  l.on("mouseover", () => {
+                    (l as any)._path.style["stroke-opacity"] = 1;
+                  });
+
+                  l.on("mouseout", () => {
+                    (l as any)._path.style["stroke-opacity"] = 0.075;
                   });
                 } else if (intersection(removeSet, allProjectIds).size) {
                   l.setStyle({
@@ -232,6 +240,8 @@ const Handler: React.FC<{
                     color: theme.palette.projectRemoveColor,
                     opacity: 1,
                   });
+                  l.off("mouseover");
+                  l.off("mouseout");
                 } else if (!!intersection(addSet, allProjectIds).size) {
                   {
                     l.setStyle({
@@ -240,6 +250,8 @@ const Handler: React.FC<{
                       opacity: 1,
                     });
                   }
+                  l.off("mouseover");
+                  l.off("mouseout");
                   // if it's an existing improvement, give it the improvement color
                 } else if (!!intersection(improvmentsSet, allProjectIds).size) {
                   l.setStyle({
@@ -247,6 +259,8 @@ const Handler: React.FC<{
                     color: theme.palette.projectColor,
                     opacity: 1,
                   });
+                  l.off("mouseover");
+                  l.off("mouseout");
                 }
               }
               l.removeEventListener("click");
@@ -424,34 +438,25 @@ const StyledLeafletContainer = styled(MapContainer)(() => ({
   },
   path: {
     "&.addable": {
-      "&:hover": {
-        pointerEvents: "all",
-        stroke: appTheme.palette.addableRoadColor,
-        strokeOpacity: 1,
-      },
+      // "&:hover": {
+      pointerEvents: "all",
+      stroke: appTheme.palette.projectAddColor,
+      strokeOpacity: 1,
+      // },
     },
     "&.removable": {
-      "&:hover": {
-        pointerEvents: "all",
-        //stroke: appTheme.palette.projectRemoveColor,
-        stroke: "red",
-        strokeOpacity: 1,
-      },
-    },
-    ".removable": {
-      "&:hover": {
-        pointerEvents: "all",
-        //stroke: appTheme.palette.projectRemoveColor,
-        stroke: "red",
-        strokeOpacity: 1,
-      },
+      // "&:hover": {
+      pointerEvents: "all",
+      stroke: appTheme.palette.projectRemoveColor,
+      strokeOpacity: 1,
+      // },
     },
     "&.returnable": {
-      "&:hover": {
-        pointerEvents: "all",
-        stroke: appTheme.palette.addableRoadColor,
-        strokeOpacity: 0.15,
-      },
+      // "&:hover": {
+      pointerEvents: "all",
+      stroke: "",
+      strokeOpacity: 0,
+      // },
     },
   },
 }));
