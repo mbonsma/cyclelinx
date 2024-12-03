@@ -197,6 +197,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [activeHistory, setActiveHistory] = useState<string>("");
   const [baseline, setBaseline] = useState<SummaryStats>();
   const [budgetId, setBudgetId] = useState<number>();
+  const [calculating, setCalculating] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [improvements, setImprovements] = useState<number[]>();
@@ -240,6 +241,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         setScores(item.scores);
         setBudgetId(undefined);
         setActiveHistory(item.name);
+        setPendingImprovements({ toAdd: [], toRemove: [] });
       }
     },
     [
@@ -337,6 +339,17 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
     }
   };
 
+  const reset = () => {
+    setScores(undefined);
+    setImprovements(undefined);
+    setPendingImprovements({
+      toAdd: [],
+      toRemove: [],
+    });
+    setBudgetId(undefined);
+    setSelectedMetric("");
+  };
+
   const handleCalculation = async () => {
     const improvementsSet = new Set(improvements);
     const toAddSet = new Set(pendingImprovements.toAdd);
@@ -347,19 +360,11 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
     ];
 
     if (projectIds.length === 0) {
-      setScores(undefined);
-      setImprovements(undefined);
-      setPendingImprovements({
-        toAdd: [],
-        toRemove: [],
-      });
-      setBudgetId(undefined);
-      setSelectedMetric("");
-      return;
+      return reset();
     }
 
     try {
-      setLoading(true);
+      setCalculating(true);
       const scores = await fetchNewCalculations(projectIds);
       setScores(scores.data);
       setImprovements(projectIds);
@@ -372,7 +377,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         setSelectedMetric(metrics[0].name);
       }
     } finally {
-      setLoading(false);
+      setCalculating(false);
     }
   };
 
@@ -420,6 +425,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           handleCalculation={handleCalculation}
           improvements={improvements}
           pendingImprovements={pendingImprovements}
+          reset={reset}
           totalKm={totalKm}
         />
         <Divider sx={{ margin: 2 }} />
@@ -606,6 +612,10 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         onClose={() => setWelcomeOverlayVisible(false)}
       />
       <LoadingOverlay open={loading} />
+      <LoadingOverlay
+        open={calculating}
+        message="Calculating accessibility...."
+      />
       <HistoryModal
         open={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}

@@ -8,6 +8,7 @@ interface ImprovementLegendProps {
   handleCalculation: () => void;
   improvements?: number[];
   pendingImprovements: PendingImprovements;
+  reset: () => void;
   totalKm?: number;
 }
 
@@ -15,6 +16,7 @@ const ImprovementLegend: React.FC<ImprovementLegendProps> = ({
   handleCalculation,
   improvements,
   pendingImprovements,
+  reset,
   totalKm,
 }) => {
   const theme = useTheme();
@@ -44,6 +46,13 @@ const ImprovementLegend: React.FC<ImprovementLegendProps> = ({
         <Grid item>
           <Button onClick={handleCalculation} variant="outlined">
             Calculate New Scores
+          </Button>
+        </Grid>
+      )}
+      {!!improvements && (
+        <Grid item>
+          <Button onClick={reset} variant="outlined">
+            Reset
           </Button>
         </Grid>
       )}
