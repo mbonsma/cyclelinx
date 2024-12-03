@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Grid, Typography, useTheme } from "@mui/material";
 import LaneChangeLegend from "./LaneChangeLegend";
-import { formatDigit } from "@/lib/ts/util";
+import { formatNumber } from "@/lib/ts/util";
 import { PendingImprovements } from "@/lib/ts/types";
 
 interface ImprovementLegendProps {
@@ -50,7 +50,7 @@ const ImprovementLegend: React.FC<ImprovementLegendProps> = ({
       {!!totalKm && (
         <Grid item>
           <Typography variant="caption">
-            Total New Bike Lanes: {formatDigit(totalKm / 1000)} (in KM)
+            Total New Bike Lanes: {formatNumber(totalKm / 1000)} (in KM)
           </Typography>
         </Grid>
       )}

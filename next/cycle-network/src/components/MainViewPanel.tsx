@@ -64,7 +64,7 @@ import {
   fetchImprovements,
   fetchNewCalculations,
 } from "@/lib/axios/api";
-import { formatDigit } from "@/lib/ts/util";
+import { formatNumber } from "@/lib/ts/util";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
@@ -160,7 +160,7 @@ const calculateDefaultBaselineSummaryStats = (scores: DefaultScores) => {
   Object.values(scores).forEach((scores) => {
     for (const metric in scores) {
       if (metric !== "da") {
-        //we're not interested in the baseline's baseline, so it's identical
+        //we're not interested in the baseline's baseline, so it can identical
         Builder.add(metric, "current", scores[metric]);
         Builder.add(metric, "baseline", scores[metric]);
       }
@@ -346,6 +346,18 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
       ...union(difference(improvementsSet, toRemoveSet), toAddSet),
     ];
 
+    if (projectIds.length === 0) {
+      setScores(undefined);
+      setImprovements(undefined);
+      setPendingImprovements({
+        toAdd: [],
+        toRemove: [],
+      });
+      setBudgetId(undefined);
+      setSelectedMetric("");
+      return;
+    }
+
     try {
       setLoading(true);
       const scores = await fetchNewCalculations(projectIds);
@@ -356,6 +368,9 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         toRemove: [],
       });
       setBudgetId(undefined);
+      if (!selectedMetric) {
+        setSelectedMetric(metrics[0].name);
+      }
     } finally {
       setLoading(false);
     }
@@ -407,7 +422,15 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           pendingImprovements={pendingImprovements}
           totalKm={totalKm}
         />
-
+        <Divider sx={{ margin: 2 }} />
+        <Grid item>
+          <CollapsibleSection defaultOpen label="Existing Lanes">
+            <ExistingLaneControls
+              setVisibleExistingLanes={setVisibleExistingLanes}
+              visibleExistingLanes={visibleExistingLanes}
+            />
+          </CollapsibleSection>
+        </Grid>
         <Grid item container>
           {!!improvements && (
             <CollapsibleSection label="Metrics" defaultOpen={true}>
@@ -426,14 +449,14 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                         <Grid item container justifyContent="space-between">
                           <span>
                             <Typography variant="caption">
-                              {formatDigit(
+                              {formatNumber(
                                 maybeLog(scaleType, scoreScale.domain()[0])
                               )}
                             </Typography>
                           </span>
                           <span>
                             <Typography variant="caption">
-                              {formatDigit(
+                              {formatNumber(
                                 maybeLog(scaleType, scoreScale.domain()[1])
                               )}
                             </Typography>
@@ -470,14 +493,14 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
                                         : "red",
                                   }}
                                 >
-                                  {formatDigit(
+                                  {formatNumber(
                                     summaryStats[selectedMetric].avg -
                                       summaryStats[selectedMetric].baselineAvg
                                   )}
                                 </Box>
                               </Typography>
                             </Grid>
-                            <Grid item xs={4}>
+                            <Grid textAlign="end" item>
                               <Button onClick={() => setHistoryModalOpen(true)}>
                                 Save
                               </Button>
@@ -534,15 +557,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
               </Grid>
             </CollapsibleSection>
           )}
-        </Grid>
-        <Divider sx={{ margin: 2 }} />
-        <Grid item>
-          <CollapsibleSection defaultOpen label="Existing Lanes">
-            <ExistingLaneControls
-              setVisibleExistingLanes={setVisibleExistingLanes}
-              visibleExistingLanes={visibleExistingLanes}
-            />
-          </CollapsibleSection>
         </Grid>
         <Divider sx={{ margin: 2 }} />
         <Grid item container>

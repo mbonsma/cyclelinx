@@ -50,7 +50,7 @@ export const roundDigit = (value: number, sd?: number): number => {
  * @param {number} value
  * @returns {string}
  */
-export const formatDigit = (value: number, d?: number) => {
+export const formatNumber = (value: number, d?: number) => {
   const rounded = roundDigit(value, d);
   if (rounded > 1000) {
     return format(",d")(rounded);

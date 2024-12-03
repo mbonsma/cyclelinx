@@ -28,12 +28,13 @@ import {
   ScoreResults,
   ScoreSet,
 } from "@/lib/ts/types";
+import appTheme from "@/lib/mui/theme";
 import HamburgerMenu from "./HamburgerMenu";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import {
   EXISTING_LANE_NAME_MAP,
   existingScale,
-  formatDigit,
+  formatNumber,
 } from "@/lib/ts/util";
 
 const formatPct = format(",.1%");
@@ -58,7 +59,7 @@ const buildValueTooltip = (
     color = "green";
   }
 
-  return `<div><strong>${capitalize(metric)}:</strong>&nbsp;${formatDigit(
+  return `<div><strong>${capitalize(metric)}:</strong>&nbsp;${formatNumber(
     scores[scoreType][metric]
   )}<span style="color:${color};">${pctChange}</span></div>`;
 };
@@ -191,17 +192,13 @@ const Handler: React.FC<{
               if (projectId) {
                 return {
                   stroke: true,
-                  fillColor: "none",
                   opacity: 0.15,
-                  fillOpacity: 0,
                 };
               }
             }
             return {
               stroke: true,
-              fillColor: "none",
               opacity: 0,
-              fillOpacity: 0,
             };
           },
           attribution: "arterial", //using this as a handle
@@ -227,13 +224,12 @@ const Handler: React.FC<{
                     stroke: true,
                     color: theme.palette.addableRoadColor,
                     opacity: 0.075,
-                    fillOpacity: 0,
+                    className: "addable",
                   });
                 } else if (intersection(removeSet, allProjectIds).size) {
                   l.setStyle({
                     stroke: true,
                     color: theme.palette.projectRemoveColor,
-                    fillOpacity: 1,
                     opacity: 1,
                   });
                 } else if (!!intersection(addSet, allProjectIds).size) {
@@ -241,7 +237,6 @@ const Handler: React.FC<{
                     l.setStyle({
                       stroke: true,
                       color: theme.palette.projectAddColor,
-                      fillOpacity: 1,
                       opacity: 1,
                     });
                   }
@@ -250,7 +245,6 @@ const Handler: React.FC<{
                   l.setStyle({
                     stroke: true,
                     color: theme.palette.projectColor,
-                    fillOpacity: 1,
                     opacity: 1,
                   });
                 }
@@ -319,42 +313,41 @@ const Handler: React.FC<{
 
   // Add scores
   useEffect(() => {
-    if (!!scores) {
-      map.eachLayer((l) => {
+    map.eachLayer((l) => {
+      if (l.options.attribution === "DAs" && isFeatureGroup(l) && !!l.feature) {
+        //we won't necessarily have a score for every DA when we calculate on the fly
         if (
-          l.options.attribution === "DAs" &&
-          isFeatureGroup(l) &&
-          !!l.feature
+          !!scores &&
+          !!selectedMetric &&
+          !!scoreScale &&
+          isGeoJSONFeature(l.feature)
         ) {
-          //we won't necessarily have a score for every DA when we calculate on the fly
-          if (!!selectedMetric && !!scoreScale && isGeoJSONFeature(l.feature)) {
-            if (scores[l.feature.properties.id.toString()]) {
-              const da_score_set =
-                scores[l.feature.properties.id.toString()].scores;
-              const da_scores = da_score_set[scoreSet];
-              l.setStyle({
-                fillColor: metricTypeScale(selectedMetric),
-                fillOpacity: scoreScale(da_scores[selectedMetric]),
-              });
-
-              l.bindPopup(
-                `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
-                  metricTypeScale
-                    .domain()
-                    .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
-                    .join("\n")
-              );
-            }
-          } else {
+          if (scores[l.feature.properties.id.toString()]) {
+            const da_score_set =
+              scores[l.feature.properties.id.toString()].scores;
+            const da_scores = da_score_set[scoreSet];
             l.setStyle({
-              fillColor: "none",
-              fillOpacity: 0,
+              fillColor: metricTypeScale(selectedMetric),
+              fillOpacity: scoreScale(da_scores[selectedMetric]),
             });
-            l.unbindPopup();
+
+            l.bindPopup(
+              `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
+                metricTypeScale
+                  .domain()
+                  .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
+                  .join("\n")
+            );
           }
+        } else {
+          l.setStyle({
+            fillColor: "none",
+            fillOpacity: 0,
+          });
+          l.unbindPopup();
         }
-      });
-    }
+      }
+    });
   }, [das, scores, selectedMetric, scoreScale, scoreSet, metricTypeScale, map]);
 
   return null;
@@ -422,13 +415,45 @@ const MapViewer: React.FC<{
   );
 };
 
-const StyledLeafletContainer = styled(MapContainer)`
-  width: 100%;
-  height: 100vh;
+const StyledLeafletContainer = styled(MapContainer)(() => ({
+  width: "100%",
+  height: "100vh",
   //remove logo
-  .leaflet-control-attribution.leaflet-control {
-    display: none;
-  }
-`;
+  ".leaflet-control-attribution.leaflet-control": {
+    display: "none",
+  },
+  path: {
+    "&.addable": {
+      "&:hover": {
+        pointerEvents: "all",
+        stroke: appTheme.palette.addableRoadColor,
+        strokeOpacity: 1,
+      },
+    },
+    "&.removable": {
+      "&:hover": {
+        pointerEvents: "all",
+        //stroke: appTheme.palette.projectRemoveColor,
+        stroke: "red",
+        strokeOpacity: 1,
+      },
+    },
+    ".removable": {
+      "&:hover": {
+        pointerEvents: "all",
+        //stroke: appTheme.palette.projectRemoveColor,
+        stroke: "red",
+        strokeOpacity: 1,
+      },
+    },
+    "&.returnable": {
+      "&:hover": {
+        pointerEvents: "all",
+        stroke: appTheme.palette.addableRoadColor,
+        strokeOpacity: 0.15,
+      },
+    },
+  },
+}));
 
 export default MapViewer;
