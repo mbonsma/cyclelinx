@@ -74,6 +74,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
           >
             <Grid item>
               <TextField
+                autoFocus
                 value={mapName}
                 onChange={(e) => setMapName(e.currentTarget.value || "")}
                 label="Map Name"

@@ -6,7 +6,6 @@ import {
   IconButton,
   lighten,
   Typography,
-  useTheme,
 } from "@mui/material";
 import { HistoryItem, ScoreResults } from "@/lib/ts/types";
 import { Delete, Download } from "@mui/icons-material";
@@ -33,20 +32,21 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
       {history.map((h, i) => (
         <React.Fragment key={h.name}>
           <Grid
+            alignItems="center"
+            container
+            direction="row"
             item
+            justifyContent="space-between"
+            onClick={() => updateView(h)}
+            spacing={1}
             sx={{
               backgroundColor: (theme) =>
                 active === h.name
                   ? lighten(theme.palette.secondary.light, 0.75)
                   : "inherit",
             }}
-            alignItems="center"
-            justifyContent="space-between"
-            container
-            direction="row"
-            spacing={1}
-            wrap="nowrap"
             width="100%"
+            wrap="nowrap"
           >
             <HistoryPanelItem
               active={active === h.name}
@@ -98,21 +98,21 @@ const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
         <Typography>{historyItem.name}</Typography>
       </Grid>
       <Grid item xs={3}>
-        <Button onClick={() => setBaseline(historyItem.scores)}>
+        <Button
+          disabled={!active}
+          onClick={() => setBaseline(historyItem.scores)}
+        >
           set as baseline
         </Button>
       </Grid>
-      <Grid item xs={3}>
-        <Button onClick={() => updateView(historyItem)}>Show</Button>
-      </Grid>
       <Grid item container direction="column" xs={2}>
         <Grid item>
-          <IconButton disabled={active}>
+          <IconButton disabled={!active}>
             <Delete onClick={removeFromHistory} />
           </IconButton>
         </Grid>
         <Grid item>
-          <IconButton>
+          <IconButton disabled={!active}>
             <Download />
           </IconButton>
         </Grid>

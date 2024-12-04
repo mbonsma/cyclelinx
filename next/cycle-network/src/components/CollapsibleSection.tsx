@@ -18,12 +18,18 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Grid container direction="column" wrap="nowrap">
-      <Grid item container justifyContent="space-between">
+      <Grid
+        onClick={() => setOpen(!open)}
+        sx={{ cursor: "pointer" }}
+        item
+        container
+        justifyContent="space-between"
+      >
         <Grid>
           <Typography variant="h6">{label}</Typography>
         </Grid>
         <Grid>
-          <IconButton onClick={() => setOpen(!open)}>
+          <IconButton>
             {open ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
           </IconButton>
         </Grid>

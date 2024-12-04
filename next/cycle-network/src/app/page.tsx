@@ -63,7 +63,6 @@ export default async function Home() {
           flexGrow={1}
           item
           direction="column"
-          height="100vh"
         >
           <MainViewPanel budgets={budgets} metrics={metrics} />
         </Grid>

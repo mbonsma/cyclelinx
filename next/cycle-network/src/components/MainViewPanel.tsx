@@ -347,6 +347,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
       toRemove: [],
     });
     setHistory([]);
+    setActiveHistory("");
     setBudgetId(undefined);
     setSelectedMetric("");
   };
@@ -389,10 +390,10 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         item
         spacing={2}
         paddingRight={2}
+        paddingTop={2}
+        paddingBottom={4}
         marginLeft={2}
         height="100vh"
-        marginTop={2}
-        paddingBottom={4}
         container
         direction="column"
         xs={12}
@@ -620,6 +621,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         open={calculating}
         message="Calculating accessibility...."
       />
+
       <HistoryModal
         open={historyModalOpen}
         history={history}
