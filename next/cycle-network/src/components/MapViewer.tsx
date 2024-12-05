@@ -28,7 +28,6 @@ import {
   ScoreResults,
   ScoreSet,
 } from "@/lib/ts/types";
-import appTheme from "@/lib/mui/theme";
 import HamburgerMenu from "./HamburgerMenu";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import {

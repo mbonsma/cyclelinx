@@ -65,7 +65,12 @@ interface ImprovementFeatureProperties extends FeatureProperties {
 
 interface ArterialFeatureProperties extends FeatureProperties {
   feature_type: "arterial";
+  GEO_ID: number;
   budget_project_ids: number[];
+}
+
+export interface ArterialFeaturePropertiesExport {
+  GEO_ID: number;
 }
 
 export type DAGeoJSON = FeatureCollection<MultiPolygon, DAProperties>;
@@ -78,6 +83,11 @@ export type ImprovementFeatureGeoJSON = FeatureCollection<
 export type ArterialFeatureGeoJSON = FeatureCollection<
   LineString,
   ArterialFeatureProperties
+>;
+
+export type ArterialFeatureGeoJSONExport = FeatureCollection<
+  LineString,
+  ArterialFeaturePropertiesExport
 >;
 
 export type ExistingLaneGeoJSON = FeatureCollection<

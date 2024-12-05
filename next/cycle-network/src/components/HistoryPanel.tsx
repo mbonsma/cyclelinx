@@ -12,6 +12,7 @@ import { Delete, Download } from "@mui/icons-material";
 
 interface HistoryPanelProps {
   active?: string;
+  exportFn: (name: string) => void;
   history: HistoryItem[];
   removeFromHistory: (name: string) => void;
   resetBaseline: () => void;
@@ -21,6 +22,7 @@ interface HistoryPanelProps {
 
 const HistoryPanel: React.FC<HistoryPanelProps> = ({
   active,
+  exportFn,
   history,
   removeFromHistory,
   resetBaseline,
@@ -50,10 +52,10 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
           >
             <HistoryPanelItem
               active={active === h.name}
+              exportFn={exportFn.bind(null, h.name)}
               historyItem={h}
               removeFromHistory={removeFromHistory.bind(null, h.name)}
               setBaseline={setBaseline}
-              updateView={updateView}
             />
           </Grid>
           {i < history.length - 1 && (
@@ -79,25 +81,25 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
 
 interface HistoryPanelItem {
   active: boolean;
+  exportFn: () => void;
   historyItem: HistoryItem;
   removeFromHistory: () => void;
   setBaseline: (scores: ScoreResults) => void;
-  updateView: (historyItem: HistoryItem) => void;
 }
 
 const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
   active,
+  exportFn,
   historyItem,
   removeFromHistory,
   setBaseline,
-  updateView,
 }) => {
   return (
     <>
-      <Grid item xs={3}>
+      <Grid item>
         <Typography>{historyItem.name}</Typography>
       </Grid>
-      <Grid item xs={3}>
+      <Grid item>
         <Button
           disabled={!active}
           onClick={() => setBaseline(historyItem.scores)}
@@ -107,12 +109,12 @@ const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
       </Grid>
       <Grid item container direction="column" xs={2}>
         <Grid item>
-          <IconButton disabled={!active}>
-            <Delete onClick={removeFromHistory} />
+          <IconButton onClick={removeFromHistory} disabled={!active}>
+            <Delete />
           </IconButton>
         </Grid>
         <Grid item>
-          <IconButton disabled={!active}>
+          <IconButton onClick={exportFn} disabled={!active}>
             <Download />
           </IconButton>
         </Grid>

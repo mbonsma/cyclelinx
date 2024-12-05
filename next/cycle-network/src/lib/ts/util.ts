@@ -90,3 +90,14 @@ export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
   ["Sharrows - Arterial"]: "Sharrows",
   ["Sharrows - Arterial - Connector"]: "Sharrows",
 };
+
+export const downloadGeojson = (json: string, filename: string) => {
+  const file = encodeURI(`data:application/geo+json,${json}`);
+  const a = document.createElement("a");
+  a.download = filename;
+  a.target = "_blank";
+  a.href = file;
+  document.body.append(a);
+  a.click();
+  a.remove();
+};

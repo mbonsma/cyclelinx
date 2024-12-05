@@ -20,6 +20,8 @@ import {
   EXISTING_LANE_TYPE,
   HistoryItem,
   DefaultScores,
+  ArterialFeatureGeoJSONExport,
+  ArterialFeaturePropertiesExport,
 } from "@/lib/ts/types";
 import {
   scaleLinear,
@@ -64,8 +66,9 @@ import {
   fetchImprovements,
   fetchNewCalculations,
 } from "@/lib/axios/api";
-import { formatNumber } from "@/lib/ts/util";
+import { downloadGeojson, formatNumber } from "@/lib/ts/util";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
+import intersection from "set.prototype.intersection";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -220,7 +223,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   >([]);
   const [welcomeOverlayVisible, setWelcomeOverlayVisible] = useState(true);
 
-  const { defaultScores } = useContext(StaticDataContext);
+  const { defaultScores, arterials } = useContext(StaticDataContext);
 
   useEffect(() => {
     if (defaultScores) {
@@ -572,8 +575,43 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
             <CollapsibleSection label="History" defaultOpen={true}>
               <HistoryPanel
                 active={activeHistory}
+                exportFn={(name) => {
+                  // improvements are an array of projectIDs
+                  const historyItemProjects = history.find(
+                    (h) => h.name === name
+                  )?.improvements;
+                  if (!!historyItemProjects && !!arterials) {
+                    const historyItemProjectsSet = new Set(historyItemProjects);
+
+                    const exportArterials = structuredClone(arterials);
+
+                    exportArterials.features = exportArterials.features
+                      .filter(
+                        ({ properties }) =>
+                          !!intersection(
+                            historyItemProjectsSet,
+                            new Set(
+                              properties.budget_project_ids.concat(
+                                properties.default_project_id || []
+                              )
+                            )
+                          ).size
+                      )
+                      .map((f) => {
+                        (f.properties as ArterialFeaturePropertiesExport) = {
+                          GEO_ID: f.properties.GEO_ID,
+                        };
+                        return f;
+                      });
+
+                    downloadGeojson(
+                      JSON.stringify(exportArterials),
+                      `${name}.geojson`
+                    );
+                  }
+                }}
                 history={history}
-                //TODO: useCallback
+                //TODO: useCallbacks here...
                 resetBaseline={() => {
                   if (defaultScores) {
                     const baseline =

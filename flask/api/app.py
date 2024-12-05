@@ -88,6 +88,7 @@ def get_arterials():
             "budget_project_ids": [p.project_id for p in a.improvement_relationships],
             "feature_type": "arterial",
             "geometry": a.geometry,
+            "GEO_ID": a.GEO_ID,
         }
         for a in db.session.execute(
             select(Arterial).options(selectinload(Arterial.improvement_relationships))
