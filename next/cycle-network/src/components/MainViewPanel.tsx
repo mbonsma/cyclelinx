@@ -249,6 +249,73 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
     [daCount]
   );
 
+  const saveHistory = useCallback(
+    (name: string) => {
+      if (scores && improvements) {
+        setHistory((history) =>
+          history.concat({
+            improvements,
+            name,
+            scores,
+          })
+        );
+      }
+    },
+    [improvements, scores]
+  );
+
+  const resetBaseline = useCallback(() => {
+    if (defaultScores) {
+      const baseline = calculateDefaultBaselineSummaryStats(defaultScores);
+      setBaseline(baseline);
+    }
+  }, [defaultScores]);
+
+  const updateBaseline = useCallback(
+    (scores: ScoreResults) => {
+      if (daCount) {
+        const baseline = calculateSummaryStats(scores, daCount);
+        setBaseline(baseline);
+      }
+    },
+    [daCount]
+  );
+
+  const exportHistoryItem = useCallback(
+    (name: string) => {
+      const historyItemProjects = history.find(
+        (h) => h.name === name
+      )?.improvements;
+      if (!!historyItemProjects && !!arterials) {
+        const historyItemProjectsSet = new Set(historyItemProjects);
+
+        const exportArterials = structuredClone(arterials);
+
+        exportArterials.features = exportArterials.features
+          .filter(
+            ({ properties }) =>
+              !!intersection(
+                historyItemProjectsSet,
+                new Set(
+                  properties.budget_project_ids.concat(
+                    properties.default_project_id || []
+                  )
+                )
+              ).size
+          )
+          .map((f) => {
+            (f.properties as ArterialFeaturePropertiesExport) = {
+              GEO_ID: f.properties.GEO_ID,
+            };
+            return f;
+          });
+
+        downloadGeojson(JSON.stringify(exportArterials), `${name}.geojson`);
+      }
+    },
+    [arterials, history]
+  );
+
   useEffect(() => {
     if (baseline && daCount && scores) {
       setSummaryStats(calculateSummaryStats(scores, daCount, baseline));
@@ -310,8 +377,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
     }
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [budgetId]);
-
-  //TODO: baseline is ALWAYS null unless manually set, at which case it's always that.
 
   const scoreScale = useMemo(() => {
     if (scores && selectedMetric) {
@@ -566,60 +631,13 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
             <CollapsibleSection label="History" defaultOpen={true}>
               <HistoryPanel
                 active={activeHistory}
-                exportFn={(name) => {
-                  // improvements are an array of projectIDs
-                  const historyItemProjects = history.find(
-                    (h) => h.name === name
-                  )?.improvements;
-                  if (!!historyItemProjects && !!arterials) {
-                    const historyItemProjectsSet = new Set(historyItemProjects);
-
-                    const exportArterials = structuredClone(arterials);
-
-                    exportArterials.features = exportArterials.features
-                      .filter(
-                        ({ properties }) =>
-                          !!intersection(
-                            historyItemProjectsSet,
-                            new Set(
-                              properties.budget_project_ids.concat(
-                                properties.default_project_id || []
-                              )
-                            )
-                          ).size
-                      )
-                      .map((f) => {
-                        (f.properties as ArterialFeaturePropertiesExport) = {
-                          GEO_ID: f.properties.GEO_ID,
-                        };
-                        return f;
-                      });
-
-                    downloadGeojson(
-                      JSON.stringify(exportArterials),
-                      `${name}.geojson`
-                    );
-                  }
-                }}
+                exportFn={exportHistoryItem}
                 history={history}
-                //TODO: useCallbacks here...
-                resetBaseline={() => {
-                  if (defaultScores) {
-                    const baseline =
-                      calculateDefaultBaselineSummaryStats(defaultScores);
-                    setBaseline(baseline);
-                  }
-                }}
-                removeFromHistory={(name: string) => {
-                  setHistory(history.filter((h) => h.name !== name));
-                }}
-                setBaseline={(scores: ScoreResults) => {
-                  const baseline = calculateSummaryStats(
-                    scores,
-                    daCount || Object.values(scores).length
-                  );
-                  setBaseline(baseline);
-                }}
+                resetBaseline={resetBaseline}
+                removeFromHistory={(name: string) =>
+                  setHistory(history.filter((h) => h.name !== name))
+                }
+                setBaseline={updateBaseline}
                 updateView={restoreHistory}
               />
             </CollapsibleSection>
@@ -655,18 +673,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         open={historyModalOpen}
         history={history}
         onClose={() => setHistoryModalOpen(false)}
-        onSave={(name: string) =>
-          //TODO: once this is finalized, use useCallback
-          !!scores &&
-          !!improvements &&
-          setHistory((history) =>
-            history.concat({
-              improvements,
-              name,
-              scores,
-            })
-          )
-        }
+        onSave={saveHistory}
       />
     </Grid>
   );
