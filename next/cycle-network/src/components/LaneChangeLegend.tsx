@@ -20,10 +20,10 @@ const LaneChangeLegend: React.FC<LaneChangeLegendProps> = ({
   >
     <Grid item xs={6}>
       <Box
-        sx={(theme) => ({
+        sx={{
           backgroundColor: color,
           height: "5px",
-        })}
+        }}
       />
     </Grid>
     <Grid item xs={6}>

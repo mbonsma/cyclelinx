@@ -20,6 +20,7 @@ import union from "set.prototype.union";
 import difference from "set.prototype.difference";
 import intersection from "set.prototype.intersection";
 import { capitalize, useTheme } from "@mui/material";
+import HamburgerMenu from "./HamburgerMenu";
 import {
   EXISTING_LANE_TYPE,
   isFeatureGroup,
@@ -28,7 +29,6 @@ import {
   ScoreResults,
   ScoreSet,
 } from "@/lib/ts/types";
-import HamburgerMenu from "./HamburgerMenu";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 import {
   EXISTING_LANE_NAME_MAP,
@@ -203,9 +203,11 @@ const Handler: React.FC<{
           attribution: "arterial", //using this as a handle
           onEachFeature: (f, l) => {
             l.on("update", (e: LeafletEvent) => {
+              //eslint-disable-next-line
               //@ts-ignore
               const improvements = e.improvements as number[];
               const pendingImprovements =
+                //eslint-disable-next-line
                 //@ts-ignore
                 e.pendingImprovements as PendingImprovements;
 
@@ -314,9 +316,7 @@ const Handler: React.FC<{
     improvements,
     pendingImprovements,
     setPendingImprovements,
-    theme.palette.projectAddColor,
-    theme.palette.projectRemoveColor,
-    theme.palette.projectColor,
+    theme.palette,
   ]);
 
   //fire update event to sync state with callbacks

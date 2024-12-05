@@ -12,7 +12,6 @@ import {
 import Link from "next/link";
 import { ButtonLink, GridModal } from "@/components";
 import { useIsMobile } from "@/hooks";
-import { Close } from "@mui/icons-material";
 
 interface WelcomeOverlayProps {
   onClose: () => void;

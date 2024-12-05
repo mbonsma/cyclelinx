@@ -1,4 +1,4 @@
-import { Metric } from "@/lib/ts/types";
+import React from "react";
 import {
   capitalize,
   FormControl,
@@ -6,7 +6,7 @@ import {
   Radio,
   RadioGroup,
 } from "@mui/material";
-import React from "react";
+import { Metric } from "@/lib/ts/types";
 
 interface MetricSelectorProps {
   metrics?: Metric[];

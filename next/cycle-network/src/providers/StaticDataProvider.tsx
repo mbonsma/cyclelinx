@@ -1,12 +1,12 @@
 "use client";
 
+import React, { createContext } from "react";
 import {
   ArterialFeatureGeoJSON,
   DAGeoJSON,
   DefaultScores,
   ExistingLaneGeoJSON,
 } from "@/lib/ts/types";
-import { createContext } from "react";
 
 interface StaticDataProps {
   arterials: ArterialFeatureGeoJSON | null;

@@ -1,11 +1,11 @@
 "use client";
 
-import { useHandleResize } from "@/hooks";
+import React, { useRef, useLayoutEffect } from "react";
 import { Box } from "@mui/material";
 import { range } from "d3-array";
 import { rgb } from "d3-color";
 import { select } from "d3-selection";
-import React, { useRef, useLayoutEffect } from "react";
+import { useHandleResize } from "@/hooks";
 
 interface LegendGradientProps {
   color: string;

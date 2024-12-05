@@ -10,20 +10,6 @@ import React, {
   useState,
 } from "react";
 import {
-  Budget,
-  Metric,
-  ScoreSet,
-  ScaleType,
-  ScoreResults,
-  BudgetProjectMember,
-  PendingImprovements,
-  EXISTING_LANE_TYPE,
-  HistoryItem,
-  DefaultScores,
-  ArterialFeatureGeoJSONExport,
-  ArterialFeaturePropertiesExport,
-} from "@/lib/ts/types";
-import {
   scaleLinear,
   scaleOrdinal,
   ScaleOrdinal,
@@ -46,6 +32,7 @@ import {
 } from "@mui/material";
 import difference from "set.prototype.difference";
 import union from "set.prototype.union";
+import intersection from "set.prototype.intersection";
 import {
   LegendGradient,
   QuartileLegend,
@@ -62,13 +49,25 @@ import {
   HistoryPanel,
 } from "@/components";
 import {
+  Budget,
+  Metric,
+  ScoreSet,
+  ScaleType,
+  ScoreResults,
+  BudgetProjectMember,
+  PendingImprovements,
+  EXISTING_LANE_TYPE,
+  HistoryItem,
+  DefaultScores,
+  ArterialFeaturePropertiesExport,
+} from "@/lib/ts/types";
+import {
   fetchBudgetScores,
   fetchImprovements,
   fetchNewCalculations,
 } from "@/lib/axios/api";
 import { downloadGeojson, formatNumber } from "@/lib/ts/util";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
-import intersection from "set.prototype.intersection";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -217,7 +216,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
   const [scaleType, setScaleType] = useState<ScaleType>("linear");
   const [selectedMetric, setSelectedMetric] = useState("");
   const [summaryStats, setSummaryStats] = useState<SummaryStats>();
-  const [totalKm, setTotalKm] = useState<number>();
+  //const [totalKm, setTotalKm] = useState<number>();
   const [visibleExistingLanes, setVisibleExistingLanes] = useState<
     EXISTING_LANE_TYPE[]
   >([]);
@@ -247,15 +246,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         setPendingImprovements({ toAdd: [], toRemove: [] });
       }
     },
-    [
-      daCount,
-      baseline,
-      setBudgetId,
-      setSummaryStats,
-      setBudgetId,
-      setScaleType,
-      setImprovements,
-    ]
+    [daCount]
   );
 
   useEffect(() => {
@@ -317,6 +308,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
         )
         .finally(() => setLoading(false));
     }
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [budgetId]);
 
   //TODO: baseline is ALWAYS null unless manually set, at which case it's always that.
@@ -431,7 +423,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
           improvements={improvements}
           pendingImprovements={pendingImprovements}
           reset={reset}
-          totalKm={totalKm}
         />
         <Divider sx={{ margin: 2 }} />
         <Grid item>

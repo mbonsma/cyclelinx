@@ -9,8 +9,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { HistoryItem } from "@/lib/ts/types";
 import { GridModal } from ".";
+import { HistoryItem } from "@/lib/ts/types";
 
 interface HistoryModalProps {
   error?: string;
@@ -33,6 +33,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
     if (error) {
       setError("");
     }
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapName]);
 
   const saveAndClose = () => {

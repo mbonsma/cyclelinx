@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Box, IconButton, Menu, MenuItem, SvgIcon } from "@mui/material";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const ROUTES = [
   { name: "About", route: "/about" },
@@ -24,7 +24,6 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const router = useRouter();
-  const pathname = usePathname();
 
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) =>

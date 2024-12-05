@@ -1,4 +1,5 @@
 import React from "react";
+import { Delete, Download } from "@mui/icons-material";
 import {
   Button,
   Divider,
@@ -8,7 +9,6 @@ import {
   Typography,
 } from "@mui/material";
 import { HistoryItem, ScoreResults } from "@/lib/ts/types";
-import { Delete, Download } from "@mui/icons-material";
 
 interface HistoryPanelProps {
   active?: string;

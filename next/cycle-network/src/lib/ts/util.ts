@@ -1,12 +1,7 @@
 import { format } from "d3-format";
-import { EXISTING_LANE_TYPE } from "./types";
 import { scaleOrdinal } from "d3-scale";
-import {
-  schemePuBuGn,
-  schemePurples,
-  schemeSet2,
-  schemeYlOrBr,
-} from "d3-scale-chromatic";
+import { schemePurples, schemeYlOrBr } from "d3-scale-chromatic";
+import { EXISTING_LANE_TYPE } from "./types";
 
 /**
  * Round number and return
