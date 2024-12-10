@@ -30,10 +30,12 @@ export default createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#8C6057",
+      //main: "#8C6057",
+      main: "#2C868E",
     },
     secondary: {
-      main: "#A69F98",
+      //main: "#A69F98",
+      main: "#C2E4DE",
     },
     projectAddColor: "#349518",
     projectColor: "blue",

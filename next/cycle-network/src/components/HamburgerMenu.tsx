@@ -3,6 +3,7 @@
 import React from "react";
 import { Box, IconButton, Menu, MenuItem, SvgIcon } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { MenuSharp } from "@mui/icons-material";
 
 const ROUTES = [
   { name: "About", route: "/about" },
@@ -48,17 +49,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       }}
     >
       <IconButton onClick={handleClick}>
-        <SvgIcon>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24px"
-            viewBox="0 -960 960 960"
-            width="24px"
-            fill={color || "black"}
-          >
-            <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
-          </svg>
-        </SvgIcon>
+        <MenuSharp fontSize="large" />
       </IconButton>
       <Menu
         sx={{ opacity: 0.85 }}
