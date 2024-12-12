@@ -4,6 +4,7 @@ from tests.factories import (
     arterial_model_factory,
     budget_model_factory,
     dissemination_area_factory,
+    intersection_model_factory,
     project_model_factory,
 )
 
@@ -109,3 +110,10 @@ def test_get_budget_scores(client, fresh_db):
     response = client.get(f"/budgets/{budget.id}/scores")
     assert response.status_code == 200
     assert len(response.json) == 5  # dict w/ 5 keyes
+
+
+def test_get_intersections(client, fresh_db):
+    intersection_model_factory(fresh_db.session).create_batch(10)
+    response = client.get("/intersections")
+    assert response.status_code == 200
+    assert len(response.json["features"]) == 10

@@ -23,6 +23,7 @@ from api.models import (
     BudgetScore,
     DisseminationArea,
     ExistingLane,
+    Intersection,
     Metric,
 )
 from api.settings import app_settings
@@ -223,6 +224,18 @@ def get_das():
         for d in db.session.execute(select(DisseminationArea)).scalars().all()
     ]
     data = properties_to_geojson_features(das)
+    res = Response(geojson.dumps(data), content_type="application/json")
+    return res
+
+
+@cycling_api.route("/intersections")
+@default_cache.cached(key_prefix="/intersections")
+def get_intersections():
+    intersections = [
+        {"id": i.id, "INTERSECTION_ID": i.INTERSECTION_ID, "geometry": i.geometry}
+        for i in db.session.execute(select(Intersection)).scalars().all()
+    ]
+    data = properties_to_geojson_features(intersections)
     res = Response(geojson.dumps(data), content_type="application/json")
     return res
 

@@ -119,6 +119,6 @@ def intersection_model_factory(session):
         CLASSIFICATION = Faker("pystr")
         CLASSIFICATION_DESC = Faker("pystr")
         OBJECTID = Faker("pyint")
-        geometry = "MULTIPOINT ((-79.531070215809706, 43.607242584971097))"
+        geometry = "MULTIPOINT ((-79.531070215809706 43.607242584971097))"
 
     return IntersectionFactor
