@@ -6,6 +6,7 @@ import {
   DAGeoJSON,
   DefaultScores,
   ExistingLaneGeoJSON,
+  IntersectionFeatureGeoJSON,
 } from "@/lib/ts/types";
 
 interface StaticDataProps {
@@ -13,6 +14,7 @@ interface StaticDataProps {
   das: DAGeoJSON | null;
   defaultScores: DefaultScores | null;
   existingLanes: ExistingLaneGeoJSON | null;
+  intersections: IntersectionFeatureGeoJSON | null;
 }
 
 export const StaticDataContext = createContext<StaticDataProps>({
@@ -20,6 +22,7 @@ export const StaticDataContext = createContext<StaticDataProps>({
   das: null,
   defaultScores: null,
   existingLanes: null,
+  intersections: null,
 });
 
 interface StaticDataProviderProps {

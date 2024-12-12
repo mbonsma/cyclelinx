@@ -8,6 +8,8 @@ import {
   LatLng,
   GeoJSON as LGeoJSON,
   LeafletEvent,
+  Layer,
+  CircleMarker,
 } from "leaflet";
 import { format } from "d3-format";
 import {
@@ -78,6 +80,45 @@ const getAllProjectIds = ({
   return retSet;
 };
 
+const IntersectionFeatures: React.FC = () => {
+  const { intersections } = useContext(StaticDataContext);
+
+  const map = useMap();
+
+  useEffect(() => {
+    if (map && intersections) {
+      map.addLayer(
+        new LGeoJSON(intersections, {
+          //pointToLayer: (point) => new DummyLayer(),
+          pointToLayer: (_, latlng) => {
+            return new CircleMarker(latlng, {
+              radius: 2,
+              weight: 1,
+              opacity: 0.3,
+              fillOpacity: 0.3,
+              className: "intersection",
+              color: "blue",
+              stroke: true,
+              fillColor: "blue",
+            });
+          },
+          attribution: "intersection", //using this as a handle
+          onEachFeature: (f, l) => {
+            l.on("click", (e) => {
+              alert(
+                `You clicked on an intersection with id ${e.target.feature.properties.INTERSECTION_ID}`
+              );
+            });
+            l.bindTooltip(`<div>${f.properties.INTERSECTION_ID}</div>`);
+          },
+        })
+      );
+    }
+  }, [map, intersections]);
+
+  return null;
+};
+
 const Handler: React.FC<{
   scoreScale?:
     | ScaleLinear<number, number>
@@ -112,6 +153,7 @@ const Handler: React.FC<{
   const theme = useTheme();
 
   // add DAs
+  // TODO: should be its own layer
   useEffect(() => {
     if (!dasSet && !!map && !!das) {
       //this will create a single layer for each feature in the bundle
@@ -130,6 +172,7 @@ const Handler: React.FC<{
   }, [das, dasSet, map, setDasSet, scores]);
 
   // manage existing lanes
+  // TODO: own layer
   useEffect(() => {
     if (!!existingLanes) {
       if (!existingLanesSet) {
@@ -414,17 +457,20 @@ const MapViewer: React.FC<{
         attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>"
       />
       {handlerVisible && (
-        <Handler
-          scoreScale={scoreScale}
-          metricTypeScale={metricTypeScale}
-          improvements={improvements}
-          pendingImprovements={pendingImprovements}
-          scores={scores}
-          scoreSet={scoreSet}
-          setPendingImprovements={setPendingImprovements}
-          selectedMetric={selectedMetric}
-          visibleExistingLanes={visibleExistingLanes}
-        />
+        <>
+          <Handler
+            scoreScale={scoreScale}
+            metricTypeScale={metricTypeScale}
+            improvements={improvements}
+            pendingImprovements={pendingImprovements}
+            scores={scores}
+            scoreSet={scoreSet}
+            setPendingImprovements={setPendingImprovements}
+            selectedMetric={selectedMetric}
+            visibleExistingLanes={visibleExistingLanes}
+          />
+          {/* <IntersectionFeatures /> */}
+        </>
       )}
     </StyledLeafletContainer>
   );
@@ -436,6 +482,11 @@ const StyledLeafletContainer = styled(MapContainer)(() => ({
   //remove logo
   ".leaflet-control-attribution.leaflet-control": {
     display: "none",
+  },
+  "&.intersection": {
+    "&:hover": {
+      color: "purple",
+    },
   },
 }));
 

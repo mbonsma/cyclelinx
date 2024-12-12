@@ -1,3 +1,5 @@
+from glob import glob
+from os import path
 from typing import List
 
 from geoalchemy2.elements import WKTElement
@@ -15,10 +17,14 @@ from api.utils import extract_files
 def import_intersections(
     intersection_geojson_path: str, unsignaled_ids_path: str, session: Session
 ):
-    intersection_geojson_extracted_path = extract_files(intersection_geojson_path)
+    intersection_geojson_extracted_dir = extract_files(intersection_geojson_path)
+
+    filename = glob("*.geojson", root_dir=intersection_geojson_extracted_dir)[0]
 
     # need to use geopandas or else proper metadata not set
-    intersections = geopandas.read_file(intersection_geojson_extracted_path)
+    intersections = geopandas.read_file(
+        path.join(intersection_geojson_extracted_dir, filename)
+    )
 
     with open(unsignaled_ids_path, "r") as f:
         unsignaled_ids = [int(l) for l in f]
@@ -51,8 +57,8 @@ if __name__ == "__main__":
         description="Add a filtered list of intersections to the database.",
     )
 
-    parser.add_argument("--intersection_geojson_path")
-    parser.add_argument("--unsignaled_ids_path")
+    parser.add_argument("--intersection_geojson_path", required=True, type=str)
+    parser.add_argument("--unsignaled_ids_path", required=True, type=str)
 
     args = parser.parse_args()
 

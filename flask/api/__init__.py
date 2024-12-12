@@ -4,6 +4,9 @@ from api.settings import app_settings
 
 LOG_LEVEL = logging.DEBUG if app_settings.APP_ENV == "local" else logging.INFO
 
+logging.getLogger("fiona").setLevel(logging.WARNING)
+logging.getLogger("faker").setLevel(logging.WARNING)
+
 # Initialize logger.
 console_handler = logging.StreamHandler()
 console_handler.setLevel(LOG_LEVEL)

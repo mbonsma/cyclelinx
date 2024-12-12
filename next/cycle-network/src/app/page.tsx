@@ -51,9 +51,14 @@ export default async function Home() {
   );
   const defaultScores = await defaultScoresResult.json();
 
+  const intersectionsResult = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/intersections`
+  );
+  const intersections = await intersectionsResult.json();
+
   return (
     <StaticDataProvider
-      value={{ arterials, das, defaultScores, existingLanes }}
+      value={{ arterials, das, defaultScores, existingLanes, intersections }}
     >
       <Grid direction="row" container justifyContent="center">
         <Grid

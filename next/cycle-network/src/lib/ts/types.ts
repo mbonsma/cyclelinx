@@ -69,6 +69,11 @@ interface ArterialFeatureProperties extends FeatureProperties {
   budget_project_ids: number[];
 }
 
+interface IntersectionFeatureProperties {
+  id: number;
+  INTERSECTION_ID: number;
+}
+
 export interface ArterialFeaturePropertiesExport {
   GEO_ID: number;
 }
@@ -93,6 +98,11 @@ export type ArterialFeatureGeoJSONExport = FeatureCollection<
 export type ExistingLaneGeoJSON = FeatureCollection<
   LineString,
   ExistingLaneProperties
+>;
+
+export type IntersectionFeatureGeoJSON = FeatureCollection<
+  MultiPoint,
+  IntersectionFeatureProperties
 >;
 
 export interface ScoreSet {
