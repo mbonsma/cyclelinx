@@ -2,6 +2,8 @@ from csv import DictWriter
 from os import path
 import pickle
 
+import geojson
+import geopandas
 from sqlalchemy import select
 
 from api.models import (
@@ -10,11 +12,13 @@ from api.models import (
     BudgetScore,
     DisseminationArea,
     ExistingLane,
+    Intersection,
     Project,
 )
 from api.utils import extract_files
 from scripts.import_das import import_das
 from scripts.import_improvements import import_improvements
+from scripts.import_intersections import _import_intersections
 from scripts.import_projects import _import_arterials, _import_projects
 from scripts.import_existing_lanes import import_geojson
 from scripts.import_scores import _import_scores
@@ -153,3 +157,18 @@ def test_import_scores(app_ctx, fresh_db, tmp_path):
 
     # 1 for original, 1 for increase = 2 x 5
     assert len(scores) == 10
+
+
+def test_import_intersection(fresh_db):
+    intersection_ids = [13464408, 13464459, 13464494]
+    feature = geojson.Feature(
+        geometry=geojson.MultiPoint(
+            [(-155.52, 19.61), (-156.22, 20.74), (-157.97, 21.46)],
+        ),
+        properties={"INTERSECTION_ID": 13464494},
+    )
+    collection = geojson.FeatureCollection([feature])
+    table = geopandas.read_file(geojson.dumps(collection))
+    _import_intersections(table, intersection_ids, fresh_db.session)
+    res = fresh_db.session.execute(select(Intersection)).scalars().all()
+    assert len(res) == 1

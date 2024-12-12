@@ -369,8 +369,8 @@ const Handler: React.FC<{
 };
 
 //GTA, more or less
-const c1 = new LatLng(43.72, -79.21);
-const c2 = new LatLng(43.61, -79.45);
+const sw = new LatLng(43.69, -79.15);
+const ne = new LatLng(43.79, -79.61);
 
 const MapViewer: React.FC<{
   improvements?: number[];
@@ -401,7 +401,7 @@ const MapViewer: React.FC<{
   const [handlerVisible, setHandlerVisible] = useState(false);
   return (
     <StyledLeafletContainer
-      bounds={new LatLngBounds(c1, c2)}
+      bounds={new LatLngBounds(sw, ne)}
       scrollWheelZoom={true}
       // This prevents the handler and map from rendering at once, which causes lag
       // Instead, we render one at a time, and this seems like the best way to do it

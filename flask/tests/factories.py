@@ -104,3 +104,21 @@ def budget_model_factory(session):
         name = Sequence(lambda n: n)
 
     return BudgetFactory
+
+
+def intersection_model_factory(session):
+    class IntersectionFactor(SQLAlchemyModelFactory):
+        class Meta:
+            model = Models.Intersection
+            sqlalchemy_session = session
+            sqlalchemy_session_persistence = "commit"
+
+        INTERSECTION_ID = Faker("pyint")
+        ELEVATION_ID = Faker("pyint")
+        INTERSECTION_DESC = Faker("pystr")
+        CLASSIFICATION = Faker("pystr")
+        CLASSIFICATION_DESC = Faker("pystr")
+        OBJECTID = Faker("pyint")
+        geometry = "MULTIPOINT ((-79.531070215809706, 43.607242584971097))"
+
+    return IntersectionFactor

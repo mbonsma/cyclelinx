@@ -1,4 +1,4 @@
-from factories import budget_model_factory, dissemination_area_factory
+from tests.factories import budget_model_factory, dissemination_area_factory
 from api.models import Metric, BudgetScore
 
 

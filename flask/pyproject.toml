@@ -22,7 +22,7 @@ flask-compress = "^1.15"
 flask-caching = "^2.3.0"
 pyproj = "^3.7.0"
 # poetry add --no-cache git+https://github.com/cklamann/calculate_accessibility_fork_ck.git@master#subdirectory=cycle-calc
-cycle-calc = {git = "https://github.com/cklamann/calculate_accessibility_fork_ck.git", rev = "master", subdirectory = "cycle-calc"}
+cycle-calc = { git = "https://github.com/cklamann/calculate_accessibility_fork_ck.git", rev = "master", subdirectory = "cycle-calc" }
 gunicorn = "^23.0.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -41,6 +41,7 @@ reportMissingImports = true
 reportMissingTypeStubs = false
 
 pythonPlatform = "Linux"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

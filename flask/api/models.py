@@ -189,3 +189,15 @@ class BudgetScore(db.Model):
     budget = db.relationship("Budget", back_populates="scores")
     metric = db.relationship("Metric")
     dissemination_area = db.relationship("DisseminationArea", back_populates="scores")
+
+
+class Intersection(db.Model):
+    __tablename__ = "intersections"
+    id = Column(Integer, primary_key=True, index=True)
+    INTERSECTION_ID = Column(Integer, nullable=False)
+    ELEVATION_ID = Column(Integer)
+    INTERSECTION_DESC = Column(String)
+    CLASSIFICATION = Column(String)
+    CLASSIFICATION_DESC = Column(String)
+    OBJECTID = Column(Integer)
+    geometry = Column(Geometry("MULTIPOINT"), nullable=False)
