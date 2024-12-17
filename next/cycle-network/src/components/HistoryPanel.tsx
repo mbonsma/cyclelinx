@@ -96,10 +96,10 @@ const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
 }) => {
   return (
     <>
-      <Grid item>
+      <Grid item xs={4}>
         <Typography>{historyItem.name}</Typography>
       </Grid>
-      <Grid item>
+      <Grid item xs={4}>
         <Button
           disabled={!active}
           onClick={() => setBaseline(historyItem.scores)}
@@ -107,7 +107,14 @@ const HistoryPanelItem: React.FC<HistoryPanelItem> = ({
           set as baseline
         </Button>
       </Grid>
-      <Grid item container direction="column" xs={2}>
+      <Grid
+        item
+        container
+        direction="column"
+        xs={4}
+        alignItems="flex-end"
+        justifyContent="center"
+      >
         <Grid item>
           <IconButton onClick={removeFromHistory} disabled={!active}>
             <Delete />

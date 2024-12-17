@@ -2,13 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   scaleLinear,
   scaleOrdinal,
@@ -62,6 +56,7 @@ import {
   DefaultScores,
   ArterialFeaturePropertiesExport,
   DAGeoJSON,
+  ArterialFeatureGeoJSON,
 } from "@/lib/ts/types";
 import {
   fetchBudgetScores,
@@ -69,7 +64,6 @@ import {
   fetchNewCalculations,
 } from "@/lib/axios/api";
 import { downloadArchive, formatNumber } from "@/lib/ts/util";
-import { StaticDataContext } from "@/providers/StaticDataProvider";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const MapViewer = dynamic(() => import("./MapViewer"), {
@@ -77,9 +71,11 @@ const MapViewer = dynamic(() => import("./MapViewer"), {
 });
 
 interface MainViewPanelProps {
+  arterials: ArterialFeatureGeoJSON;
   budgets: Budget[];
   metrics: Metric[];
   das: DAGeoJSON;
+  defaultScores: DefaultScores;
 }
 
 const getScale = (scaleType: ScaleType, domain: [number, number]) => {
@@ -144,67 +140,69 @@ class SummaryStatBuilder {
     }
   };
 
-  calculate = (baseline?: SummaryStats) => {
+  calculate = () => {
     [...this.metrics].forEach((m) => {
       this.stats[m] = {
         avg: 0,
         baselineAvg: 0,
       };
       this.stats[m].avg = this.totals[m].current / this.daCount;
-      this.stats[m].baselineAvg = baseline
-        ? baseline[m].avg
-        : this.totals[m].baseline / this.daCount;
+      this.stats[m].baselineAvg = this.totals[m].baseline / this.daCount;
     });
 
     return this.stats;
   };
 }
 
-const calculateDefaultBaselineSummaryStats = (scores: DefaultScores) => {
-  const Builder = new SummaryStatBuilder(Object.values(scores).length);
-  Object.values(scores).forEach((scores) => {
-    for (const metric in scores) {
-      if (metric !== "da") {
-        //we're not interested in the baseline's baseline, so it can identical
-        Builder.add(metric, "current", scores[metric]);
-        Builder.add(metric, "baseline", scores[metric]);
+const calculateSummaryStats = (
+  scores: ScoreResults,
+  defaultScores: DefaultScores,
+  baseline: ScoreResults = {}
+) => {
+  // Note that the scores returned do not always include all DAs! So if we have user-defined baseline,
+  // it might not overlap with the current scores, and neither might include ALL default scores. Any missing scores
+  // will be filled in with the default scores, which is why we always need them
+  const daCount = Object.values(defaultScores).length;
+
+  const Builder = new SummaryStatBuilder(daCount);
+
+  const metrics = Object.keys(Object.values(scores)[0].scores.budget);
+
+  Object.values(defaultScores).forEach((defaultScore) => {
+    metrics.forEach((metric) => {
+      if (!scores[defaultScore.da]) {
+        Builder.add(metric, "current", defaultScore[metric]);
+      } else {
+        Builder.add(
+          metric,
+          "current",
+          scores[defaultScore.da].scores.budget[metric]
+        );
       }
-    }
+      if (!baseline[defaultScore.da]) {
+        Builder.add(metric, "baseline", defaultScore[metric]);
+      } else {
+        Builder.add(
+          metric,
+          "baseline",
+          baseline[defaultScore.da].scores.budget[metric]
+        );
+      }
+    });
   });
+
   return Builder.calculate();
 };
 
-const calculateSummaryStats = (
-  scores: ScoreResults,
-  daCount: number,
-  baseline?: SummaryStats
-) => {
-  const Builder = new SummaryStatBuilder(daCount);
-
-  Object.values(scores).forEach(({ scores }) => {
-    for (const metric in scores.budget) {
-      Builder.add(metric, "current", scores.budget[metric]);
-    }
-  });
-
-  if (!baseline) {
-    Object.values(scores).forEach(({ scores }) => {
-      for (const metric in scores.original) {
-        Builder.add(metric, "baseline", scores.original[metric]);
-      }
-    });
-  }
-
-  return Builder.calculate(baseline);
-};
-
 const MainViewPanel: React.FC<MainViewPanelProps> = ({
+  arterials,
   budgets,
-  metrics,
   das,
+  defaultScores,
+  metrics,
 }) => {
   const [activeHistory, setActiveHistory] = useState<string>("");
-  const [baseline, setBaseline] = useState<SummaryStats>();
+  const [baseline, setBaseline] = useState<ScoreResults>();
   const [budgetId, setBudgetId] = useState<number>();
   const [calculating, setCalculating] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -229,11 +227,9 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
   >([]);
   const [welcomeOverlayVisible, setWelcomeOverlayVisible] = useState(true);
 
-  const { defaultScores, arterials } = useContext(StaticDataContext);
-
   useEffect(() => {
     if (defaultScores) {
-      setBaseline(calculateDefaultBaselineSummaryStats(defaultScores));
+      //setBaseline(calculateDefaultBaselineSummaryStats(defaultScores));
     }
   }, [defaultScores]);
 
@@ -273,19 +269,17 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
 
   const resetBaseline = useCallback(() => {
     if (defaultScores) {
-      const baseline = calculateDefaultBaselineSummaryStats(defaultScores);
-      setBaseline(baseline);
+      setBaseline(undefined);
     }
   }, [defaultScores]);
 
   const updateBaseline = useCallback(
     (scores: ScoreResults) => {
-      if (daCount) {
-        const baseline = calculateSummaryStats(scores, daCount);
-        setBaseline(baseline);
+      if (defaultScores) {
+        setBaseline(scores);
       }
     },
-    [daCount]
+    [defaultScores]
   );
 
   const exportHistoryItem = useCallback(
@@ -366,10 +360,10 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
   );
 
   useEffect(() => {
-    if (baseline && daCount && scores) {
-      setSummaryStats(calculateSummaryStats(scores, daCount, baseline));
+    if (scores && defaultScores) {
+      setSummaryStats(calculateSummaryStats(scores, defaultScores, baseline));
     }
-  }, [scores, daCount, baseline]);
+  }, [baseline, defaultScores, scores]);
 
   const metricTypeScale: ScaleOrdinal<string, string, never> | undefined =
     useMemo(() => {

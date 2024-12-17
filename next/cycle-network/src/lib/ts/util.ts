@@ -47,7 +47,7 @@ export const roundDigit = (value: number, sd?: number): number => {
  */
 export const formatNumber = (value: number, d?: number) => {
   const rounded = roundDigit(value, d);
-  if (rounded > 1000) {
+  if (Math.abs(rounded) > 1000) {
     return format(",d")(rounded);
   } else return rounded;
 };

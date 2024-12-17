@@ -75,7 +75,13 @@ export default async function Home() {
           item
           direction="column"
         >
-          <MainViewPanel budgets={budgets} das={das} metrics={metrics} />
+          <MainViewPanel
+            arterials={arterials}
+            budgets={budgets}
+            das={das}
+            defaultScores={defaultScores}
+            metrics={metrics}
+          />
         </Grid>
       </Grid>
     </StaticDataProvider>
