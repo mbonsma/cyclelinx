@@ -51,14 +51,20 @@ export default async function Home() {
   );
   const defaultScores = await defaultScoresResult.json();
 
-  const intersectionsResult = await fetch(
-    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/intersections`
-  );
-  const intersections = await intersectionsResult.json();
+  // const intersectionsResult = await fetch(
+  //   `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/intersections`
+  // );
+  // const intersections = await intersectionsResult.json();
 
   return (
     <StaticDataProvider
-      value={{ arterials, das, defaultScores, existingLanes, intersections }}
+      value={{
+        arterials,
+        das,
+        defaultScores,
+        existingLanes,
+        intersections: null, //leaving for now, in case we need to put back in
+      }}
     >
       <Grid direction="row" container justifyContent="center">
         <Grid
@@ -69,7 +75,7 @@ export default async function Home() {
           item
           direction="column"
         >
-          <MainViewPanel budgets={budgets} metrics={metrics} />
+          <MainViewPanel budgets={budgets} das={das} metrics={metrics} />
         </Grid>
       </Grid>
     </StaticDataProvider>

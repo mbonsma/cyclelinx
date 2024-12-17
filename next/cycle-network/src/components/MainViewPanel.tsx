@@ -30,6 +30,7 @@ import {
   Select,
   Typography,
 } from "@mui/material";
+import JSZip from "jszip";
 import difference from "set.prototype.difference";
 import union from "set.prototype.union";
 import intersection from "set.prototype.intersection";
@@ -60,13 +61,14 @@ import {
   HistoryItem,
   DefaultScores,
   ArterialFeaturePropertiesExport,
+  DAGeoJSON,
 } from "@/lib/ts/types";
 import {
   fetchBudgetScores,
   fetchImprovements,
   fetchNewCalculations,
 } from "@/lib/axios/api";
-import { downloadGeojson, formatNumber } from "@/lib/ts/util";
+import { downloadArchive, formatNumber } from "@/lib/ts/util";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
@@ -77,6 +79,7 @@ const MapViewer = dynamic(() => import("./MapViewer"), {
 interface MainViewPanelProps {
   budgets: Budget[];
   metrics: Metric[];
+  das: DAGeoJSON;
 }
 
 const getScale = (scaleType: ScaleType, domain: [number, number]) => {
@@ -195,7 +198,11 @@ const calculateSummaryStats = (
   return Builder.calculate(baseline);
 };
 
-const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
+const MainViewPanel: React.FC<MainViewPanelProps> = ({
+  budgets,
+  metrics,
+  das,
+}) => {
   const [activeHistory, setActiveHistory] = useState<string>("");
   const [baseline, setBaseline] = useState<SummaryStats>();
   const [budgetId, setBudgetId] = useState<number>();
@@ -283,6 +290,8 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
 
   const exportHistoryItem = useCallback(
     (name: string) => {
+      const archive = new JSZip();
+
       const historyItemProjects = history.find(
         (h) => h.name === name
       )?.improvements;
@@ -310,10 +319,50 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({ budgets, metrics }) => {
             return f;
           });
 
-        downloadGeojson(JSON.stringify(exportArterials), `${name}.geojson`);
+        archive.file(`${name}.geojson`, JSON.stringify(exportArterials));
+      }
+      if (!!scores) {
+        const daMap = das.features.reduce<Record<number, number>>(
+          (acc, curr) => ({
+            ...acc,
+            [curr.properties.id]: curr.properties.DAUID,
+          }),
+          {}
+        );
+
+        const scoreArray = Object.values(scores);
+        if (scoreArray.length) {
+          const scoreNames = Object.keys(scoreArray[0].scores.budget);
+          const scoreHeaders = scoreNames.flatMap((k) => [
+            `${k.toLowerCase()}_original`,
+            `${k.toLowerCase()}_improvement`,
+          ]);
+
+          const headers = `dauid,${scoreHeaders.join(",")}\n`;
+
+          const rows = scoreArray
+            .flatMap((s) =>
+              [
+                daMap[s.da],
+                ...scoreNames.flatMap((name) => [
+                  s.scores.original[name],
+                  s.scores.diff[name],
+                ]),
+              ].join(",")
+            )
+            .join("\n");
+
+          const csv = headers + rows;
+
+          archive.file("scores.csv", csv);
+
+          archive
+            .generateAsync({ type: "base64" })
+            .then((content) => downloadArchive(content, `${name}.zip`));
+        }
       }
     },
-    [arterials, history]
+    [arterials, das, history, scores]
   );
 
   useEffect(() => {

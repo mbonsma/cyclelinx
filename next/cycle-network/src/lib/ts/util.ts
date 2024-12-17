@@ -86,12 +86,11 @@ export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {
   ["Sharrows - Arterial - Connector"]: "Sharrows",
 };
 
-export const downloadGeojson = (json: string, filename: string) => {
-  const file = encodeURI(`data:application/geo+json,${json}`);
+export const downloadArchive = (contents: string, name: string) => {
   const a = document.createElement("a");
-  a.download = filename;
+  a.download = name;
   a.target = "_blank";
-  a.href = file;
+  a.href = `data:application/zip;base64,${contents}`;
   document.body.append(a);
   a.click();
   a.remove();
