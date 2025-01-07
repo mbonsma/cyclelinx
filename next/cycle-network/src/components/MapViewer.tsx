@@ -2,29 +2,23 @@
 
 import dynamic from "next/dynamic";
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "@emotion/styled";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, TileLayer } from "react-leaflet";
 import { LatLngBounds, LatLng } from "leaflet";
-import { format } from "d3-format";
 import {
   ScaleLinear,
   ScaleOrdinal,
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
-import { capitalize } from "@mui/material";
 import { HamburgerMenu } from "@/components";
 import {
   EXISTING_LANE_TYPE,
-  isFeatureGroup,
-  isGeoJSONFeature,
   PendingImprovements,
   ScoreResults,
   ScoreSet,
 } from "@/lib/ts/types";
-import { StaticDataContext } from "@/providers/StaticDataProvider";
-import { formatNumber } from "@/lib/ts/util";
 
 // we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
 const DALayer = dynamic(() => import("@/components/DALayer"), {
@@ -41,90 +35,6 @@ const ExistingLanesLayer = dynamic(
 const ArterialLayer = dynamic(() => import("@/components/ArterialLayer"), {
   ssr: false,
 });
-
-const formatPct = format(",.1%");
-
-const buildValueTooltip = (
-  metric: string,
-  scores: ScoreSet,
-  scoreType: keyof ScoreSet
-) => {
-  let pctChange = "";
-  let color = "inherit";
-
-  if (scoreType !== "diff") {
-    pctChange = "";
-  } else if (scores.original[metric] === 0 && scores.diff[metric] === 0) {
-    pctChange = "(N/A)";
-  } else if (scores.original[metric] === 0 && scores.diff[metric] !== 0) {
-    pctChange = "(Inf)";
-    color = "green";
-  } else {
-    pctChange = `(${formatPct(scores.diff[metric] / scores.original[metric])})`;
-    color = "green";
-  }
-
-  return `<div><strong>${capitalize(metric)}:</strong>&nbsp;${formatNumber(
-    scores[scoreType][metric]
-  )}<span style="color:${color};">${pctChange}</span></div>`;
-};
-
-//todo: this should be an event layer, which I think react-leaflet supports specifically
-//and is there a Layer component? So we can skip the useEffects?
-const Handler: React.FC<{
-  scoreScale?:
-    | ScaleLinear<number, number>
-    | ScaleQuantile<number, never>
-    | ScaleSymLog<number, number, never>;
-  metricTypeScale: ScaleOrdinal<string, string, never>;
-  selectedMetric?: string;
-  scores?: ScoreResults;
-  scoreSet: keyof ScoreSet;
-}> = ({ scoreScale, metricTypeScale, scores, scoreSet, selectedMetric }) => {
-  const map = useMap();
-  const { das } = useContext(StaticDataContext);
-
-  // Add scores
-  useEffect(() => {
-    map.eachLayer((l) => {
-      if (l.options.attribution === "DAs" && isFeatureGroup(l) && !!l.feature) {
-        //we won't necessarily have a score for every DA when we calculate on the fly
-        if (
-          !!scores &&
-          !!selectedMetric &&
-          !!scoreScale &&
-          isGeoJSONFeature(l.feature)
-        ) {
-          if (scores[l.feature.properties.id.toString()]) {
-            const da_score_set =
-              scores[l.feature.properties.id.toString()].scores;
-            const da_scores = da_score_set[scoreSet];
-            l.setStyle({
-              fillColor: metricTypeScale(selectedMetric),
-              fillOpacity: scoreScale(da_scores[selectedMetric]),
-            });
-
-            l.bindPopup(
-              `<div><strong>DAUID:</strong>&nbsp;${l.feature.properties.DAUID}</div>` +
-                metricTypeScale
-                  .domain()
-                  .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
-                  .join("\n")
-            );
-          }
-        } else {
-          l.setStyle({
-            fillColor: "none",
-            fillOpacity: 0,
-          });
-          l.unbindPopup();
-        }
-      }
-    });
-  }, [das, scores, selectedMetric, scoreScale, scoreSet, metricTypeScale, map]);
-
-  return null;
-};
 
 //GTA, more or less
 const sw = new LatLng(43.69, -79.15);
@@ -147,10 +57,10 @@ const MapViewer: React.FC<{
   visibleExistingLanes: EXISTING_LANE_TYPE[];
 }> = ({
   improvements,
-  scoreScale,
   metricTypeScale,
   pendingImprovements,
   scores,
+  scoreScale,
   scoreSet,
   selectedMetric,
   setPendingImprovements,
@@ -173,19 +83,18 @@ const MapViewer: React.FC<{
       />
       {handlerVisible && (
         <>
-          <DALayer />
+          <DALayer
+            metricTypeScale={metricTypeScale}
+            scores={scores}
+            scoreScale={scoreScale}
+            scoreSet={scoreSet}
+            selectedMetric={selectedMetric}
+          />
           <ExistingLanesLayer visibleExistingLanes={visibleExistingLanes} />
           <ArterialLayer
             improvements={improvements}
             setPendingImprovements={setPendingImprovements}
             pendingImprovements={pendingImprovements}
-          />
-          <Handler
-            scoreScale={scoreScale}
-            metricTypeScale={metricTypeScale}
-            scores={scores}
-            scoreSet={scoreSet}
-            selectedMetric={selectedMetric}
           />
           {/* <IntersectionFeatures /> */}
         </>
