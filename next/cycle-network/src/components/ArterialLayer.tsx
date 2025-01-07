@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useMap } from "react-leaflet";
 import intersection from "set.prototype.intersection";
 import difference from "set.prototype.difference";
 import union from "set.prototype.union";
+import { Geometry } from "geojson";
 import { useTheme } from "@mui/material";
 import { GeoJSON, LeafletEvent } from "leaflet";
 import { isFeatureGroup, PendingImprovements } from "@/lib/ts/types";
@@ -38,19 +39,21 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
   pendingImprovements,
   setPendingImprovements,
 }) => {
+  const [layer, setLayer] = useState<GeoJSON<any, Geometry>>();
+
   const { arterials } = useContext(StaticDataContext);
   const map = useMap();
   const theme = useTheme();
 
   useEffect(() => {
-    const layer = new GeoJSON(arterials!, {
+    const artLayer = new GeoJSON(arterials!, {
       style: (f) => {
         if (f) {
           const projectId = f.properties.default_project_id;
           if (projectId) {
             return {
               stroke: true,
-              opacity: 0.15,
+              opacity: 0.15, //todo: this should be .075, but leaving it as test if update ever fires
             };
           }
         }
@@ -85,25 +88,12 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
                 color: theme.palette.addableRoadColor,
                 opacity: 0.075,
               });
-              // we can't use events like this everywhere b/c of performance
-              // (and note that the className method doesn't work)
-              l.off("mouseover");
-              l.off("mouseout");
-              l.on("mouseover", () => {
-                (l as any)._path.style["stroke-opacity"] = 1;
-              });
-
-              l.on("mouseout", () => {
-                (l as any)._path.style["stroke-opacity"] = 0.075;
-              });
             } else if (intersection(removeSet, allProjectIds).size) {
               l.setStyle({
                 stroke: true,
                 color: theme.palette.projectRemoveColor,
                 opacity: 1,
               });
-              l.off("mouseover");
-              l.off("mouseout");
             } else if (!!intersection(addSet, allProjectIds).size) {
               {
                 l.setStyle({
@@ -112,8 +102,6 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
                   opacity: 1,
                 });
               }
-              l.off("mouseover");
-              l.off("mouseout");
               // if it's an existing improvement, give it the improvement color
             } else if (!!intersection(improvmentsSet, allProjectIds).size) {
               l.setStyle({
@@ -121,8 +109,6 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
                 color: theme.palette.projectColor,
                 opacity: 1,
               });
-              l.off("mouseover");
-              l.off("mouseout");
             }
           }
           l.removeEventListener("click");
@@ -164,16 +150,19 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
         });
       }, //end each feature
     }); //end layer
-    map.addLayer(layer);
+    setLayer(artLayer);
+    map.addLayer(artLayer);
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  //fire update event to sync state with callbacks
   useEffect(() => {
-    map.eachLayer((l) =>
-      l.fire("update", { improvements, pendingImprovements })
-    );
-  }, [improvements, map, pendingImprovements]);
+    if (layer) {
+      layer.eachLayer((l) =>
+        l.fire("update", { improvements, pendingImprovements })
+      );
+      //layer.fire("update", { improvements, pendingImprovements });
+    }
+  }, [improvements, layer, pendingImprovements]);
 
   return null;
 };
