@@ -160,7 +160,6 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
       layer.eachLayer((l) =>
         l.fire("update", { improvements, pendingImprovements })
       );
-      //layer.fire("update", { improvements, pendingImprovements });
     }
   }, [improvements, layer, pendingImprovements]);
 

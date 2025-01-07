@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Box, IconButton, Menu, MenuItem, SvgIcon } from "@mui/material";
+import { Box, IconButton, Menu, MenuItem } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { MenuSharp } from "@mui/icons-material";
 
@@ -20,7 +20,6 @@ interface HamburgerMenuProps {
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   absolute,
   backgroundColor,
-  color,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 

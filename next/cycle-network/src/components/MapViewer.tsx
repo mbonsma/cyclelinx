@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-import React, { useState } from "react";
+import React from "react";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer } from "react-leaflet";
 import { LatLngBounds, LatLng } from "leaflet";
@@ -66,39 +66,30 @@ const MapViewer: React.FC<{
   setPendingImprovements,
   visibleExistingLanes,
 }) => {
-  const [handlerVisible, setHandlerVisible] = useState(false);
   return (
     <StyledLeafletContainer
       bounds={new LatLngBounds(sw, ne)}
       scrollWheelZoom={true}
-      // This prevents the handler and map from rendering at once, which causes lag
-      // Instead, we render one at a time, and this seems like the best way to do it
-      // given the circumstances.
-      whenReady={() => setTimeout(() => setHandlerVisible(true), 500)}
     >
       <HamburgerMenu absolute />
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>"
       />
-      {handlerVisible && (
-        <>
-          <DALayer
-            metricTypeScale={metricTypeScale}
-            scores={scores}
-            scoreScale={scoreScale}
-            scoreSet={scoreSet}
-            selectedMetric={selectedMetric}
-          />
-          <ExistingLanesLayer visibleExistingLanes={visibleExistingLanes} />
-          <ArterialLayer
-            improvements={improvements}
-            setPendingImprovements={setPendingImprovements}
-            pendingImprovements={pendingImprovements}
-          />
-          {/* <IntersectionFeatures /> */}
-        </>
-      )}
+      <DALayer
+        metricTypeScale={metricTypeScale}
+        scores={scores}
+        scoreScale={scoreScale}
+        scoreSet={scoreSet}
+        selectedMetric={selectedMetric}
+      />
+      <ExistingLanesLayer visibleExistingLanes={visibleExistingLanes} />
+      <ArterialLayer
+        improvements={improvements}
+        setPendingImprovements={setPendingImprovements}
+        pendingImprovements={pendingImprovements}
+      />
+      {/* <IntersectionFeatures /> */}
     </StyledLeafletContainer>
   );
 };
