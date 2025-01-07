@@ -1,16 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import React, { useContext, useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import {
-  LatLngBounds,
-  LatLng,
-  GeoJSON as LGeoJSON,
-  LeafletEvent,
-  Layer,
-  CircleMarker,
-} from "leaflet";
+import { LatLngBounds, LatLng } from "leaflet";
 import { format } from "d3-format";
 import {
   ScaleLinear,
@@ -18,11 +13,8 @@ import {
   ScaleQuantile,
   ScaleSymLog,
 } from "d3-scale";
-import union from "set.prototype.union";
-import difference from "set.prototype.difference";
-import intersection from "set.prototype.intersection";
-import { capitalize, useTheme } from "@mui/material";
-import HamburgerMenu from "./HamburgerMenu";
+import { capitalize } from "@mui/material";
+import { HamburgerMenu } from "@/components";
 import {
   EXISTING_LANE_TYPE,
   isFeatureGroup,
@@ -32,11 +24,23 @@ import {
   ScoreSet,
 } from "@/lib/ts/types";
 import { StaticDataContext } from "@/providers/StaticDataProvider";
-import {
-  EXISTING_LANE_NAME_MAP,
-  existingScale,
-  formatNumber,
-} from "@/lib/ts/util";
+import { formatNumber } from "@/lib/ts/util";
+
+// we need to import this dynamically b/c leaflet needs `window` and can't be prerendered
+const DALayer = dynamic(() => import("@/components/DALayer"), {
+  ssr: false,
+});
+
+const ExistingLanesLayer = dynamic(
+  () => import("@/components/ExistingLanesLayer"),
+  {
+    ssr: false,
+  }
+);
+
+const ArterialLayer = dynamic(() => import("@/components/ArterialLayer"), {
+  ssr: false,
+});
 
 const formatPct = format(",.1%");
 
@@ -65,309 +69,20 @@ const buildValueTooltip = (
   )}<span style="color:${color};">${pctChange}</span></div>`;
 };
 
-const getAllProjectIds = ({
-  default_project_id,
-  budget_project_ids,
-}: {
-  default_project_id: number | null;
-  budget_project_ids: number[];
-}) => {
-  const retSet = new Set<number>();
-  budget_project_ids.forEach((b) => retSet.add(b));
-  if (default_project_id) {
-    retSet.add(default_project_id);
-  }
-  return retSet;
-};
-
-const IntersectionFeatures: React.FC = () => {
-  const { intersections } = useContext(StaticDataContext);
-
-  const map = useMap();
-
-  useEffect(() => {
-    if (map && intersections) {
-      map.addLayer(
-        new LGeoJSON(intersections, {
-          //pointToLayer: (point) => new DummyLayer(),
-          pointToLayer: (_, latlng) => {
-            return new CircleMarker(latlng, {
-              radius: 2,
-              weight: 1,
-              opacity: 0.3,
-              fillOpacity: 0.3,
-              className: "intersection",
-              color: "blue",
-              stroke: true,
-              fillColor: "blue",
-            });
-          },
-          attribution: "intersection", //using this as a handle
-          onEachFeature: (f, l) => {
-            l.on("click", (e) => {
-              alert(
-                `You clicked on an intersection with id ${e.target.feature.properties.INTERSECTION_ID}`
-              );
-            });
-            l.bindTooltip(`<div>${f.properties.INTERSECTION_ID}</div>`);
-          },
-        })
-      );
-    }
-  }, [map, intersections]);
-
-  return null;
-};
-
+//todo: this should be an event layer, which I think react-leaflet supports specifically
+//and is there a Layer component? So we can skip the useEffects?
 const Handler: React.FC<{
   scoreScale?:
     | ScaleLinear<number, number>
     | ScaleQuantile<number, never>
     | ScaleSymLog<number, number, never>;
   metricTypeScale: ScaleOrdinal<string, string, never>;
-  improvements?: number[];
-  pendingImprovements: PendingImprovements;
   selectedMetric?: string;
-  setPendingImprovements: React.Dispatch<
-    React.SetStateAction<PendingImprovements>
-  >;
   scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
-  visibleExistingLanes: EXISTING_LANE_TYPE[];
-}> = ({
-  scoreScale,
-  metricTypeScale,
-  improvements,
-  pendingImprovements,
-  scores,
-  scoreSet,
-  selectedMetric,
-  setPendingImprovements,
-  visibleExistingLanes,
-}) => {
-  const [arterialsSet, setArterialsSet] = useState(false);
-  const [dasSet, setDasSet] = useState(false);
-  const [existingLanesSet, setExistingLanesSet] = useState(false);
+}> = ({ scoreScale, metricTypeScale, scores, scoreSet, selectedMetric }) => {
   const map = useMap();
-  const { arterials, das, existingLanes } = useContext(StaticDataContext);
-  const theme = useTheme();
-
-  // add DAs
-  // TODO: should be its own layer
-  useEffect(() => {
-    if (!dasSet && !!map && !!das) {
-      //this will create a single layer for each feature in the bundle
-      map.addLayer(
-        new LGeoJSON(das, {
-          style: {
-            stroke: false,
-            fillColor: "none",
-            fillOpacity: 0,
-          },
-          attribution: "DAs", //using this as a handle
-        })
-      );
-      setDasSet(true);
-    }
-  }, [das, dasSet, map, setDasSet, scores]);
-
-  // manage existing lanes
-  // TODO: own layer
-  useEffect(() => {
-    if (!!existingLanes) {
-      if (!existingLanesSet) {
-        map.addLayer(
-          new LGeoJSON(existingLanes, {
-            style: {
-              stroke: false,
-              fillColor: "none",
-              fillOpacity: 0,
-            },
-            attribution: "existingLanes",
-          })
-        );
-        setExistingLanesSet(true);
-      }
-      map.eachLayer((l: any) => {
-        const layerProps = l?.feature?.properties;
-        if (
-          !!layerProps?.INFRA_HIGHORDER &&
-          l?.options?.attribution === "existingLanes"
-        ) {
-          if (
-            !visibleExistingLanes.includes(
-              EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
-            )
-          ) {
-            l.setStyle({
-              stroke: false,
-              fillColor: "none",
-              fillOpacity: 0,
-            });
-          } else {
-            l.setStyle({
-              stroke: true,
-              fillColor: existingScale(
-                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
-              ),
-              color: existingScale(
-                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
-              ),
-              fillOpacity: 0.75,
-              opacity: 1,
-            });
-          }
-        }
-      });
-    }
-  }, [existingLanes, existingLanesSet, visibleExistingLanes, map]);
-
-  //add Arterials w/ click behavior and styling
-  //we use the update event to keep the callbacks up to date with react's data
-  useEffect(() => {
-    if (!!map) {
-      if (!arterialsSet && !!arterials) {
-        const layer = new LGeoJSON(arterials, {
-          style: (f) => {
-            if (f) {
-              const projectId = f.properties.default_project_id;
-              if (projectId) {
-                return {
-                  stroke: true,
-                  opacity: 0.15,
-                };
-              }
-            }
-            return {
-              stroke: true,
-              opacity: 0,
-            };
-          },
-          attribution: "arterial", //using this as a handle
-          onEachFeature: (f, l) => {
-            l.on("update", (e: LeafletEvent) => {
-              //eslint-disable-next-line
-              //@ts-ignore
-              const improvements = e.improvements as number[];
-              const pendingImprovements =
-                //eslint-disable-next-line
-                //@ts-ignore
-                e.pendingImprovements as PendingImprovements;
-
-              const allProjectIds = getAllProjectIds(f.properties);
-              const improvmentsSet = new Set(improvements);
-              const removeSet = new Set(pendingImprovements.toRemove);
-              const addSet = new Set(pendingImprovements.toAdd);
-              if (allProjectIds.size && isFeatureGroup(l)) {
-                //if it's not in any set, base styling
-                if (
-                  !intersection(addSet, allProjectIds).size &&
-                  !intersection(improvmentsSet, allProjectIds).size
-                ) {
-                  l.setStyle({
-                    stroke: true,
-                    color: theme.palette.addableRoadColor,
-                    opacity: 0.075,
-                  });
-                  //we can't use events like this everywhere b/c of performance
-                  //(and note that className method doesn't work)
-                  l.off("mouseover");
-                  l.off("mouseout");
-                  l.on("mouseover", () => {
-                    (l as any)._path.style["stroke-opacity"] = 1;
-                  });
-
-                  l.on("mouseout", () => {
-                    (l as any)._path.style["stroke-opacity"] = 0.075;
-                  });
-                } else if (intersection(removeSet, allProjectIds).size) {
-                  l.setStyle({
-                    stroke: true,
-                    color: theme.palette.projectRemoveColor,
-                    opacity: 1,
-                  });
-                  l.off("mouseover");
-                  l.off("mouseout");
-                } else if (!!intersection(addSet, allProjectIds).size) {
-                  {
-                    l.setStyle({
-                      stroke: true,
-                      color: theme.palette.projectAddColor,
-                      opacity: 1,
-                    });
-                  }
-                  l.off("mouseover");
-                  l.off("mouseout");
-                  // if it's an existing improvement, give it the improvement color
-                } else if (!!intersection(improvmentsSet, allProjectIds).size) {
-                  l.setStyle({
-                    stroke: true,
-                    color: theme.palette.projectColor,
-                    opacity: 1,
-                  });
-                  l.off("mouseover");
-                  l.off("mouseout");
-                }
-              }
-              l.removeEventListener("click");
-              l.addEventListener("click", (e) => {
-                const allProjectIds = getAllProjectIds(
-                  e.sourceTarget.feature.properties
-                );
-
-                if (!!allProjectIds.size) {
-                  // if user added already, remove from add list
-                  if (!!intersection(addSet, allProjectIds).size) {
-                    setPendingImprovements(({ toRemove }) => ({
-                      toAdd: [...difference(addSet, allProjectIds)],
-                      toRemove,
-                    }));
-
-                    // if user has marked for removal, remove from remove list
-                  } else if (!!intersection(removeSet, allProjectIds).size) {
-                    setPendingImprovements(({ toAdd }) => ({
-                      toRemove: [...difference(removeSet, allProjectIds)],
-                      toAdd,
-                    }));
-                  } //if it's in the improvements list, they're removing
-                  else if (!!intersection(improvmentsSet, allProjectIds).size) {
-                    setPendingImprovements(({ toAdd }) => ({
-                      toRemove: [...union(removeSet, allProjectIds)],
-                      toAdd,
-                    }));
-                  }
-                  // otherwise they're marking it to add
-                  else {
-                    setPendingImprovements(({ toRemove }) => ({
-                      toAdd: [...union(addSet, allProjectIds)],
-                      toRemove,
-                    }));
-                  }
-                }
-              });
-            });
-          }, //end each feature
-        }); //end layer
-        map.addLayer(layer);
-        setArterialsSet(true);
-      } // end arterial set conditional
-    } //end map conditional
-  }, [
-    arterials,
-    arterialsSet,
-    map,
-    improvements,
-    pendingImprovements,
-    setPendingImprovements,
-    theme.palette,
-  ]);
-
-  //fire update event to sync state with callbacks
-  useEffect(() => {
-    map.eachLayer((l) =>
-      l.fire("update", { improvements, pendingImprovements })
-    );
-  }, [improvements, map, pendingImprovements]);
+  const { das } = useContext(StaticDataContext);
 
   // Add scores
   useEffect(() => {
@@ -458,16 +173,19 @@ const MapViewer: React.FC<{
       />
       {handlerVisible && (
         <>
+          <DALayer />
+          <ExistingLanesLayer visibleExistingLanes={visibleExistingLanes} />
+          <ArterialLayer
+            improvements={improvements}
+            setPendingImprovements={setPendingImprovements}
+            pendingImprovements={pendingImprovements}
+          />
           <Handler
             scoreScale={scoreScale}
             metricTypeScale={metricTypeScale}
-            improvements={improvements}
-            pendingImprovements={pendingImprovements}
             scores={scores}
             scoreSet={scoreSet}
-            setPendingImprovements={setPendingImprovements}
             selectedMetric={selectedMetric}
-            visibleExistingLanes={visibleExistingLanes}
           />
           {/* <IntersectionFeatures /> */}
         </>

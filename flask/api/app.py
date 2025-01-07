@@ -80,6 +80,7 @@ def get_budgets():
 
 
 @cycling_api.route("/arterials", methods=["GET"])
+@default_cache.cached()
 def get_arterials():
     arterials = [
         {
@@ -104,6 +105,7 @@ def get_arterials():
 
 
 @cycling_api.route("/budgets/<int:id>/arterials")
+@default_cache.cached()
 def get_budget_arterials(id):
 
     budget = db.session.execute(select(Budget).filter(Budget.id == id)).scalar()
