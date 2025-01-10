@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import React from "react";
 import Link from "next/link";
 import {
@@ -11,8 +13,11 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { HamburgerMenu } from "@/components";
+import { Footer } from "@/components";
 
+const HamburgerMenu = dynamic(() => import("@/components/HamburgerMenu"), {
+  ssr: false,
+});
 interface InfoPageLayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -43,6 +48,7 @@ const InfoPageLayout: React.FC<InfoPageLayoutProps> = ({ children, title }) => (
       </AppBar>
       {children}
     </Box>
+    <Footer />
   </Container>
 );
 
