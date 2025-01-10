@@ -159,9 +159,9 @@ const calculateSummaryStats = (
   defaultScores: DefaultScores,
   baseline: ScoreResults = {}
 ) => {
-  // Note that the scores returned do not always include all DAs! So if we have user-defined baseline,
-  // it might not overlap with the current scores, and neither might include ALL default scores. Any missing scores
-  // will be filled in with the default scores, which is why we always need them
+  // Note that the scores returned do not always include all DAs! So if we have a user-defined baseline, its DAs
+  // might not overlap with those of the current scores, and neither might include ALL the baseline scores. Thus, any missing scores
+  // will be filled in with the default scores, which is why we always need them.
   const daCount = Object.values(defaultScores).length;
 
   const Builder = new SummaryStatBuilder(daCount);

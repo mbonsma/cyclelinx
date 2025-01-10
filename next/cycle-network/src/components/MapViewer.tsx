@@ -37,8 +37,8 @@ const ArterialLayer = dynamic(() => import("@/components/ArterialLayer"), {
 });
 
 //GTA, more or less
-const sw = new LatLng(43.69, -79.15);
-const ne = new LatLng(43.79, -79.61);
+const ne = new LatLng(43.855, -79.133);
+const sw = new LatLng(43.586, -79.639);
 
 const MapViewer: React.FC<{
   improvements?: number[];
