@@ -15,10 +15,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.flask.rule=Host(`${HOST}`)&&PathPrefix(`${FLASK_ROUTER_PATH}`)"
-      #- "traefik.http.routers.flask.entrypoints=websecure"
+      - "traefik.http.routers.flask.entrypoints=websecure"
       - "traefik.http.routers.flask.entrypoints=web"
-      #- "traefik.http.routers.flask.tls=true"
-      #- "traefik.http.routers.flask.tls.certResolver=default-resolver"
+      - "traefik.http.routers.flask.tls=true"
+      - "traefik.http.routers.flask.tls.certResolver=default-resolver"
       - "traefik.http.middlewares.flask-stripprefix.stripprefix.prefixes=${FLASK_ROUTER_PATH}"
       - "traefik.http.routers.flask.middlewares=flask-stripprefix@docker"
       - "traefik.http.services.flask.loadbalancer.server.port=${FLASK_PORT}"
@@ -34,10 +34,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.next.rule=Host(`${HOST}`)"
-      #- "traefik.http.routers.next.entrypoints=websecure"
+      - "traefik.http.routers.next.entrypoints=websecure"
       - "traefik.http.routers.next.entrypoints=web"
-      # - "traefik.http.routers.next.tls=true"
-      # - "traefik.http.routers.next.tls.certResolver=default-resolver"
+       - "traefik.http.routers.next.tls=true"
+       - "traefik.http.routers.next.tls.certResolver=default-resolver"
       - "traefik.http.services.next.loadbalancer.server.port=${NEXT_PORT}"
 
   postgres:
@@ -65,17 +65,17 @@ services:
       - --log.level=INFO
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      # - --entrypoints.websecure.address=:443
-      # - --entrypoints.web.http.redirections.entryPoint.to=websecure
-      # - --entrypoints.web.http.redirections.entryPoint.scheme=https
-      # - --entrypoints.web.http.redirections.entrypoint.permanent=true
-      # - --certificatesresolvers.default-resolver.acme=true
-      # - --certificatesresolvers.default-resolver.acme.email=${LETSENCRYPT_EMAIL}
-      # - --certificatesresolvers.default-resolver.acme.storage=/letsencrypt/acme.json
-      # - --certificatesresolvers.default-resolver.acme.httpchallenge.entrypoint=web
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --certificatesresolvers.default-resolver.acme=true
+      - --certificatesresolvers.default-resolver.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.default-resolver.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.default-resolver.acme.httpchallenge.entrypoint=web
     ports:
       - 80:80
-      # - 443:443
+      - 443:443
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik/letsencrypt:/letsencrypt
