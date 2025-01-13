@@ -1,9 +1,11 @@
 import React from "react";
 //https://github.com/mui/material-ui/issues/40214
-import { promises as fs } from "fs";
-import path from "path";
 import Grid from "@mui/material/Grid";
 import { MainViewPanel } from "@/components";
+import arterials from "@/lib/geojson/arterials.json";
+import defaults from "@/lib/geojson/defaults.json";
+import existingLanes from "@/lib/geojson/existing.json";
+import das from "@/lib/geojson/das.json";
 import StaticDataProvider from "@/providers/StaticDataProvider";
 import {
   ArterialFeatureGeoJSON,
@@ -25,41 +27,13 @@ export default async function MapPage() {
   );
   const budgets = await budgetsResult.json();
 
-  const arterials = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/arterials.geojson"),
-      "utf8"
-    )
-  ) as ArterialFeatureGeoJSON;
-
-  const das = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/das.geojson"),
-      "utf8"
-    )
-  ) as DAGeoJSON;
-
-  const existingLanes = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/existing.geojson"),
-      "utf8"
-    )
-  ) as ExistingLaneGeoJSON;
-
-  const defaultScores = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/existing.geojson"),
-      "utf8"
-    )
-  ) as DefaultScores;
-
   return (
     <StaticDataProvider
       value={{
-        arterials,
-        das,
-        defaultScores,
-        existingLanes,
+        arterials: arterials as ArterialFeatureGeoJSON,
+        das: das as DAGeoJSON,
+        defaultScores: defaults as DefaultScores,
+        existingLanes: existingLanes as ExistingLaneGeoJSON,
         intersections: null, //leaving for now, in case we need to put back in
       }}
     >
@@ -73,10 +47,10 @@ export default async function MapPage() {
           direction="column"
         >
           <MainViewPanel
-            arterials={arterials}
+            arterials={arterials as ArterialFeatureGeoJSON}
             budgets={budgets}
-            das={das}
-            defaultScores={defaultScores}
+            das={das as DAGeoJSON}
+            defaultScores={defaults as DefaultScores}
             metrics={metrics}
           />
         </Grid>

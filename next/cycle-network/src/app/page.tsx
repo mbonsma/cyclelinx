@@ -5,7 +5,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { Typography } from "@mui/material";
 import { MapPage } from "@/components";
 
-export const dynamic = "force-dynamic"; // prevent fetches at buildtime
+//export const dynamic = "force-dynamic"; // prevent fetches at buildtime
 
 export default function Home() {
   return (
