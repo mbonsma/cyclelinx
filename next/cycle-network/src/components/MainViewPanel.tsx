@@ -24,6 +24,7 @@ import {
   Select,
   Typography,
 } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
 import JSZip from "jszip";
 import difference from "set.prototype.difference";
 import union from "set.prototype.union";
@@ -210,6 +211,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
   const [improvements, setImprovements] = useState<number[]>();
   const [loading, setLoading] = useState(false);
   const [measuresVisible, setMeasuresVisible] = useState(false);
+  const [mapLoading, setMapLoading] = useState(true);
   const [pendingImprovements, setPendingImprovements] =
     useState<PendingImprovements>({
       toAdd: [],
@@ -533,6 +535,26 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
           reset={reset}
         />
         <Divider sx={{ margin: 2 }} />
+        {!!mapLoading && (
+          <Grid
+            direction="column"
+            justifyContent="center"
+            alignItems="center"
+            item
+            container
+          >
+            <Grid item>
+              <Typography>
+                <CircularProgress size="large" />
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Typography color="error" variant="h5">
+                Map loading....
+              </Typography>
+            </Grid>
+          </Grid>
+        )}
         <Grid item>
           <CollapsibleSection defaultOpen label="Existing Lanes">
             <ExistingLaneControls
@@ -651,18 +673,16 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
                   </Grid>
                 )}
                 {!!scoreScale && (
-                  <>
-                    <Grid item>
-                      <ScoreScalePanel
-                        measuresVisible={measuresVisible}
-                        scoreScale={scoreScale}
-                        scoreSetType={scoreSetType}
-                        selectedMetric={selectedMetric}
-                        setMeasuresVisible={setMeasuresVisible}
-                        setScoreSetType={setScoreSetType}
-                      />
-                    </Grid>
-                  </>
+                  <Grid item>
+                    <ScoreScalePanel
+                      measuresVisible={measuresVisible}
+                      scoreScale={scoreScale}
+                      scoreSetType={scoreSetType}
+                      selectedMetric={selectedMetric}
+                      setMeasuresVisible={setMeasuresVisible}
+                      setScoreSetType={setScoreSetType}
+                    />
+                  </Grid>
                 )}
               </Grid>
             </CollapsibleSection>
@@ -698,6 +718,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
             scoreScale={scoreScale}
             scoreSet={scoreSetType}
             selectedMetric={selectedMetric}
+            setMapLoaded={() => setMapLoading(false)}
             visibleExistingLanes={visibleExistingLanes}
           />
         )}
@@ -711,7 +732,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
         open={calculating}
         message="Calculating accessibility...."
       />
-
       <HistoryModal
         open={historyModalOpen}
         history={history}

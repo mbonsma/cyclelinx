@@ -51,6 +51,7 @@ const MapViewer: React.FC<{
   scores?: ScoreResults;
   scoreSet: keyof ScoreSet;
   selectedMetric?: string;
+  setMapLoaded: () => void;
   setPendingImprovements: React.Dispatch<
     React.SetStateAction<PendingImprovements>
   >;
@@ -63,6 +64,7 @@ const MapViewer: React.FC<{
   scoreScale,
   scoreSet,
   selectedMetric,
+  setMapLoaded,
   setPendingImprovements,
   visibleExistingLanes,
 }) => {
@@ -70,6 +72,7 @@ const MapViewer: React.FC<{
     <StyledLeafletContainer
       bounds={new LatLngBounds(sw, ne)}
       scrollWheelZoom={true}
+      whenReady={() => setMapLoaded()}
     >
       <HamburgerMenu absolute />
       <TileLayer

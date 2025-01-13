@@ -53,7 +53,7 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
           if (projectId) {
             return {
               stroke: true,
-              opacity: 0.15, //todo: this should be .075, but leaving it as test if update ever fires
+              opacity: 0.1,
             };
           }
         }
@@ -86,7 +86,7 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
               l.setStyle({
                 stroke: true,
                 color: theme.palette.addableRoadColor,
-                opacity: 0.075,
+                opacity: 0.1,
               });
             } else if (intersection(removeSet, allProjectIds).size) {
               l.setStyle({
