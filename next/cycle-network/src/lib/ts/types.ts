@@ -6,6 +6,7 @@ import geojson, {
   Feature,
   MultiPoint,
   GeometryCollection,
+  MultiLineString,
 } from "geojson";
 import { FeatureGroup, Layer } from "leaflet";
 
@@ -96,7 +97,7 @@ export type ArterialFeatureGeoJSONExport = FeatureCollection<
 >;
 
 export type ExistingLaneGeoJSON = FeatureCollection<
-  LineString,
+  MultiLineString,
   ExistingLaneProperties
 >;
 

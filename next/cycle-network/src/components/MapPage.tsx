@@ -4,9 +4,10 @@ import { promises as fs } from "fs";
 import path from "path";
 import Grid from "@mui/material/Grid";
 import { MainViewPanel } from "@/components";
-// import existingLanes from "@/lib/geojson/existing.json";
-// import das from "@/lib/geojson/das.json";
-// import arterials from "@/lib/geojson/arterials.json";
+import das from "@/lib/geojson/das.json";
+import existingLanes from "@/lib/geojson/existing.json";
+import defaultScores from "@/lib/geojson/defaults.json";
+import arterials from "@/lib/geojson/arterials.json";
 import StaticDataProvider from "@/providers/StaticDataProvider";
 import {
   ArterialFeatureGeoJSON,
@@ -67,41 +68,41 @@ export default async function MapPage() {
   // );
   // const intersections = await intersectionsResult.json();
 
-  const arterials = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/arterials.geojson"),
-      "utf8"
-    )
-  ) as ArterialFeatureGeoJSON;
+  // const arterials = JSON.parse(
+  //   await fs.readFile(
+  //     path.join(process.cwd() + "/src/lib/geojson/arterials.geojson"),
+  //     "utf8"
+  //   )
+  // ) as ArterialFeatureGeoJSON;
 
-  const das = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/das.geojson"),
-      "utf8"
-    )
-  ) as DAGeoJSON;
+  // const das = JSON.parse(
+  //   await fs.readFile(
+  //     path.join(process.cwd() + "/src/lib/geojson/das.geojson"),
+  //     "utf8"
+  //   )
+  // ) as DAGeoJSON;
 
-  const existingLanes = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/existing.geojson"),
-      "utf8"
-    )
-  ) as ExistingLaneGeoJSON;
+  // const existingLanes = JSON.parse(
+  //   await fs.readFile(
+  //     path.join(process.cwd() + "/src/lib/geojson/existing.geojson"),
+  //     "utf8"
+  //   )
+  // ) as ExistingLaneGeoJSON;
 
-  const defaultScores = JSON.parse(
-    await fs.readFile(
-      path.join(process.cwd() + "/src/lib/geojson/defaults.geojson"),
-      "utf8"
-    )
-  ) as DefaultScores;
+  // const defaultScores = JSON.parse(
+  //   await fs.readFile(
+  //     path.join(process.cwd() + "/src/lib/geojson/defaults.geojson"),
+  //     "utf8"
+  //   )
+  // ) as DefaultScores;
 
   return (
     <StaticDataProvider
       value={{
-        arterials,
-        das,
+        arterials: arterials as ArterialFeatureGeoJSON,
+        das: das as DAGeoJSON,
         defaultScores,
-        existingLanes,
+        existingLanes: existingLanes as ExistingLaneGeoJSON,
         intersections: null, //leaving for now, in case we need to put back in
       }}
     >
@@ -115,9 +116,9 @@ export default async function MapPage() {
           direction="column"
         >
           <MainViewPanel
-            arterials={arterials}
+            arterials={arterials as ArterialFeatureGeoJSON}
             budgets={budgets}
-            das={das}
+            das={das as DAGeoJSON}
             defaultScores={defaultScores}
             metrics={metrics}
           />
