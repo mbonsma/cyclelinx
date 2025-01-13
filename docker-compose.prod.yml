@@ -16,7 +16,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.flask.rule=Host(`${HOST}`)&&PathPrefix(`${FLASK_ROUTER_PATH}`)"
       - "traefik.http.routers.flask.entrypoints=websecure"
-      - "traefik.http.routers.flask.entrypoints=web"
       - "traefik.http.routers.flask.tls=true"
       - "traefik.http.routers.flask.tls.certResolver=default-resolver"
       - "traefik.http.middlewares.flask-stripprefix.stripprefix.prefixes=${FLASK_ROUTER_PATH}"
@@ -35,9 +34,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.next.rule=Host(`${HOST}`)"
       - "traefik.http.routers.next.entrypoints=websecure"
-      - "traefik.http.routers.next.entrypoints=web"
-       - "traefik.http.routers.next.tls=true"
-       - "traefik.http.routers.next.tls.certResolver=default-resolver"
+      - "traefik.http.routers.next.tls=true"
+      - "traefik.http.routers.next.tls.certResolver=default-resolver"
       - "traefik.http.services.next.loadbalancer.server.port=${NEXT_PORT}"
 
   postgres:

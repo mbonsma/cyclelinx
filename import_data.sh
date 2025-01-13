@@ -25,7 +25,7 @@ fi
 
 DATA_DIR="${1}"
 
-# ./import_data.sh --dev ~/cycle-network/flask/data
+# ./import_data.sh --dev <flask/data>
 
 docker compose -f "${compose_file}" run --rm \
     -v ${DATA_DIR}/das.tar.xz:/tmp/upload.tar.xz \

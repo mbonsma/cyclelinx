@@ -60,7 +60,7 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onClose, open }) => {
         </Grid>
         <Grid item>
           <Typography variant="h6">
-            Click <Link href="#">here</Link> to view the full tutorial.
+            Click <Link href="/help">here</Link> to view the full tutorial.
           </Typography>
         </Grid>
         <Grid item>
