@@ -5,7 +5,7 @@ import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Grid } from "@mui/material";
 
-const LoadingOverlay: React.FC<{ open: boolean; message?: string }> = () => {
+const LoadingOverlay: React.FC = () => {
   return (
     <Backdrop
       sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
