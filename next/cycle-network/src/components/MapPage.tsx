@@ -3,9 +3,11 @@ import React from "react";
 import Grid from "@mui/material/Grid";
 import { MainViewPanel } from "@/components";
 import arterials from "@/lib/geojson/arterials.json";
+import budgets from "@/lib/geojson/budgets.json";
+import das from "@/lib/geojson/das.json";
 import defaults from "@/lib/geojson/defaults.json";
 import existingLanes from "@/lib/geojson/existing.json";
-import das from "@/lib/geojson/das.json";
+import metrics from "@/lib/geojson/metrics.json";
 import StaticDataProvider from "@/providers/StaticDataProvider";
 import {
   ArterialFeatureGeoJSON,
@@ -17,16 +19,6 @@ import {
 //export const dynamic = "force-dynamic"; // prevent fetches at buildtime
 
 export default async function MapPage() {
-  const metricsResult = await fetch(
-    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/metrics`
-  );
-  const metrics = await metricsResult.json();
-
-  const budgetsResult = await fetch(
-    `${process.env.NEXT_PUBLIC_API_ENDPOINT_INTERNAL}/budgets`
-  );
-  const budgets = await budgetsResult.json();
-
   return (
     <StaticDataProvider
       value={{
