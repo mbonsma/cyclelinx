@@ -27,16 +27,17 @@ const HelpSectionOne: React.FC = () => (
   <HelpSection title="Getting started">
     <HelpSectionText>
       <HelpSectionParagraph>
-        The first thing you will see on the Cyclelinx app is a map of the Greater
-        Toronto Area. Roads where new bike infrastructure can be added are marked in a
-        light blue colour.
+        The first thing you will see on the Cyclelinx app is a map of the
+        Greater Toronto Area. Roads where new bike infrastructure can be added
+        are marked in a light blue colour.
       </HelpSectionParagraph>
       <HelpSectionParagraph>
-        The panel on the left allows you to view existing bike lanes as of 2021 by type.
-        It also allows you to select a <Strong>"budget"</Strong> (given in
-        kilometers of new bike infrastructure). When a budget is selected, the map will
-        be updated with new bike routes that are optimal for increasing accessibility
-        to destinations given the existing infrastructure.
+        The panel on the left allows you to view existing bike lanes as of 2021
+        by type. It also allows you to select a <Strong>"budget"</Strong> (given
+        in kilometers of new bike infrastructure). When a budget is selected,
+        the map will be updated with new bike routes that are optimal for
+        increasing accessibility to destinations given the existing
+        infrastructure.
       </HelpSectionParagraph>
     </HelpSectionText>
     <HelpSectionImage
@@ -55,15 +56,15 @@ const HelpSectionTwo: React.FC = () => (
       <HelpSectionParagraph>
         After selecting a budget, the optimal new cycling routes will appear as
         blue lines on the map. The heat map (shown in green in the image) will
-        indicate the accessibility created by the proposed infrastructure for each
-        origin census {" "}
+        indicate the accessibility created by the proposed infrastructure for
+        each origin census{" "}
         <Link
           target="_blank"
           href="https://www12.statcan.gc.ca/census-recensement/2021/ref/dict/az/definition-eng.cfm?ID=geo021"
         >
           dissemination area
-        </Link>{" "}. The
-        type of infrastructure shown can be toggled in the section of the
+        </Link>{" "}
+        . The type of infrastructure shown can be toggled in the section of the
         left-hand panel labeled <Strong>Metrics</Strong>.
       </HelpSectionParagraph>
       <HelpSectionParagraph>
@@ -74,8 +75,8 @@ const HelpSectionTwo: React.FC = () => (
         >
           dissemination area
         </Link>{" "}
-        over the "baseline" infrastructure, which by default is the current (2021)
-        infrastructure.
+        over the "baseline" infrastructure, which by default is the current
+        (2021) infrastructure.
       </HelpSectionParagraph>
       <HelpSectionParagraph>
         Click <Strong>Save</Strong> to store the current map and compare it with

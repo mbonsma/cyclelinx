@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 export default function useHandleResize(
-  ref: React.MutableRefObject<HTMLElement | null>
+  ref: React.MutableRefObject<HTMLElement | null>,
 ) {
   const [width, setWidth] = useState<number>();
 

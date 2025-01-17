@@ -47,7 +47,7 @@ const ExistingLanesLayer: React.FC<ExistingLanesLayerProps> = ({
         ) {
           if (
             !visibleExistingLanes.includes(
-              EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+              EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER],
             )
           ) {
             l.setStyle({
@@ -59,10 +59,10 @@ const ExistingLanesLayer: React.FC<ExistingLanesLayerProps> = ({
             l.setStyle({
               stroke: true,
               fillColor: existingScale(
-                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER],
               ),
               color: existingScale(
-                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER]
+                EXISTING_LANE_NAME_MAP[layerProps.INFRA_HIGHORDER],
               ),
               fillOpacity: 0.75,
               opacity: 1,

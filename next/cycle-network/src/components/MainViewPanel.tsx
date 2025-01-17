@@ -158,7 +158,7 @@ class SummaryStatBuilder {
 const calculateSummaryStats = (
   scores: ScoreResults,
   defaultScores: DefaultScores,
-  baseline: ScoreResults = {}
+  baseline: ScoreResults = {},
 ) => {
   // Note that the scores returned do not always include all DAs! So if we have a user-defined baseline, its DAs
   // might not overlap with those of the current scores, and neither might include ALL the baseline scores. Thus, any missing scores
@@ -177,7 +177,7 @@ const calculateSummaryStats = (
         Builder.add(
           metric,
           "current",
-          scores[defaultScore.da].scores.budget[metric]
+          scores[defaultScore.da].scores.budget[metric],
         );
       }
       if (!baseline[defaultScore.da]) {
@@ -186,7 +186,7 @@ const calculateSummaryStats = (
         Builder.add(
           metric,
           "baseline",
-          baseline[defaultScore.da].scores.budget[metric]
+          baseline[defaultScore.da].scores.budget[metric],
         );
       }
     });
@@ -251,7 +251,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
         setPendingImprovements({ toAdd: [], toRemove: [] });
       }
     },
-    [daCount]
+    [daCount],
   );
 
   const saveHistory = useCallback(
@@ -262,11 +262,11 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
             improvements,
             name,
             scores,
-          })
+          }),
         );
       }
     },
-    [improvements, scores]
+    [improvements, scores],
   );
 
   const resetBaseline = useCallback(() => {
@@ -281,7 +281,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
         setBaseline(scores);
       }
     },
-    [defaultScores]
+    [defaultScores],
   );
 
   const exportHistoryItem = useCallback(
@@ -289,7 +289,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
       const archive = new JSZip();
 
       const historyItemProjects = history.find(
-        (h) => h.name === name
+        (h) => h.name === name,
       )?.improvements;
       if (!!historyItemProjects && !!arterials) {
         const historyItemProjectsSet = new Set(historyItemProjects);
@@ -303,10 +303,10 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
                 historyItemProjectsSet,
                 new Set(
                   properties.budget_project_ids.concat(
-                    properties.default_project_id || []
-                  )
-                )
-              ).size
+                    properties.default_project_id || [],
+                  ),
+                ),
+              ).size,
           )
           .map((f) => {
             (f.properties as ArterialFeaturePropertiesExport) = {
@@ -323,7 +323,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
             ...acc,
             [curr.properties.id]: curr.properties.DAUID,
           }),
-          {}
+          {},
         );
 
         const scoreArray = Object.values(scores);
@@ -344,7 +344,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
                   s.scores.original[name],
                   s.scores.diff[name],
                 ]),
-              ].join(",")
+              ].join(","),
             )
             .join("\n");
 
@@ -358,7 +358,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
         }
       }
     },
-    [arterials, das, history, scores]
+    [arterials, das, history, scores],
   );
 
   useEffect(() => {
@@ -372,7 +372,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
       if (metrics) {
         const scale = scaleOrdinal(
           metrics.map((r) => r.name),
-          schemeDark2.slice(0, metrics.length)
+          schemeDark2.slice(0, metrics.length),
         );
         return scale;
       } else {
@@ -416,7 +416,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
                 }
               }
             }
-          })
+          }),
         )
         .finally(() => setLoading(false));
     }
@@ -426,7 +426,9 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
   const scoreScale = useMemo(() => {
     if (scores && selectedMetric) {
       const scoreExtent = extent(
-        Object.values(scores).map((s) => s.scores[scoreSetType][selectedMetric])
+        Object.values(scores).map(
+          (s) => s.scores[scoreSetType][selectedMetric],
+        ),
       ) as [number, number];
       return getScale(scaleType, scoreExtent);
     }
@@ -535,26 +537,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
           reset={reset}
         />
         <Divider sx={{ margin: 2 }} />
-        {!!mapLoading && (
-          <Grid
-            direction="column"
-            justifyContent="center"
-            alignItems="center"
-            item
-            container
-          >
-            <Grid item>
-              <Typography>
-                <CircularProgress size="large" />
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography color="error" variant="h5">
-                Map loading....
-              </Typography>
-            </Grid>
-          </Grid>
-        )}
         <Grid item>
           <CollapsibleSection defaultOpen label="Existing Lanes">
             <ExistingLaneControls
@@ -582,14 +564,14 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
                           <span>
                             <Typography variant="caption">
                               {formatNumber(
-                                maybeLog(scaleType, scoreScale.domain()[0])
+                                maybeLog(scaleType, scoreScale.domain()[0]),
                               )}
                             </Typography>
                           </span>
                           <span>
                             <Typography variant="caption">
                               {formatNumber(
-                                maybeLog(scaleType, scoreScale.domain()[1])
+                                maybeLog(scaleType, scoreScale.domain()[1]),
                               )}
                             </Typography>
                           </span>
@@ -627,7 +609,7 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
                                 >
                                   {formatNumber(
                                     summaryStats[selectedMetric].avg -
-                                      summaryStats[selectedMetric].baselineAvg
+                                      summaryStats[selectedMetric].baselineAvg,
                                   )}
                                 </Box>
                               </Typography>
@@ -707,20 +689,41 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
           )}
         </Grid>
       </Grid>
-      <Grid item xs={12} md={10} flexGrow={1}>
+      <Grid item direction="column" container xs={12} md={10} flexGrow={1}>
+        {!!mapLoading && (
+          <Grid
+            height="100vh"
+            justifyContent="center"
+            alignItems="center"
+            flexGrow={1}
+            direction="column"
+            container
+            item
+            spacing={2}
+          >
+            <Grid item>
+              <Typography variant="h5">Map Loading...</Typography>
+            </Grid>
+            <Grid item>
+              <CircularProgress />
+            </Grid>
+          </Grid>
+        )}
         {!!metricTypeScale && (
-          <MapViewer
-            improvements={improvements}
-            pendingImprovements={pendingImprovements}
-            metricTypeScale={metricTypeScale}
-            setPendingImprovements={setPendingImprovements}
-            scores={scores}
-            scoreScale={scoreScale}
-            scoreSet={scoreSetType}
-            selectedMetric={selectedMetric}
-            setMapLoaded={() => setMapLoading(false)}
-            visibleExistingLanes={visibleExistingLanes}
-          />
+          <Grid item flexGrow={1}>
+            <MapViewer
+              improvements={improvements}
+              pendingImprovements={pendingImprovements}
+              metricTypeScale={metricTypeScale}
+              setPendingImprovements={setPendingImprovements}
+              scores={scores}
+              scoreScale={scoreScale}
+              scoreSet={scoreSetType}
+              selectedMetric={selectedMetric}
+              setMapLoaded={() => setMapLoading(false)}
+              visibleExistingLanes={visibleExistingLanes}
+            />
+          </Grid>
         )}
       </Grid>
       <WelcomeOverlay

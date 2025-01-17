@@ -1,11 +1,12 @@
 {
   "files.watcherExclude": {
-    "**/.next/**": true
+    "**/.next/**": true,
+    "**/geojson/*": true,
+    "**/*.geojson": true
   },
   "search.exclude": {
-    "**/.next": true
+    "**/.next": true,
+    "**/geojson/*": true,
+    "**/*.geojson": true
   },
-  "files.exclude": {
-    "**/.next": true
-  }
 }

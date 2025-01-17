@@ -30,12 +30,12 @@ const IntersectionLayer: React.FC = () => {
           onEachFeature: (f, l) => {
             l.on("click", (e) => {
               alert(
-                `You clicked on an intersection with id ${e.target.feature.properties.INTERSECTION_ID}`
+                `You clicked on an intersection with id ${e.target.feature.properties.INTERSECTION_ID}`,
               );
             });
             l.bindTooltip(`<div>${f.properties.INTERSECTION_ID}</div>`);
           },
-        })
+        }),
       );
     }
   }, [map, intersections]);
