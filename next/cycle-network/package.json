@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint-check": "next lint --max-warnings 0 src",
-    "tsc": "tsc --rootdir ./src",
+    "type-check": "tsc --rootdir ./src",
     "format-check": "prettier -c src",
     "format": "prettier --write src"
   },
