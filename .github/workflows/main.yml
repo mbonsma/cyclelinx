@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - actions
   workflow_dispatch:
   pull_request:
     branches:
