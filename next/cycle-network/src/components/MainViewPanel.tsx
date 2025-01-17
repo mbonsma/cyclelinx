@@ -535,26 +535,6 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
           reset={reset}
         />
         <Divider sx={{ margin: 2 }} />
-        {!!mapLoading && (
-          <Grid
-            direction="column"
-            justifyContent="center"
-            alignItems="center"
-            item
-            container
-          >
-            <Grid item>
-              <Typography>
-                <CircularProgress size="large" />
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography color="error" variant="h5">
-                Map loading....
-              </Typography>
-            </Grid>
-          </Grid>
-        )}
         <Grid item>
           <CollapsibleSection defaultOpen label="Existing Lanes">
             <ExistingLaneControls
@@ -707,20 +687,41 @@ const MainViewPanel: React.FC<MainViewPanelProps> = ({
           )}
         </Grid>
       </Grid>
-      <Grid item xs={12} md={10} flexGrow={1}>
+      <Grid item direction="column" container xs={12} md={10} flexGrow={1}>
+        {!!mapLoading && (
+          <Grid
+            height="100vh"
+            justifyContent="center"
+            alignItems="center"
+            flexGrow={1}
+            direction="column"
+            container
+            item
+            spacing={2}
+          >
+            <Grid item>
+              <Typography variant="h5">Map Loading...</Typography>
+            </Grid>
+            <Grid item>
+              <CircularProgress />
+            </Grid>
+          </Grid>
+        )}
         {!!metricTypeScale && (
-          <MapViewer
-            improvements={improvements}
-            pendingImprovements={pendingImprovements}
-            metricTypeScale={metricTypeScale}
-            setPendingImprovements={setPendingImprovements}
-            scores={scores}
-            scoreScale={scoreScale}
-            scoreSet={scoreSetType}
-            selectedMetric={selectedMetric}
-            setMapLoaded={() => setMapLoading(false)}
-            visibleExistingLanes={visibleExistingLanes}
-          />
+          <Grid item flexGrow={1}>
+            <MapViewer
+              improvements={improvements}
+              pendingImprovements={pendingImprovements}
+              metricTypeScale={metricTypeScale}
+              setPendingImprovements={setPendingImprovements}
+              scores={scores}
+              scoreScale={scoreScale}
+              scoreSet={scoreSetType}
+              selectedMetric={selectedMetric}
+              setMapLoaded={() => setMapLoading(false)}
+              visibleExistingLanes={visibleExistingLanes}
+            />
+          </Grid>
         )}
       </Grid>
       <WelcomeOverlay
