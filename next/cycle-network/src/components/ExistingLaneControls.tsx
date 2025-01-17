@@ -61,7 +61,7 @@ const ExistingLaneControls: React.FC<ExistingLaneControlsProps> = ({
               onChange={() =>
                 visibleExistingLanes.includes(m)
                   ? setVisibleExistingLanes(
-                      visibleExistingLanes.filter((l) => l !== m)
+                      visibleExistingLanes.filter((l) => l !== m),
                     )
                   : setVisibleExistingLanes(visibleExistingLanes.concat(m))
               }
@@ -69,7 +69,7 @@ const ExistingLaneControls: React.FC<ExistingLaneControlsProps> = ({
               value={m}
               checked={visibleExistingLanes.includes(m)}
             />
-          )
+          ),
         )}
       </FormGroup>
     </FormControl>

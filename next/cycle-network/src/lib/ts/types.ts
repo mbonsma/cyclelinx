@@ -37,7 +37,7 @@ interface FeatureProperties {
 
 interface FeatureCollection<
   T extends GeoJsonObject,
-  P extends Record<string, any>
+  P extends Record<string, any>,
 > {
   crs: {
     properties: {
@@ -139,7 +139,7 @@ export type EXISTING_LANE_TYPE =
   | "Signed Route";
 
 export const isFeatureGroup = (
-  arg: Layer | FeatureGroup
+  arg: Layer | FeatureGroup,
 ): arg is FeatureGroup => !!(arg as FeatureGroup).setStyle;
 
 export const isGeoJSONFeature = <P extends Record<string, any>>(
@@ -147,7 +147,7 @@ export const isGeoJSONFeature = <P extends Record<string, any>>(
     | geojson.FeatureCollection<GeometryObject, P>
     | Feature<MultiPoint, P>
     | GeometryCollection
-    | undefined
+    | undefined,
 ): arg is Feature<MultiPoint, P> =>
   !!(arg as Feature<MultiPoint, P>).type &&
   !!(arg as Feature<MultiPoint, P>).properties;
