@@ -23,6 +23,11 @@ jobs:
           cache: npm
           cache-dependency-path: next
       -
+        name: Install packages
+        working-directory: next
+        run: |
+          npm ci
+      -
         name: Check React formatting
         working-directory: next/cycle-network
         run: |
@@ -71,4 +76,4 @@ jobs:
         run: |
           poetry install --with dev
           poetry run black --check api
-          poetry run pytest -W ignore::DeprecationWarning poetry run pytest tests/test_util.py tests/test_models.py tests/test_routes.py
+          poetry run pytest -W ignore::DeprecationWarning tests/test_util.py tests/test_models.py tests/test_routes.py
