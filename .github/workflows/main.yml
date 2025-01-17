@@ -1,0 +1,74 @@
+name: Test
+on:
+  push:
+    branches:
+      - master
+      - actions
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-next:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: next
+      -
+        name: Check React formatting
+        working-directory: next
+        run: |
+          npm run format-check
+      -
+        name: Lint React code
+        working-directory: next
+        run: |
+          npm run lint-check
+      -
+        name: Check typescript
+        working-directory: next
+        run: |
+          npm run type-check
+
+  test-flask:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: pass
+        ports:
+          - 5432:5432
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: pip
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: 1.7.1
+      -
+        name: test
+        working-directory: flask
+        env:
+          TEST_DB_NAME: postgres
+          POSTGRES_HOST: localhost
+          POSTGRES_PASSWORD: pass
+          POSTGRES_USER: postgres
+        run: |
+          poetry install --with dev
+          poetry run black --check api
+          poetry run pytest -W ignore::DeprecationWarning

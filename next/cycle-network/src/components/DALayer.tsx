@@ -37,7 +37,7 @@ const formatPct = format(",.1%");
 const buildValueTooltip = (
   metric: string,
   scores: ScoreSet,
-  scoreType: keyof ScoreSet
+  scoreType: keyof ScoreSet,
 ) => {
   let pctChange = "";
   let color = "inherit";
@@ -55,7 +55,7 @@ const buildValueTooltip = (
   }
 
   return `<div><strong>${capitalize(metric)}:</strong>&nbsp;${formatNumber(
-    scores[scoreType][metric]
+    scores[scoreType][metric],
   )}<span style="color:${color};">${pctChange}</span></div>`;
 };
 
@@ -113,7 +113,7 @@ const DALayer: React.FC<DALayerProps> = ({
                   metricTypeScale
                     .domain()
                     .map((v) => buildValueTooltip(v, da_score_set, scoreSet))
-                    .join("\n")
+                    .join("\n"),
               );
             }
           } else {

@@ -19,7 +19,7 @@ const LegendGradient: React.FC<LegendGradientProps> = ({
   range,
 }) => {
   const selector = useRef(
-    `legend-gradient-${Math.random().toString(36).slice(3)}`
+    `legend-gradient-${Math.random().toString(36).slice(3)}`,
   );
 
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -47,7 +47,7 @@ const renderLinearLegend = (
   height: number,
   opacityRange: [number, number],
   selector: string,
-  width: number | string
+  width: number | string,
 ) => {
   const gradientId = `legendGradient-${Math.random().toString(36).slice(3)}`;
 

@@ -114,7 +114,7 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
           l.removeEventListener("click");
           l.addEventListener("click", (e) => {
             const allProjectIds = getAllProjectIds(
-              e.sourceTarget.feature.properties
+              e.sourceTarget.feature.properties,
             );
 
             if (!!allProjectIds.size) {
@@ -158,7 +158,7 @@ const ArterialLayer: React.FC<ArterialLayerProps> = ({
   useEffect(() => {
     if (layer) {
       layer.eachLayer((l) =>
-        l.fire("update", { improvements, pendingImprovements })
+        l.fire("update", { improvements, pendingImprovements }),
       );
     }
   }, [improvements, layer, pendingImprovements]);

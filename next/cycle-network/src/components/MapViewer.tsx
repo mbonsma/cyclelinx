@@ -29,7 +29,7 @@ const ExistingLanesLayer = dynamic(
   () => import("@/components/ExistingLanesLayer"),
   {
     ssr: false,
-  }
+  },
 );
 
 const ArterialLayer = dynamic(() => import("@/components/ArterialLayer"), {

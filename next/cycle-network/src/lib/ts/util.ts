@@ -63,7 +63,7 @@ const existingLaneTypes: EXISTING_LANE_TYPE[] = [
 
 export const existingScale = scaleOrdinal(
   existingLaneTypes,
-  schemePurples[6].slice(2).concat([schemeYlOrBr[8][5], schemeYlOrBr[8][6]])
+  schemePurples[6].slice(2).concat([schemeYlOrBr[8][5], schemeYlOrBr[8][6]]),
 );
 
 export const EXISTING_LANE_NAME_MAP: Record<string, EXISTING_LANE_TYPE> = {

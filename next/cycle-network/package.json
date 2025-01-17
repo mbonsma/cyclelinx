@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "tsc": "tsc --rootdir ./src"
+    "lint-check": "next lint --max-warnings 0 src",
+    "tsc": "tsc --rootdir ./src",
+    "format-check": "prettier -c src",
+    "format": "prettier --write src"
   },
   "dependencies": {
     "@emotion/cache": "^11.11.0",
@@ -26,6 +29,7 @@
     "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "next": "14.0.4",
+    "prettier": "^3.4.2",
     "react": "^18",
     "react-dom": "^18",
     "react-leaflet": "^4.2.1",
