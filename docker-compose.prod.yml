@@ -12,6 +12,7 @@ services:
     networks:
       - cycle-network
     entrypoint: ["gunicorn", "api.app:create_app()", "-w", "2", "-b", "0.0.0.0:${FLASK_PORT}"]
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.flask.rule=Host(`${HOST}`)&&PathPrefix(`${FLASK_ROUTER_PATH}`)"
@@ -30,6 +31,7 @@ services:
         - NEXT_PORT
     networks:
       - cycle-network
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.next.rule=Host(`${HOST}`)"
@@ -43,6 +45,7 @@ services:
     volumes:
       - db-data-prod:/var/lib/postgresql/data
       - ./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    restart: unless-stopped
     environment:
       - POSTGRES_DB
       - POSTGRES_HOST_AUTH_METHOD=password
@@ -53,6 +56,10 @@ services:
       - cycle-network
   traefik:
     image: traefik:3.1
+    restart: unless-stopped
+    labels:
+      - "traefik.tls.stores.default.defaultgeneratedcert.resolver=default-resolver"
+      - "traefik.tls.stores.default.defaultgeneratedcert.domain.main=${HOST}"
     command:
       - --accesslog=true
       - --accesslog.filepath=/logs/access.log
@@ -63,6 +70,7 @@ services:
       - --log.level=INFO
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.file.filename=/letsencrypt/tls.yml
       - --entrypoints.websecure.address=:443
       - --entrypoints.web.http.redirections.entryPoint.to=websecure
       - --entrypoints.web.http.redirections.entryPoint.scheme=https
