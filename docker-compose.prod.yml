@@ -28,6 +28,8 @@ services:
       args:
         - NEXT_PUBLIC_API_ENDPOINT_BROWSER=${API_ENDPOINT_BROWSER}
         - NEXT_PUBLIC_API_ENDPOINT_INTERNAL=${API_ENDPOINT_INTERNAL}
+        - NEXT_PUBLIC_GA_CODE=${GA_CODE}
+        - NEXT_PUBLIC_APP_ENV=${APP_ENV}
         - NEXT_PORT
     networks:
       - cycle-network

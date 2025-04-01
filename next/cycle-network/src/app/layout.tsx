@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Inter } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v14-appRouter";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -33,6 +34,10 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          {process.env.NEXT_PUBLIC_APP_ENV == "production" &&
+            !!process.env.NEXT_PUBLIC_GA_CODE && (
+              <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_CODE} />
+            )}
           <ThemeProvider theme={theme}>
             <CssBaseline />
             {children}

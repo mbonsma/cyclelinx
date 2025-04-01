@@ -19,6 +19,7 @@
     "@mui/icons-material": "^5.16.8",
     "@mui/material": "^5.15.4",
     "@mui/material-nextjs": "^5.15.3",
+    "@next/third-parties": "^15.2.4",
     "axios": "^1.6.7",
     "d3-array": "^3.2.4",
     "d3-color": "^3.1.0",
