@@ -40,7 +40,7 @@ export default function RootLayout({
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>
-      {process.env.NEXT_PUBLIC_APP_ENV == "local" &&
+      {process.env.NEXT_PUBLIC_APP_ENV == "production" &&
         !!process.env.NEXT_PUBLIC_GA_CODE && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_CODE} />
         )}
