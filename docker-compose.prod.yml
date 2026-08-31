@@ -30,7 +30,9 @@ services:
         - NEXT_PUBLIC_API_ENDPOINT_INTERNAL=${API_ENDPOINT_INTERNAL}
         - NEXT_PUBLIC_GA_CODE=${GA_CODE}
         - NEXT_PUBLIC_APP_ENV=${APP_ENV}
+        - NEXT_PUBLIC_CARTO_KEY=${CARTO_KEY}
         - NEXT_PORT
+
     networks:
       - cycle-network
     restart: unless-stopped
