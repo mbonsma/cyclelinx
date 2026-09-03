@@ -59,7 +59,7 @@ services:
     networks:
       - cycle-network
   traefik:
-    image: traefik:3.1
+    image: traefik:3.6.1
     restart: unless-stopped
     labels:
       - "traefik.tls.stores.default.defaultgeneratedcert.resolver=default-resolver"
